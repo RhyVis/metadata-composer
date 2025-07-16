@@ -1,0 +1,39 @@
+use crate::command::*;
+use crate::core::init_core;
+use tauri::{generate_context, generate_handler};
+
+mod api;
+mod command;
+mod core;
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_single_instance::init(|_app, _args, _cwd| {}))
+        .setup(|app| {
+            let handle = app.handle();
+
+            if cfg!(debug_assertions) {
+                handle.plugin(
+                    tauri_plugin_log::Builder::default()
+                        .level(log::LevelFilter::Info)
+                        .build(),
+                )?;
+            } else {
+                handle.plugin(
+                    tauri_plugin_log::Builder::default()
+                        .level(log::LevelFilter::Error)
+                        .build(),
+                )?;
+            }
+
+            init_core(handle)?;
+
+            Ok(())
+        })
+        .invoke_handler(generate_handler![lib_update, lib_get_all, lib_get])
+        .run(generate_context!())
+        .expect("error while running tauri application");
+}

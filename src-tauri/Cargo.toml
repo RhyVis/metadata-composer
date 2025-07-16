@@ -1,0 +1,35 @@
+[package]
+name = "app"
+description = "A manager for metadata"
+version = "0.1.0"
+authors = ["Rhynia"]
+license = "GPL-3"
+edition = "2024"
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.3.0", features = [] }
+
+[dependencies]
+log = "0.4"
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.9"
+bson = "2.15"
+ts-rs = { version = "11.0", features = ["chrono-impl"] }
+chrono = { version = "0.4", features = ["serde"] }
+walkdir = "2.5"
+uuid = { version = "1.17", features = ["v4"] }
+redb = "2.6"
+const_format = { version = "0.2", features = ["fmt"] }
+tauri = { version = "2.6.2", features = [] }
+tauri-plugin-log = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-dialog = "2"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-single-instance = "2"
