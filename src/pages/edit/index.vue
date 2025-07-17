@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useRouteParams } from '@vueuse/router';
-import { computed, inject, onMounted, ref, watch } from 'vue';
+import { inject, onMounted, ref, watch } from 'vue';
 import { set } from '@vueuse/core';
 import { useRouter } from 'vue-router';
 import { LibraryKey, type LibraryStore } from '@/stores/library.ts';
@@ -13,11 +13,14 @@ import EditContentInfo from '@/pages/edit/comp/EditContentInfo.vue';
 import { Command } from '@/api/cmd.ts';
 import { useQuasar } from 'quasar';
 import { notifyError, notifySuccess } from '@/api/q-ext.ts';
+import EditImage from '@/pages/edit/comp/EditImage.vue';
+import { useGlobalStore } from '@/stores/global.ts';
+import { storeToRefs } from 'pinia';
 
 const { push } = useRouter();
 const { loading, notify } = useQuasar();
 const library: LibraryStore = inject(LibraryKey)!;
-const dev = computed(() => import.meta.env.DEV);
+const { isDevMode } = storeToRefs(useGlobalStore());
 
 const id = ref('');
 const data = ref<Metadata | undefined>();
@@ -78,7 +81,7 @@ onMounted(() => {
 <template>
   <q-page padding>
     <q-card>
-      <template v-if="dev">
+      <template v-if="isDevMode">
         <q-card-section>
           <div class="text-subtitle2">Develop Info</div>
           <q-separator />
@@ -119,6 +122,8 @@ onMounted(() => {
             use-input
             @update:model-value="updateField('collection', $event as string)"
           />
+          <!-- Image Input -->
+          <EditImage :edit="edit" />
           <!-- Content Info -->
           <EditContentInfo :edit="edit" />
           <!-- Archive Info -->
@@ -131,7 +136,7 @@ onMounted(() => {
       <q-card-actions>
         <q-space />
         <q-btn-group push>
-          <q-btn label="保存" push @click="handleUpdate" />
+          <q-btn icon="save" label="保存" push @click="handleUpdate" />
         </q-btn-group>
       </q-card-actions>
     </q-card>

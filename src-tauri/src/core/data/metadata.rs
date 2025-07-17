@@ -147,6 +147,8 @@ pub struct Metadata {
     pub tags: Vec<String>,
     /// Collection names, if any
     pub collection: Option<String>,
+    /// Image hash, if any
+    pub image: Option<String>,
 
     /// The content type of the data item
     pub content_info: ContentInfo,
@@ -166,7 +168,7 @@ fn default_version() -> String {
 }
 
 /// Fields in [Metadata] with optional, used in communication with the frontend
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Deserialize, TS)]
 #[ts(export, export_to = "../../src/api/types.ts")]
 pub struct MetadataOption {
     pub id: Option<Uuid>,
@@ -174,6 +176,7 @@ pub struct MetadataOption {
     pub alias: Option<Vec<String>>,
     pub tags: Option<Vec<String>>,
     pub collection: Option<String>,
+    pub image: Option<String>,
     pub content_info: Option<ContentInfo>,
     pub archive_info: Option<ArchiveInfo>,
 
@@ -190,7 +193,8 @@ impl Metadata {
             title: opt.title.unwrap_or(format!("Unnamed {id}")),
             alias: opt.alias.unwrap_or_default(),
             tags: opt.tags.unwrap_or_default(),
-            collection: None,
+            collection: opt.collection,
+            image: opt.image,
             content_info: opt.content_info.unwrap_or_default(),
             archive_info: opt.archive_info.clone().unwrap_or_default(),
             create_time: time.clone(),
@@ -246,6 +250,12 @@ impl Metadata {
         if !raw_path.exists() {
             return Err(anyhow!(
                 "Archive source path does not exist: {}",
+                raw_path.display()
+            ));
+        }
+        if !raw_path.is_dir() {
+            return Err(anyhow!(
+                "Archive source path is not a directory: {}",
                 raw_path.display()
             ));
         }

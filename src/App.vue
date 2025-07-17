@@ -3,6 +3,7 @@ import { LibraryKey, useLibraryStore } from '@/stores/library.ts';
 import { onMounted, provide } from 'vue';
 import { useQuasar } from 'quasar';
 import { notifyError, notifySuccess } from '@/api/q-ext.ts';
+import { useGlobalStore } from '@/stores/global.ts';
 
 const { notify } = useQuasar();
 const library = useLibraryStore();
@@ -16,6 +17,13 @@ onMounted(async () => {
   } catch (e) {
     console.error(e);
     notify(notifyError('加载数据库失败', e));
+  }
+
+  try {
+    useGlobalStore().$tauri.start();
+  } catch (e) {
+    console.error('Failed to start Tauri:', e);
+    notify(notifyError('无法启动同步', e));
   }
 });
 </script>

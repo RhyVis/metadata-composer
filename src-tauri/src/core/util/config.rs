@@ -9,6 +9,7 @@ use std::sync::OnceLock;
 const CONFIG_FILE_NAME: &str = "config.toml";
 
 const DIR_NAME_ARCHIVE: &str = "archive";
+const DIR_NAME_IMAGE: &str = "image";
 
 static CONFIG: OnceLock<InternalConfig> = OnceLock::new();
 
@@ -64,6 +65,10 @@ impl InternalConfig {
         self.root.join(DIR_NAME_ARCHIVE)
     }
 
+    pub fn dir_image(&self) -> PathBuf {
+        self.root.join(DIR_NAME_IMAGE)
+    }
+
     fn check(&self) -> Result<()> {
         let root = self.root();
         if !root.exists() {
@@ -72,6 +77,10 @@ impl InternalConfig {
         let dir_archive = self.dir_archive();
         if !dir_archive.exists() {
             fs::create_dir_all(&dir_archive)?;
+        }
+        let dir_image = self.dir_image();
+        if !dir_image.exists() {
+            fs::create_dir_all(&dir_image)?;
         }
 
         Ok(())

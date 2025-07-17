@@ -9,9 +9,10 @@ import {
   GameDistributionOptions,
   GameSysPlatformOptions,
 } from '@/pages/edit/script/define.ts';
-import { computed } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useGlobalStore } from '@/stores/global.ts';
 
-const dev = computed(() => import.meta.env.DEV);
+const { isDevMode } = storeToRefs(useGlobalStore());
 
 const { edit } = defineProps<{
   edit: UseEdit;
@@ -28,7 +29,7 @@ const {
 </script>
 
 <template>
-  <q-card class="q-my-sm" v-if="dev">
+  <q-card class="q-my-sm" v-if="isDevMode">
     <q-card-section>
       <div class="text-caption">Content Type: {{ currentType }}</div>
     </q-card-section>

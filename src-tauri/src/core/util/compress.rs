@@ -1,9 +1,9 @@
 use crate::core::util::create_hidden_command;
 use anyhow::{Result, anyhow};
 use encoding_rs::GBK;
-use log::info;
+use log::{error, info};
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::Command;
 
 fn exist_7z_exe() -> bool {
     match Command::new("7z").arg("--help").output() {
@@ -30,8 +30,9 @@ pub fn compress(
         compression_level
     );
 
-    let input_path = input_dir.as_ref();
-    let output_path = output_file.as_ref();
+    let input_path = input_dir.as_ref().to_owned();
+    let output_path = output_file.as_ref().to_owned();
+    let password = password.map(|s| s.to_owned());
     let compression_level = match compression_level {
         Some(level) => {
             if level <= 9 {
@@ -59,15 +60,19 @@ pub fn compress(
         command.arg(format!("-p{pwd}")).arg("-mhe=on");
     }
 
-    let output = command.output()?;
-    if !output.status.success() {
-        return Err(anyhow!(
-            "Failed in 7z compression command: {}",
-            decode_out(&output.stderr)
-        ));
-    }
-
-    Ok(())
+    command
+        .output()
+        .map_err(|err| anyhow!("Compression command exec failed, {err}"))
+        .and_then(|out| {
+            if out.status.success() {
+                info!("Compression completed successfully.");
+                Ok(())
+            } else {
+                let err_msg = decode_out(&out.stderr);
+                error!("Compression failed: {err_msg}");
+                Err(anyhow!("Compression failed: {err_msg}"))
+            }
+        })
 }
 
 pub fn decompress(
@@ -86,10 +91,12 @@ pub fn decompress(
         password
     );
 
-    let input_path = input_file.as_ref();
-    let output_path = output_dir.as_ref();
+    let input_path = input_file.as_ref().to_owned();
+    let output_path = output_dir.as_ref().to_owned();
+    let password = password.map(|s| s.to_owned());
 
     let mut command = create_hidden_command("7z");
+
     command
         .arg("x")
         .arg(input_path)
@@ -100,16 +107,19 @@ pub fn decompress(
         command.arg(format!("-p{pwd}"));
     }
 
-    command.stderr(Stdio::inherit());
-    let output = command.output()?;
-    if !output.status.success() {
-        return Err(anyhow!(
-            "Failed in 7z decompression command: {}",
-            decode_out(&output.stderr)
-        ));
-    }
-
-    Ok(())
+    command
+        .output()
+        .map_err(|e| anyhow!("Decompression command failed: {e}"))
+        .and_then(|out| {
+            if out.status.success() {
+                info!("Decompression completed successfully.");
+                Ok(())
+            } else {
+                let err_msg = decode_out(&out.stderr);
+                error!("Decompression failed: {err_msg}");
+                Err(anyhow!("Decompression failed: {err_msg}"))
+            }
+        })
 }
 
 fn decode_out(out: &[u8]) -> String {

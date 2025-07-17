@@ -21,4 +21,12 @@ export class Command {
   static async metadataCollectionList(): Promise<string[]> {
     return await invoke('metadata_collection_list');
   }
+
+  static async utilProcessImg(source: string): Promise<string> {
+    return await invoke('util_process_img', { source });
+  }
+
+  static async pathResolveImg(hash: string): Promise<string> {
+    return await invoke('path_resolve_img', { hash });
+  }
 }

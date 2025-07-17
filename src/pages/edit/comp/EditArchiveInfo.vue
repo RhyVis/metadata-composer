@@ -2,12 +2,13 @@
 import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { useArchiveInfo } from '@/pages/edit/script/useArchiveInfo.ts';
 import { ArchiveTypeEnum, ArchiveTypeOptions } from '@/pages/edit/script/define.ts';
-import { computed } from 'vue';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { useQuasar } from 'quasar';
 import { notifyError, notifyWarning } from '@/api/q-ext.ts';
+import { useGlobalStore } from '@/stores/global.ts';
+import { storeToRefs } from 'pinia';
 
-const dev = computed(() => import.meta.env.DEV);
+const { isDevMode } = storeToRefs(useGlobalStore());
 const { notify } = useQuasar();
 
 const { edit } = defineProps<{
@@ -36,7 +37,7 @@ const openPathW = (path: string | null) => {
 </script>
 
 <template>
-  <q-card class="q-my-sm" v-if="dev">
+  <q-card class="q-my-sm" v-if="isDevMode">
     <q-card-section>
       <div class="text-caption">Current Type: {{ currentType }}</div>
       <div class="text-caption">Input Path: {{ inputPath ?? '`undefined`' }}</div>

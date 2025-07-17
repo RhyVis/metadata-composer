@@ -61,6 +61,10 @@ tags: Array<string>,
  */
 collection: string | null, 
 /**
+ * Image hash, if any
+ */
+image: string | null, 
+/**
  * The content type of the data item
  */
 content_info: ContentInfo, 
@@ -72,4 +76,4 @@ archive_info: ArchiveInfo, create_time: string, update_time: string, };
 /**
  * Fields in [Metadata] with optional, used in communication with the frontend
  */
-export type MetadataOption = { id: string | null, title: string | null, alias: Array<string> | null, tags: Array<string> | null, collection: string | null, content_info: ContentInfo | null, archive_info: ArchiveInfo | null, flag_create_archive: boolean, };
+export type MetadataOption = { id: string | null, title: string | null, alias: Array<string> | null, tags: Array<string> | null, collection: string | null, image: string | null, content_info: ContentInfo | null, archive_info: ArchiveInfo | null, flag_create_archive: boolean, };
