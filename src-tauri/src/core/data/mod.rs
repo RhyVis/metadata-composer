@@ -1,5 +1,6 @@
 use anyhow::Result;
 
+pub mod collection;
 pub mod library;
 pub mod metadata;
 

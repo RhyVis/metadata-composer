@@ -14,7 +14,7 @@ const { edit } = defineProps<{
   edit: UseEdit;
 }>();
 const editArchiveInfo = useArchiveInfo(edit);
-const { currentType, inputPath, inputPassword, doSelect } = editArchiveInfo;
+const { currentType, inputPath, inputPassword, flagCreateArchive, doSelect } = editArchiveInfo;
 
 const openPathW = (path: string | null) => {
   if (path) {
@@ -53,12 +53,25 @@ const openPathW = (path: string | null) => {
     stack-label
   ></q-select>
   <template v-if="currentType == ArchiveTypeEnum.ArchiveFile">
-    <q-field label="源路径" stack-label>
+    <q-field :label="flagCreateArchive ? '源文件路径' : '压缩包路径'" stack-label>
       <div @click="openPathW(inputPath)">
         {{ inputPath }}
       </div>
       <template #after>
-        <q-btn flat icon="insert_drive_file" size="md" square @click="doSelect(false)" />
+        <q-checkbox v-model="flagCreateArchive" size="md">
+          <q-tooltip>是否创建新的压缩归档</q-tooltip>
+        </q-checkbox>
+        <q-btn
+          :icon="flagCreateArchive ? 'folder' : 'insert_drive_file'"
+          flat
+          size="md"
+          square
+          @click="doSelect(flagCreateArchive)"
+        >
+          <q-tooltip>{{
+            flagCreateArchive ? '选择文件夹，压缩将不包含文件夹本身' : '选择压缩包'
+          }}</q-tooltip>
+        </q-btn>
       </template>
     </q-field>
     <q-input v-model="inputPassword" label="密码" stack-label />

@@ -17,17 +17,18 @@ export const useEdit = (initialData: Ref<Metadata | undefined>) => {
     id: initialData.value?.id ?? null,
     title: null,
     alias: null,
-    archive_info: null,
-    collection: null,
-    content_type: null,
     tags: null,
+    collection: null,
+    content_info: null,
+    archive_info: null,
+    flag_create_archive: false,
   });
 
   const updateField = <K extends keyof MetadataOption>(field: K, value: MetadataOption[K]) => {
     editData.value[field] = value;
   };
   const clearField = <K extends keyof MetadataOption>(field: K) => {
-    editData.value[field] = null;
+    editData.value[field] = null as never;
   };
   const updateData = async () => {
     await update(get(editData));

@@ -8,6 +8,8 @@ use std::sync::OnceLock;
 
 const CONFIG_FILE_NAME: &str = "config.toml";
 
+const DIR_NAME_ARCHIVE: &str = "archive";
+
 static CONFIG: OnceLock<InternalConfig> = OnceLock::new();
 
 pub fn init_config() -> Result<()> {
@@ -24,7 +26,7 @@ pub fn init_config() -> Result<()> {
     }
     .into();
 
-    fs::create_dir_all(&config.root)?;
+    config.check()?;
 
     CONFIG
         .set(config)
@@ -45,12 +47,35 @@ pub fn get_config_copy() -> Result<InternalConfig> {
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 struct ExternalConfig {
-    pub root: Option<String>,
+    root: Option<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct InternalConfig {
-    pub root: PathBuf,
+    root: PathBuf,
+}
+
+impl InternalConfig {
+    pub fn root(&self) -> &PathBuf {
+        &self.root
+    }
+
+    pub fn dir_archive(&self) -> PathBuf {
+        self.root.join(DIR_NAME_ARCHIVE)
+    }
+
+    fn check(&self) -> Result<()> {
+        let root = self.root();
+        if !root.exists() {
+            fs::create_dir_all(root)?;
+        }
+        let dir_archive = self.dir_archive();
+        if !dir_archive.exists() {
+            fs::create_dir_all(&dir_archive)?;
+        }
+
+        Ok(())
+    }
 }
 
 impl From<ExternalConfig> for InternalConfig {

@@ -4,6 +4,7 @@ import { LibraryKey, type LibraryStore } from '@/stores/library.ts';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { storeToRefs } from 'pinia';
 import { useRouter } from 'vue-router';
+import { MainColDef } from '@/pages/main/script/define.ts';
 
 const library: LibraryStore = inject(LibraryKey)!;
 const { items } = storeToRefs(library);
@@ -24,7 +25,7 @@ onMounted(() => {
 <template>
   <q-page padding>
     <div class="text-center">
-      <q-table :rows="items">
+      <q-table :columns="MainColDef" :rows="items" flat row-key="id">
         <template #top-right>
           <q-btn flat icon="add" round @click="handleCreate" />
         </template>

@@ -3,6 +3,8 @@ use std::path::Path;
 use walkdir::WalkDir;
 
 pub trait PathExt {
+    /// It does not check if the path exists, it just returns 0 if the path does not exist,
+    /// or encountered an error.
     fn calculate_size(&self) -> u64;
 }
 

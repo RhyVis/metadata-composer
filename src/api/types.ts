@@ -8,7 +8,7 @@ export type ArchiveInfo = "None" | { "ArchiveFile": { size: number, path: string
 /**
  * Represents collection information for grouping data items
  */
-export type Collection = { id: string, name: string, };
+export type CollectionDef = { id: string, name: string, };
 
 /**
  * Represents the type of content for a data item, with detailed information
@@ -57,9 +57,9 @@ alias: Array<string>,
  */
 tags: Array<string>, 
 /**
- * Collection information, if any
+ * Collection names, if any
  */
-collection: Collection | null, 
+collection: string | null, 
 /**
  * The content type of the data item
  */
@@ -72,4 +72,4 @@ archive_info: ArchiveInfo, create_time: string, update_time: string, };
 /**
  * Fields in [Metadata] with optional, used in communication with the frontend
  */
-export type MetadataOption = { id: string | null, title: string | null, alias: Array<string> | null, tags: Array<string> | null, collection: Collection | null, content_info: ContentInfo | null, archive_info: ArchiveInfo | null, };
+export type MetadataOption = { id: string | null, title: string | null, alias: Array<string> | null, tags: Array<string> | null, collection: string | null, content_info: ContentInfo | null, archive_info: ArchiveInfo | null, flag_create_archive: boolean, };

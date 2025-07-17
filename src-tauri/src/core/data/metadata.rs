@@ -1,17 +1,15 @@
 use crate::api::dl_site::DLContentType;
+use crate::core::util::compress::compress;
+use crate::core::util::config::get_config_copy;
+use crate::core::util::path_ext::PathExt;
+use anyhow::{Result, anyhow};
 use chrono::{DateTime, Utc};
-use log::info;
+use log::{info, warn};
 use serde::{Deserialize, Serialize};
+use std::fs;
+use std::path::{Path, PathBuf};
 use ts_rs::TS;
 use uuid::Uuid;
-
-/// Represents collection information for grouping data items
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/api/types.ts")]
-pub struct Collection {
-    pub id: String,
-    pub name: String,
-}
 
 /// Represents the type of content for a data item, with detailed information
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, Default)]
@@ -21,6 +19,35 @@ pub enum ContentInfo {
     Undefined,
 
     Game(GameData),
+}
+
+impl ContentInfo {
+    fn dir_name(&self) -> Vec<&'static str> {
+        match self {
+            ContentInfo::Undefined => vec!["undefined"],
+            ContentInfo::Game(data) => vec!["game", data.distribution.dir_name()],
+        }
+    }
+
+    /// Returns the relative path starting from `.`, but it **should** start from `config.dir_archive()`
+    ///
+    /// This is used to store in metadata
+    fn path_rel(&self) -> PathBuf {
+        let mut base = PathBuf::new();
+        for dir in self.dir_name() {
+            base.push(dir);
+        }
+        base
+    }
+
+    fn file_name(&self) -> String {
+        match self {
+            ContentInfo::Undefined => {
+                format!("UndefinedContent-{}", Utc::now().format("%Y%m%d%H%M%S"))
+            }
+            ContentInfo::Game(data) => data.distribution.file_name(),
+        }
+    }
 }
 
 /// Represents game data, including version, developer, publisher, and platform information
@@ -62,14 +89,20 @@ pub enum GameDistribution {
     },
 }
 
-impl Default for GameData {
-    fn default() -> Self {
-        GameData {
-            version: default_version(),
-            developer: None,
-            publisher: None,
-            sys_platform: Vec::new(),
-            distribution: GameDistribution::Unknown,
+impl GameDistribution {
+    fn dir_name(&self) -> &'static str {
+        match self {
+            GameDistribution::Unknown => "unknown",
+            GameDistribution::Steam { .. } => "steam",
+            GameDistribution::DLSite { .. } => "dl",
+        }
+    }
+
+    fn file_name(&self) -> String {
+        match self {
+            Self::Unknown => format!("Unknown-{}", Utc::now().format("%Y%m%d%H%M%S")),
+            Self::Steam { app_id } => app_id.to_string(),
+            Self::DLSite { id, .. } => id.to_string(),
         }
     }
 }
@@ -104,7 +137,7 @@ pub enum ArchiveInfo {
 pub struct Metadata {
     /// Unique identifier for the data item,
     /// by default a [Uuid]
-    pub id: String,
+    pub id: Uuid,
 
     /// The title of the data item
     pub title: String,
@@ -112,8 +145,8 @@ pub struct Metadata {
     pub alias: Vec<String>,
     /// Tags associated with the data item
     pub tags: Vec<String>,
-    /// Collection information, if any
-    pub collection: Option<Collection>,
+    /// Collection names, if any
+    pub collection: Option<String>,
 
     /// The content type of the data item
     pub content_info: ContentInfo,
@@ -124,8 +157,8 @@ pub struct Metadata {
     pub update_time: DateTime<Utc>,
 }
 
-fn default_id() -> String {
-    Uuid::new_v4().to_string()
+fn default_id() -> Uuid {
+    Uuid::new_v4()
 }
 
 fn default_version() -> String {
@@ -136,31 +169,48 @@ fn default_version() -> String {
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/api/types.ts")]
 pub struct MetadataOption {
-    pub id: Option<String>,
+    pub id: Option<Uuid>,
     pub title: Option<String>,
     pub alias: Option<Vec<String>>,
     pub tags: Option<Vec<String>>,
-    pub collection: Option<Collection>,
+    pub collection: Option<String>,
     pub content_info: Option<ContentInfo>,
     pub archive_info: Option<ArchiveInfo>,
+
+    #[serde(default)]
+    pub flag_create_archive: bool,
 }
 
 impl Metadata {
-    pub fn create(opt: MetadataOption) -> Self {
+    pub fn create(opt: MetadataOption) -> Result<Self> {
         let id = default_id();
         let time = Utc::now();
         info!("Creating metadata: {} at {}", id, time);
-        Self {
+        let mut created = Self {
             title: opt.title.unwrap_or(format!("Unnamed {id}")),
             alias: opt.alias.unwrap_or_default(),
             tags: opt.tags.unwrap_or_default(),
             collection: None,
             content_info: opt.content_info.unwrap_or_default(),
-            archive_info: opt.archive_info.unwrap_or_default(),
+            archive_info: opt.archive_info.clone().unwrap_or_default(),
             create_time: time.clone(),
             update_time: time,
             id,
+        };
+
+        if opt.flag_create_archive {
+            if let Some(archive_info) = opt.archive_info {
+                if let ArchiveInfo::ArchiveFile { .. } = archive_info {
+                    created.process_archive()?;
+                }
+            } else {
+                warn!(
+                    "Set 'flag_create_archive' but no archive_info provided, skipping archive creation."
+                );
+            }
         }
+
+        Ok(created)
     }
 
     pub fn patch(&mut self, opt: MetadataOption) {
@@ -186,6 +236,45 @@ impl Metadata {
         info!("Updating metadata: {} at {}", self.id, update_time);
         self.update_time = update_time;
     }
+
+    fn process_archive(&mut self) -> Result<()> {
+        let (raw_path, password) = match self.archive_info.clone() {
+            ArchiveInfo::ArchiveFile { path, password, .. } => (path, password),
+            _ => unreachable!(),
+        };
+        let raw_path = Path::new(&raw_path);
+        if !raw_path.exists() {
+            return Err(anyhow!(
+                "Archive source path does not exist: {}",
+                raw_path.display()
+            ));
+        }
+
+        let dir_base = get_config_copy()?.dir_archive();
+        let dir_rel = self.content_info.path_rel();
+
+        let file_name = format!("{}.a", self.content_info.file_name());
+
+        let mut target_path = dir_base.join(&dir_rel);
+        fs::create_dir_all(&target_path)?;
+        target_path.push(&file_name);
+
+        info!(
+            "Processing archive: {}, saving to {}",
+            file_name,
+            target_path.display()
+        );
+        compress(raw_path, &target_path, password.as_deref(), Some(9))?;
+
+        self.archive_info = ArchiveInfo::ArchiveFile {
+            size: target_path.calculate_size(),
+            path: dir_rel.join(file_name).to_string_lossy().to_string(),
+            password,
+        };
+        info!("Created archive for metadata: {}", self.id);
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -193,18 +282,29 @@ mod test {
     use super::*;
 
     #[test]
-    fn content_type() {
-        #[derive(Debug, Serialize)]
-        struct Wrapper {
-            content: ContentInfo,
-        }
+    fn test_content_info() {
+        let c1 = ContentInfo::Undefined;
+        let c1_rel = c1.path_rel();
+        println!("{:?}", c1_rel);
+        assert_eq!(c1_rel, PathBuf::from("undefined"));
 
-        let wrapper = Wrapper {
-            content: ContentInfo::Game(GameData::default()),
-        };
-        let serialized = serde_json::to_string_pretty(&wrapper).unwrap();
+        let c2 = ContentInfo::Game(GameData {
+            version: "1.0".to_string(),
+            developer: Some("Dev".to_string()),
+            publisher: Some("Pub".to_string()),
+            sys_platform: vec![GameSysPlatform::Windows],
+            distribution: GameDistribution::Steam { app_id: 12345 },
+        });
+        let c2_rel = c2.path_rel();
+        println!("{:?}", c2_rel);
+        assert_eq!(c2_rel, PathBuf::from("game/steam"));
 
-        dbg!(&wrapper);
-        println!("{}", serialized);
+        let base = PathBuf::from("any_base/this/is/for/test");
+        let c2_full = base.join(c2_rel);
+        println!("{:?}", c2_full);
+        assert_eq!(
+            c2_full,
+            PathBuf::from("any_base/this/is/for/test/game/steam")
+        );
     }
 }

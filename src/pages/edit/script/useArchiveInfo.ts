@@ -1,6 +1,6 @@
 import type { ArchiveInfo } from '@/api/types.ts';
 import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { selectDirectory, selectFile } from '@/api/dialog.ts';
 import { ArchiveTypeEnum } from '@/pages/edit/script/define.ts';
 import { get, set } from '@vueuse/core';
@@ -87,6 +87,14 @@ export const useArchiveInfo = (edit: UseEdit) => {
   const inputPath = ref<string | null>(null);
   const inputPassword = ref<string | null>(null);
 
+  const flagCreateArchive = computed({
+    get: () => editData.value.flag_create_archive,
+    set: (value: boolean) => {
+      console.info(`Setting flag_create_archive to: ${value}`);
+      updateField('flag_create_archive', value);
+    },
+  });
+
   watch(currentType, (newType) => {
     console.info(`Archive type changed: ${newType}`);
     if (newType == ArchiveTypeEnum.None) {
@@ -107,5 +115,5 @@ export const useArchiveInfo = (edit: UseEdit) => {
     updateField('archive_info', generateArchiveInfo());
   });
 
-  return { currentType, inputPath, inputPassword, doSelect };
+  return { currentType, inputPath, inputPassword, flagCreateArchive, doSelect };
 };

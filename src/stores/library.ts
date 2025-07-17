@@ -21,22 +21,23 @@ export const useLibraryStore = defineStore('library', {
   actions: {
     async fetch() {
       try {
-        this.items = await Command.libGetAll();
+        this.items = await Command.metadataGetAll();
       } catch (e) {
         console.error(e);
       }
     },
     async update(item: MetadataOption) {
       try {
-        const id = await Command.libUpdate(item);
+        const id = await Command.metadataUpdate(item);
         if (id) {
-          console.info('Created item with ID:', id);
+          console.info(`Created item with ID: ${id}`);
         } else {
-          console.info('Updated item with ID:', item.id);
+          console.info(`Updated item with ID: ${item.id}`);
         }
-        this.items = await Command.libGetAll();
+        this.items = await Command.metadataGetAll();
       } catch (e) {
         console.error(e);
+        throw e;
       }
     },
     get(id: string): Metadata | undefined {

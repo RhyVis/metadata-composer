@@ -33,7 +33,13 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(generate_handler![lib_update, lib_get_all, lib_get])
+        .invoke_handler(generate_handler![
+            metadata_update,
+            metadata_get_all,
+            metadata_get,
+            metadata_delete,
+            metadata_collection_list
+        ])
         .run(generate_context!())
         .expect("error while running tauri application");
 }
