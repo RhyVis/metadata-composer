@@ -1,6 +1,6 @@
 import type { ArchiveInfo } from '@/api/types.ts';
 import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { selectDirectory, selectFile } from '@/api/dialog.ts';
 import { ArchiveTypeEnum } from '@/pages/edit/script/define.ts';
 import { get, set } from '@vueuse/core';
@@ -9,35 +9,22 @@ export const useArchiveInfo = (edit: UseEdit) => {
   const { editData, originalData, updateField } = edit;
 
   const getInitialType = (): string => {
-    if (!editData.value.archive_info) {
-      if (!originalData.value?.archive_info) {
-        return ArchiveTypeEnum.None;
-      }
+    const data: ArchiveInfo | null = editData.value.archive_info
+      ? editData.value.archive_info
+      : originalData.value?.archive_info
+        ? originalData.value.archive_info
+        : null;
+    if (!data) return ArchiveTypeEnum.None;
 
-      if (originalData.value.archive_info == ArchiveTypeEnum.None) {
-        return ArchiveTypeEnum.None;
-      } else if (ArchiveTypeEnum.ArchiveFile in originalData.value.archive_info) {
-        return ArchiveTypeEnum.ArchiveFile;
-      } else if (ArchiveTypeEnum.CommonFile in originalData.value.archive_info) {
-        return ArchiveTypeEnum.CommonFile;
-      } else if (ArchiveTypeEnum.Directory in originalData.value.archive_info) {
-        return ArchiveTypeEnum.Directory;
-      }
-
+    function extractType(info: ArchiveInfo): string {
+      if (info === 'None') return ArchiveTypeEnum.None;
+      if ('ArchiveFile' in info) return ArchiveTypeEnum.ArchiveFile;
+      if ('CommonFile' in info) return ArchiveTypeEnum.CommonFile;
+      if ('Directory' in info) return ArchiveTypeEnum.Directory;
       return ArchiveTypeEnum.None;
     }
 
-    if (editData.value.archive_info == ArchiveTypeEnum.None) {
-      return ArchiveTypeEnum.None;
-    } else if (ArchiveTypeEnum.ArchiveFile in editData.value.archive_info) {
-      return ArchiveTypeEnum.ArchiveFile;
-    } else if (ArchiveTypeEnum.CommonFile in editData.value.archive_info) {
-      return ArchiveTypeEnum.CommonFile;
-    } else if (ArchiveTypeEnum.Directory in editData.value.archive_info) {
-      return ArchiveTypeEnum.Directory;
-    }
-
-    return ArchiveTypeEnum.None;
+    return extractType(data);
   };
 
   const generateArchiveInfo = (): ArchiveInfo => {

@@ -27,6 +27,7 @@ pub enum ContentInfo {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/api/types.ts")]
 pub struct GameData {
+    #[serde(default = "default_version")]
     pub version: String,
     pub developer: Option<String>,
     pub publisher: Option<String>,
@@ -140,7 +141,7 @@ pub struct MetadataOption {
     pub alias: Option<Vec<String>>,
     pub tags: Option<Vec<String>>,
     pub collection: Option<Collection>,
-    pub content_type: Option<ContentInfo>,
+    pub content_info: Option<ContentInfo>,
     pub archive_info: Option<ArchiveInfo>,
 }
 
@@ -154,7 +155,7 @@ impl Metadata {
             alias: opt.alias.unwrap_or_default(),
             tags: opt.tags.unwrap_or_default(),
             collection: None,
-            content_info: opt.content_type.unwrap_or_default(),
+            content_info: opt.content_info.unwrap_or_default(),
             archive_info: opt.archive_info.unwrap_or_default(),
             create_time: time.clone(),
             update_time: time,
@@ -175,8 +176,8 @@ impl Metadata {
         if let Some(collection) = opt.collection {
             self.collection = Some(collection);
         }
-        if let Some(content_type) = opt.content_type {
-            self.content_info = content_type;
+        if let Some(content_info) = opt.content_info {
+            self.content_info = content_info;
         }
         if let Some(archive_info) = opt.archive_info {
             self.archive_info = archive_info;

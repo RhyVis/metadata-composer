@@ -64,8 +64,8 @@ onMounted(() => {
           <div class="text-caption">Data: {{ data ?? '`undefined`' }}</div>
           <div class="text-caption">EditMode: {{ edit.isEditMode }}</div>
           <div class="text-caption">
-            Edit:
-            <pre>{{ edit }}</pre>
+            EditData:
+            <pre>{{ editData }}</pre>
           </div>
         </q-card-section>
         <q-separator inset />

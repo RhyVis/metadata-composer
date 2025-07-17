@@ -69,7 +69,7 @@ const openPathW = (path: string | null) => {
         {{ inputPath }}
       </div>
       <template #after>
-        <q-btn flat icon="file" size="md" square @click="doSelect(true)" />
+        <q-btn flat icon="insert_drive_file" size="md" square @click="doSelect(true)" />
       </template>
     </q-field>
   </template>
