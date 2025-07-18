@@ -18,3 +18,11 @@ export function initLogger() {
   forwardConsole('warn', warn);
   forwardConsole('error', error);
 }
+
+export function initKeyBlocker() {
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
+      event.preventDefault();
+    }
+  });
+}

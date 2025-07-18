@@ -1,15 +1,17 @@
 import 'quasar/src/css/index.sass';
 import '@quasar/extras/material-icons/material-icons.css';
+import '@quasar/extras/fontawesome-v6/fontawesome-v6.css';
 import '@/assets/main.scss';
 import { Loading, Notify, Quasar } from 'quasar';
 import quasarLang from 'quasar/lang/zh-CN';
 import { createApp } from 'vue';
-import { initLogger } from '@/api/hook.ts';
+import { initKeyBlocker, initLogger } from '@/api/hook.ts';
 import App from '@/App.vue';
 import router from '@/router';
 import pinia from '@/stores';
 
 initLogger();
+initKeyBlocker();
 
 console.info('Creating frontend application...');
 

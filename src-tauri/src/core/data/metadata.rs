@@ -147,6 +147,8 @@ pub struct Metadata {
     pub tags: Vec<String>,
     /// Collection names, if any
     pub collection: Option<String>,
+    /// Description of the data item
+    pub description: Option<String>,
     /// Image hash, if any
     pub image: Option<String>,
 
@@ -171,13 +173,23 @@ fn default_version() -> String {
 #[derive(Debug, Clone, Deserialize, TS)]
 #[ts(export, export_to = "../../src/api/types.ts")]
 pub struct MetadataOption {
+    #[serde(default)]
     pub id: Option<Uuid>,
+    #[serde(default)]
     pub title: Option<String>,
+    #[serde(default)]
     pub alias: Option<Vec<String>>,
+    #[serde(default)]
     pub tags: Option<Vec<String>>,
+    #[serde(default)]
     pub collection: Option<String>,
+    #[serde(default)]
+    pub description: Option<String>,
+    #[serde(default)]
     pub image: Option<String>,
+    #[serde(default)]
     pub content_info: Option<ContentInfo>,
+    #[serde(default)]
     pub archive_info: Option<ArchiveInfo>,
 
     #[serde(default)]
@@ -194,6 +206,7 @@ impl Metadata {
             alias: opt.alias.unwrap_or_default(),
             tags: opt.tags.unwrap_or_default(),
             collection: opt.collection,
+            description: opt.description,
             image: opt.image,
             content_info: opt.content_info.unwrap_or_default(),
             archive_info: opt.archive_info.clone().unwrap_or_default(),

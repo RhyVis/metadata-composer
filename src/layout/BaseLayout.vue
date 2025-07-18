@@ -3,9 +3,13 @@ import Icon from '@/assets/icon-square.svg';
 import { useQuasar } from 'quasar';
 import { computed } from 'vue';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { storeToRefs } from 'pinia';
+import { useGlobalStore } from '@/stores/global.ts';
 
+const dev = computed(() => import.meta.env.DEV);
 const { dark } = useQuasar();
 const window = getCurrentWindow();
+const { isDevMode } = storeToRefs(useGlobalStore());
 
 const headerClass = computed(() =>
   dark.isActive ? ['bg-dark', 'text-white'] : ['bg-white', 'text-blue-grey-9'],
@@ -31,7 +35,16 @@ const iconName = computed(() => (dark.isActive ? 'dark_mode' : 'light_mode'));
         </q-toolbar-title>
 
         <div class="row region-none">
+          <q-btn
+            v-if="dev"
+            :icon="isDevMode ? 'code' : 'code_off'"
+            flat
+            push
+            round
+            @click="isDevMode = !isDevMode"
+          />
           <q-btn :icon="iconName" flat push round @click="dark.toggle()" />
+          <q-separator class="q-mx-xs" inset vertical />
           <q-btn-group flat push>
             <q-btn flat icon="minimize" push size="sm" @click="window.minimize()" />
             <q-btn flat icon="maximize" push size="sm" @click="window.maximize()" />

@@ -1,30 +1,29 @@
 <script lang="ts" setup>
-import { LibraryKey, useLibraryStore } from '@/stores/library.ts';
-import { onMounted, provide } from 'vue';
-import { useQuasar } from 'quasar';
-import { notifyError, notifySuccess } from '@/api/q-ext.ts';
+import { useLibraryStore } from '@/stores/library.ts';
+import { onMounted } from 'vue';
 import { useGlobalStore } from '@/stores/global.ts';
+import { useNotify } from '@/composables/useNotify.ts';
 
-const { notify } = useQuasar();
-const library = useLibraryStore();
+const { notifyError, notifySuccess } = useNotify();
+const { fetch, size } = useLibraryStore();
 
-provide(LibraryKey, library);
-
-onMounted(async () => {
-  try {
-    await library.fetch();
-    notify(notifySuccess(`成功加载数据库: ${library.size}`));
-  } catch (e) {
-    console.error(e);
-    notify(notifyError('加载数据库失败', e));
-  }
-
-  try {
-    useGlobalStore().$tauri.start();
-  } catch (e) {
-    console.error('Failed to start Tauri:', e);
-    notify(notifyError('无法启动同步', e));
-  }
+onMounted(() => {
+  fetch().then(
+    () => notifySuccess(`成功加载数据库: ${size}`),
+    (e) => {
+      console.error(e);
+      notifyError('加载数据库失败', e);
+    },
+  );
+  useGlobalStore()
+    .$tauri.start()
+    .then(
+      () => console.log('Tauri started successfully'),
+      (e) => {
+        console.error('Failed to start Tauri:', e);
+        notifyError('无法启动同步', e);
+      },
+    );
 });
 </script>
 

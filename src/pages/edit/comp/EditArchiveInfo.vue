@@ -3,13 +3,12 @@ import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { useArchiveInfo } from '@/pages/edit/script/useArchiveInfo.ts';
 import { ArchiveTypeEnum, ArchiveTypeOptions } from '@/pages/edit/script/define.ts';
 import { openPath } from '@tauri-apps/plugin-opener';
-import { useQuasar } from 'quasar';
-import { notifyError, notifyWarning } from '@/api/q-ext.ts';
 import { useGlobalStore } from '@/stores/global.ts';
 import { storeToRefs } from 'pinia';
+import { useNotify } from '@/composables/useNotify.ts';
 
 const { isDevMode } = storeToRefs(useGlobalStore());
-const { notify } = useQuasar();
+const { notifyWarning, notifyError } = useNotify();
 
 const { edit } = defineProps<{
   edit: UseEdit;
@@ -23,15 +22,13 @@ const openPathW = (path: string | null) => {
       openPath(path);
     } catch (e) {
       console.error(e);
-      notify(
-        notifyError(
-          '打开路径失败',
-          `无法打开路径: ${path}. 错误信息: ${e instanceof Error ? e.message : String(e)}`,
-        ),
+      notifyError(
+        '打开路径失败',
+        `无法打开路径: ${path}. 错误信息: ${e instanceof Error ? e.message : String(e)}`,
       );
     }
   } else {
-    notify(notifyWarning('路径未定义', '请先选择一个路径'));
+    notifyWarning('路径未定义', '请先选择一个路径');
   }
 };
 </script>
