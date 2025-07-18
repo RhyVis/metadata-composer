@@ -11,14 +11,19 @@ import { useQuasar } from 'quasar';
 import { useLibraryStore } from '@/stores/library.ts';
 import { Command } from '@/api/cmd.ts';
 import { useNotify } from '@/composables/useNotify.ts';
+import { isDeployable, isDeployed } from '@/pages/main/script/function.ts';
+import { selectDirectory } from '@/api/dialog.ts';
+import { useConfigStore } from '@/stores/config.ts';
 
 const { push } = useRouter();
 const { notifySuccess, notifyError } = useNotify();
 const { dark, loading } = useQuasar();
 const { pagination, visibleColumns } = storeToRefs(useTableStore());
 const { searchTag, searchByRegex, rows } = useTable();
-const tableStore = useTableStore();
 const { fetch } = useLibraryStore();
+const config = useConfigStore();
+const { root_deploy } = storeToRefs(useConfigStore());
+const tableStore = useTableStore();
 
 const textClazz = computed(() => (dark.isActive ? 'text-grey-5' : 'text-grey-9'));
 
@@ -36,6 +41,69 @@ const handleRemove = async (id: string) => {
   } catch (e) {
     console.error(e);
     notifyError(`删除 '${id}' 失败`, e instanceof Error ? e.message : String(e));
+  } finally {
+    loading.hide();
+  }
+};
+const handleDeploy = async (id: string, useDeployDir: boolean) => {
+  console.info(`Deploying item with id: ${id}`);
+  if (useDeployDir) {
+    loading.show({
+      message: `正在部署 '${id}'...`,
+    });
+    try {
+      await Command.metadataDeploy(id, {
+        use_config_dir: true,
+        target_dir: null,
+      });
+      await fetch();
+    } catch (e) {
+      console.error(e);
+      notifyError(`部署 '${id}' 失败`, e);
+    } finally {
+      loading.hide();
+    }
+  } else {
+    try {
+      const path = await selectDirectory();
+      if (path) {
+        loading.show({
+          message: `正在部署 '${id}' 到 ${path}...`,
+        });
+        try {
+          await Command.metadataDeploy(id, {
+            use_config_dir: false,
+            target_dir: path,
+          });
+          await fetch();
+          notifySuccess(`已成功部署 '${id}' 到 ${path}`);
+        } catch (e) {
+          console.error(e);
+          notifyError(`部署 '${id}' 失败`, e);
+        } finally {
+          loading.hide();
+        }
+      } else {
+        notifyError('部署取消', '未选择有效的目录');
+      }
+    } catch (e) {
+      console.error(e);
+      notifyError('选择目录失败', e);
+    }
+  }
+};
+const handleDeployOff = async (id: string) => {
+  console.info(`Un-deploying item with id: ${id}`);
+  loading.show({
+    message: `正在取消部署 '${id}'...`,
+  });
+  try {
+    await Command.metadataDeployOff(id);
+    await fetch();
+    notifySuccess(`已成功取消部署 '${id}'`);
+  } catch (e) {
+    console.error(e);
+    notifyError(`取消部署 '${id}' 失败`, e instanceof Error ? e.message : String(e));
   } finally {
     loading.hide();
   }
@@ -184,6 +252,85 @@ onMounted(() =>
               <q-separator inset />
               <q-card-actions class="q-mt-auto" align="right">
                 <q-btn-group flat>
+                  <template v-if="isDeployable(row as Metadata)">
+                    <q-btn
+                      v-if="config.hasDeployRoot"
+                      color="primary"
+                      flat
+                      icon="create_new_folder"
+                      size="sm"
+                    >
+                      <q-tooltip>部署到指定目录</q-tooltip>
+                      <q-popup-proxy>
+                        <q-card>
+                          <q-card-section>
+                            <div class="r-no-sel text-subtitle2">
+                              <div>部署到设置目录或自定义目录 -></div>
+                              <div>当前设置目录: {{ root_deploy }}</div>
+                            </div>
+                          </q-card-section>
+                          <q-separator />
+                          <q-card-actions align="right">
+                            <q-btn-group flat>
+                              <q-btn
+                                v-close-popup
+                                flat
+                                label="设置目录"
+                                size="sm"
+                                @click="handleDeploy(row.id, true)"
+                              />
+                              <q-btn
+                                v-close-popup
+                                flat
+                                label="自定义目录"
+                                size="sm"
+                                @click="handleDeploy(row.id, false)"
+                              />
+                            </q-btn-group>
+                          </q-card-actions>
+                        </q-card>
+                      </q-popup-proxy>
+                    </q-btn>
+                    <q-btn
+                      v-else
+                      color="primary"
+                      flat
+                      icon="create_new_folder"
+                      size="sm"
+                      @click="handleDeploy(row.id, false)"
+                    >
+                      <q-tooltip>部署到指定目录</q-tooltip>
+                    </q-btn>
+                  </template>
+                  <q-btn
+                    v-if="isDeployed(row as Metadata)"
+                    color="primary"
+                    flat
+                    icon="folder_off"
+                    size="sm"
+                  >
+                    <q-tooltip>取消部署</q-tooltip>
+                    <q-popup-proxy>
+                      <q-card>
+                        <q-card-section>
+                          <div class="r-no-sel text-subtitle2">确定要取消部署吗</div>
+                        </q-card-section>
+                        <q-separator />
+                        <q-card-actions align="right">
+                          <q-btn-group flat>
+                            <q-btn v-close-popup flat icon="close" size="sm" />
+                            <q-btn
+                              v-close-popup
+                              flat
+                              icon="check"
+                              size="sm"
+                              @click="handleDeployOff(row.id)"
+                            />
+                          </q-btn-group>
+                        </q-card-actions>
+                      </q-card>
+                    </q-popup-proxy>
+                  </q-btn>
                   <q-btn flat icon="edit" size="sm" @click="handleEdit((row as Metadata).id)">
                     <q-tooltip> 编辑条目 </q-tooltip>
                   </q-btn>

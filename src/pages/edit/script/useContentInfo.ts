@@ -23,6 +23,22 @@ export const useContentInfo = (edit: UseEdit) => {
 
     return extractType(data);
   };
+  const getInitialGameData = (): GameData => {
+    const data: ContentInfo | null = editData.value.content_info
+      ? editData.value.content_info
+      : originalData.value?.content_info
+        ? originalData.value.content_info
+        : null;
+    if (!data || data === 'Undefined') return defaultGameData();
+
+    if ('Game' in data) {
+      return {
+        ...data.Game,
+      };
+    }
+
+    return defaultGameData();
+  };
   const updateInfo = () => {
     switch (currentType.value) {
       case ContentTypeEnum.Undefined: {
@@ -46,7 +62,7 @@ export const useContentInfo = (edit: UseEdit) => {
 
   const currentType = ref(getInitialType());
 
-  const gInputObject = ref<GameData>(defaultGameData());
+  const gInputObject = ref<GameData>(getInitialGameData());
   const gInputDistributionType = computed({
     get: () => {
       const dist = gInputObject.value.distribution;
@@ -82,7 +98,13 @@ export const useContentInfo = (edit: UseEdit) => {
         gInputObject.value.distribution !== 'Unknown' &&
         'Steam' in gInputObject.value.distribution
       ) {
-        gInputObject.value.distribution.Steam.app_id = value;
+        const v = parseInt(String(value), 10);
+        if (isNaN(v)) {
+          console.warn(`Invalid Steam App ID: ${value}`);
+          gInputObject.value.distribution.Steam.app_id = 0;
+          return;
+        }
+        gInputObject.value.distribution.Steam.app_id = parseInt(String(value), 10);
       }
     },
   });

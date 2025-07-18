@@ -6,13 +6,18 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'layout',
+      name: 'base',
       component: BaseLayout,
       children: [
         {
           path: '',
           name: 'main',
           component: () => import('@/pages/main/index.vue'),
+        },
+        {
+          path: 'config',
+          name: 'config',
+          component: () => import('@/pages/config/index.vue'),
         },
         {
           path: 'edit/:id',

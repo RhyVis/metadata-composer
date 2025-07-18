@@ -1,4 +1,4 @@
-import type { Metadata, MetadataOption } from '@/api/types.ts';
+import type { DeployArg, InternalConfig, Metadata, MetadataOption } from '@/api/types.ts';
 import { invoke } from '@tauri-apps/api/core';
 
 export class Command {
@@ -22,11 +22,27 @@ export class Command {
     return await invoke('metadata_collection_list');
   }
 
+  static async metadataDeploy(key: string, arg: DeployArg): Promise<void> {
+    return await invoke('metadata_deploy', { key, arg });
+  }
+
+  static async metadataDeployOff(key: string): Promise<void> {
+    return await invoke('metadata_deploy_off', { key });
+  }
+
   static async utilProcessImg(source: string): Promise<string> {
     return await invoke('util_process_img', { source });
   }
 
   static async pathResolveImg(hash: string): Promise<string> {
     return await invoke('path_resolve_img', { hash });
+  }
+
+  static async configGet(): Promise<InternalConfig> {
+    return await invoke('config_get');
+  }
+
+  static async configUpdate(name: keyof InternalConfig, value: unknown): Promise<void> {
+    return await invoke('config_update', { name, value });
   }
 }

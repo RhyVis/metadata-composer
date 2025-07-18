@@ -1,5 +1,8 @@
+pub mod append;
+
+use crate::command::append::DeployArg;
 use crate::core::data::metadata::{Metadata, MetadataOption};
-use crate::core::util::config::get_config;
+use crate::core::util::config::{InternalConfig, get_config, get_config_copy, update_config_field};
 use crate::core::{StringResult, data, util};
 use tauri::command;
 
@@ -31,11 +34,21 @@ pub fn metadata_collection_list() -> CommandResult<Vec<String>> {
 }
 
 #[command]
+pub fn metadata_deploy(key: String, arg: DeployArg) -> CommandResult<()> {
+    data::metadata_deploy(key.as_str(), arg).string_result()
+}
+
+#[command]
+pub fn metadata_deploy_off(key: String) -> CommandResult<()> {
+    data::metadata_deploy_off(&key).string_result()
+}
+
+#[command]
 pub fn util_process_img(source: String) -> CommandResult<String> {
     util::img::process_image(source).string_result()
 }
 
-#[command]
+#[command(async)]
 pub fn path_resolve_img(hash: String) -> CommandResult<String> {
     let mut base = get_config().string_result()?.dir_image();
     base.push(format!("{hash}.png"));
@@ -45,4 +58,14 @@ pub fn path_resolve_img(hash: String) -> CommandResult<String> {
     } else {
         Err(format!("Image not found: {}", abs.display()))
     }
+}
+
+#[command]
+pub fn config_get() -> CommandResult<InternalConfig> {
+    get_config_copy().string_result()
+}
+
+#[command]
+pub fn config_update(name: String, value: Option<String>) -> CommandResult<()> {
+    update_config_field(name, value).string_result()
 }

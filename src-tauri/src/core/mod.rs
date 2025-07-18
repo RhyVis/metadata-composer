@@ -40,3 +40,9 @@ where
         self.map_err(|e| e.to_string())
     }
 }
+
+/// This ... That ...
+pub enum Whether<This, That> {
+    This(This),
+    That(That),
+}

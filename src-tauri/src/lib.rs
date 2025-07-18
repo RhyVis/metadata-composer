@@ -40,8 +40,12 @@ pub fn run() {
             metadata_get,
             metadata_delete,
             metadata_collection_list,
+            metadata_deploy,
+            metadata_deploy_off,
             util_process_img,
-            path_resolve_img
+            path_resolve_img,
+            config_get,
+            config_update
         ])
         .run(generate_context!())
         .expect("error while running tauri application");

@@ -20,6 +20,10 @@ export type ContentInfo = "Undefined" | { "Game": GameData };
  */
 export type DLContentType = "Maniax" | "Books" | "Pro" | "AppX";
 
+export type DeployArg = { use_config_dir: boolean, target_dir: string | null, };
+
+export type DeployInfo = "None" | { "File": { path: string, } } | { "Directory": { path: string, } };
+
 /**
  * Represents game data, including version, developer, publisher, and platform information
  */
@@ -34,6 +38,8 @@ export type GameDistribution = "Unknown" | { "Steam": { app_id: number, } } | { 
  * Represents the platform on which a game can run
  */
 export type GameSysPlatform = "Windows" | "Linux" | "MacOS" | "Android" | "IOS" | "Web";
+
+export type InternalConfig = { root_data: string, root_deploy: string | null, };
 
 /**
  * Basic metadata structure for data item
@@ -75,7 +81,11 @@ content_info: ContentInfo,
 /**
  * Archive information
  */
-archive_info: ArchiveInfo, create_time: string, update_time: string, };
+archive_info: ArchiveInfo, 
+/**
+ * Deployment information, if any
+ */
+deploy_info: DeployInfo, create_time: string, update_time: string, };
 
 /**
  * Fields in [Metadata] with optional, used in communication with the frontend

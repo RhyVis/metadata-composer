@@ -5,10 +5,12 @@ import { computed } from 'vue';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { storeToRefs } from 'pinia';
 import { useGlobalStore } from '@/stores/global.ts';
+import { useRouter } from 'vue-router';
 
 const dev = computed(() => import.meta.env.DEV);
-const { dark } = useQuasar();
 const window = getCurrentWindow();
+const { dark } = useQuasar();
+const { push } = useRouter();
 const { isDevMode } = storeToRefs(useGlobalStore());
 
 const headerClass = computed(() =>
@@ -17,7 +19,6 @@ const headerClass = computed(() =>
 const contentClass = computed(() =>
   dark.isActive ? ['bg-dark', 'text-white'] : ['bg-grey-1', 'text-blue-grey-9'],
 );
-const iconName = computed(() => (dark.isActive ? 'dark_mode' : 'light_mode'));
 </script>
 
 <template>
@@ -35,15 +36,24 @@ const iconName = computed(() => (dark.isActive ? 'dark_mode' : 'light_mode'));
         </q-toolbar-title>
 
         <div class="row region-none">
-          <q-btn
-            v-if="dev"
-            :icon="isDevMode ? 'code' : 'code_off'"
-            flat
-            push
-            round
-            @click="isDevMode = !isDevMode"
-          />
-          <q-btn :icon="iconName" flat push round @click="dark.toggle()" />
+          <q-btn-group flat>
+            <q-btn
+              v-if="dev"
+              :icon="isDevMode ? 'code' : 'code_off'"
+              flat
+              push
+              round
+              @click="isDevMode = !isDevMode"
+            />
+            <q-btn
+              :icon="dark.isActive ? 'dark_mode' : 'light_mode'"
+              flat
+              push
+              round
+              @click="dark.toggle()"
+            />
+            <q-btn flat icon="settings" push round @click="push('config')" />
+          </q-btn-group>
           <q-separator class="q-mx-xs" inset vertical />
           <q-btn-group flat push>
             <q-btn flat icon="minimize" push size="sm" @click="window.minimize()" />

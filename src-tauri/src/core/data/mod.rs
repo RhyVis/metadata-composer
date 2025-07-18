@@ -1,10 +1,13 @@
+use crate::command::append::DeployArg;
 use crate::core::data::metadata::{Metadata, MetadataOption};
 use crate::core::util::config::get_config;
 use anyhow::{Result, anyhow};
 use const_format::formatc;
-use log::{info, warn};
+use log::{error, info, warn};
 use redb::{Database, ReadableTable, ReadableTableMetadata, TableDefinition};
 use std::collections::HashSet;
+use std::fs;
+use std::path::Path;
 use std::sync::{OnceLock, RwLock};
 
 pub mod collection;
@@ -19,7 +22,6 @@ const LIB_FILE_STEM: &str = "lib";
 const LIB_FILE_EXT: &str = "bin";
 const LIB_FILE_NAME: &str = formatc!("{LIB_FILE_STEM}.{LIB_FILE_EXT}");
 
-const TABLE_IMAGE: TableDefinition<&str, Vec<u8>> = TableDefinition::new("image");
 const TABLE_METADATA: TableDefinition<&str, Vec<u8>> = TableDefinition::new("metadata");
 
 static DB: OnceLock<Database> = OnceLock::new();
@@ -29,13 +31,12 @@ static COLLECTION_TEMP: OnceLock<RwLock<HashSet<String>>> = OnceLock::new();
 fn init_library() -> Result<()> {
     fn create_db() -> Result<Database> {
         let config = get_config()?;
-        let db_path = config.root().join(LIB_FILE_NAME);
+        let db_path = config.root_data().join(LIB_FILE_NAME);
         Ok(Database::create(db_path)?)
     }
 
     fn configure_db(db: Database) -> Result<Database> {
         let write = db.begin_write()?;
-        write.open_table(TABLE_IMAGE)?.get("TEST")?;
         write.open_table(TABLE_METADATA)?.get("TEST")?;
         write.commit()?;
         Ok(db)
@@ -76,6 +77,17 @@ fn metadata_get_internal(key: &str) -> Result<Option<Metadata>> {
             Ok(None)
         }
     }
+}
+
+fn metadata_set_internal(key: &str, value: Metadata) -> Result<()> {
+    let write = get_db()?.begin_write()?;
+    {
+        let mut table = write.open_table(TABLE_METADATA)?;
+        let raw = bson::to_vec(&value)?;
+        table.insert(key, raw)?;
+    }
+    write.commit()?;
+    Ok(())
 }
 
 fn metadata_create_internal(opt: MetadataOption) -> Result<String> {
@@ -207,4 +219,63 @@ pub fn metadata_delete(key: &str) -> Result<()> {
 
 pub fn metadata_collection_list() -> Result<Vec<String>> {
     metadata_collection_list_internal()
+}
+
+pub fn metadata_deploy(key: &str, arg: DeployArg) -> Result<()> {
+    let data = metadata_get_internal(key)?;
+    if let Some(mut data) = data {
+        let deploy_dir = get_config()?.root_deploy().cloned();
+        if arg.use_config_dir {
+            // Deploy to configured dir
+            let mut deploy_dir = deploy_dir.expect("Why?");
+            info!("Deploy to configured root: {}", deploy_dir.display());
+            deploy_dir.push(&data.title);
+            fs::create_dir_all(&deploy_dir)?;
+            let id = data.id.to_string();
+            if data.deploy(deploy_dir)? {
+                info!("Successfully deployed metadata with id '{id}'");
+                metadata_set_internal(&id, data)?;
+                Ok(())
+            } else {
+                Err(anyhow!("Failed to deploy metadata with id '{id}'"))
+            }
+        } else if arg.target_dir.is_some() {
+            // Deploy to custom dir
+            let target_dir = arg.target_dir.expect("Why?");
+            let target_dir = Path::new(target_dir.as_str());
+            info!("Deploy to custom dir: {}", target_dir.display());
+            if !target_dir.exists() {
+                fs::create_dir_all(&target_dir)?;
+            }
+            let id = data.id.to_string();
+            if data.deploy(target_dir)? {
+                info!("Successfully deployed metadata with id '{id}'");
+                metadata_set_internal(&id, data)?;
+
+                Ok(())
+            } else {
+                Err(anyhow!("Failed to deploy metadata with id '{id}'"))
+            }
+        } else {
+            error!("Provided deploy argument not valid: {}, {:?}", key, arg);
+            Err(anyhow!("Failed to deploy metadata with key '{}'", key))
+        }
+    } else {
+        Err(anyhow!("Key '{}' not found in library", key))
+    }
+}
+
+pub fn metadata_deploy_off(key: &str) -> Result<()> {
+    let data = metadata_get_internal(key)?;
+    if let Some(mut data) = data {
+        if data.deploy_off()? {
+            info!("Successfully deployed metadata with key '{key}'");
+            metadata_set_internal(key, data)?;
+            Ok(())
+        } else {
+            Err(anyhow!("Failed to deploy metadata with key '{key}'"))
+        }
+    } else {
+        Err(anyhow!("Key '{}' not found in library", key))
+    }
 }
