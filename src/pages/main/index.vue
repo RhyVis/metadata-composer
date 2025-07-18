@@ -258,7 +258,7 @@ onMounted(() =>
                               :src="assetUrl"
                               contain
                               fit="scale-down"
-                              style="max-height: 260px"
+                              style="height: 256px"
                             />
                           </template>
                         </AsyncImage>

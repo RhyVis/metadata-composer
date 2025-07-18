@@ -7,6 +7,7 @@ import { useConfigStore } from '@/stores/config.ts';
 import { useQuasar } from 'quasar';
 import { storeToRefs } from 'pinia';
 import { get } from '@vueuse/core';
+import ContextMenu from '@/layout/ContextMenu.vue';
 
 const { notifyError, notifySuccess } = useNotify();
 const { dark } = useQuasar();
@@ -52,5 +53,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <router-view />
+  <div>
+    <RouterView />
+    <ContextMenu />
+  </div>
 </template>

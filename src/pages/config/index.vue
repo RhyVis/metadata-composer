@@ -53,7 +53,7 @@ onMounted(() =>
 </script>
 
 <template>
-  <q-page>
+  <q-page padding>
     <q-list bordered padding>
       <q-item-label header>内部设置</q-item-label>
 
