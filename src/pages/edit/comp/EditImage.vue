@@ -30,6 +30,10 @@ const updateAssetUrl = async (hash: string | null) => {
     set(imageSrc, undefined);
   }
 };
+const clearImage = () => {
+  editData.value.image = null;
+  setShowImage(false);
+};
 
 watch(
   () => editData.value.image,
@@ -48,7 +52,7 @@ onMounted(async () => {
     </q-card-section>
   </q-card>
   <q-field hint="此处存储的为图片哈希值" label="图片" stack-label>
-    {{ editData.image }}
+    <div>{{ editData.image ?? '拖拽文件到窗口以上传图片' }}</div>
     <template v-if="imageSrc" #after>
       <q-btn flat icon="image" size="md" square @click="setShowImage(true)" />
     </template>
@@ -58,9 +62,11 @@ onMounted(async () => {
       <q-card-section>
         <q-img :src="imageSrc" />
       </q-card-section>
-      <q-card-actions>
-        <q-space />
-        <q-btn flat icon="close" size="md" square @click="setShowImage(false)" />
+      <q-card-actions align="right">
+        <q-btn-group flat>
+          <q-btn flat icon="delete" size="md" @click="clearImage" />
+          <q-btn flat icon="close" size="md" @click="setShowImage(false)" />
+        </q-btn-group>
       </q-card-actions>
     </q-card>
   </q-dialog>

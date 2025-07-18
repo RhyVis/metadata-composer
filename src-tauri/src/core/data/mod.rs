@@ -170,13 +170,11 @@ fn sync_collection_all() -> Result<()> {
     let read = db.begin_read()?;
     let table = read.open_table(TABLE_METADATA)?;
 
-    for entry in table.iter()? {
-        if let Ok((key, value)) = entry {
-            if let Ok(data) = bson::from_slice::<Metadata>(value.value().as_slice()) {
-                sync_collection(&data)?;
-            } else {
-                warn!("Failed to deserialize metadata for key '{}'", key.value());
-            }
+    for (k, v) in table.iter()?.flatten() {
+        if let Ok(data) = bson::from_slice::<Metadata>(v.value().as_slice()) {
+            sync_collection(&data)?;
+        } else {
+            warn!("Failed to deserialize metadata for key '{}'", k.value());
         }
     }
     Ok(())
@@ -245,7 +243,7 @@ pub fn metadata_deploy(key: &str, arg: DeployArg) -> Result<()> {
             let target_dir = Path::new(target_dir.as_str());
             info!("Deploy to custom dir: {}", target_dir.display());
             if !target_dir.exists() {
-                fs::create_dir_all(&target_dir)?;
+                fs::create_dir_all(target_dir)?;
             }
             let id = data.id.to_string();
             if data.deploy(target_dir)? {

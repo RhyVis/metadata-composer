@@ -1,15 +1,11 @@
-import type { InjectionKey } from 'vue';
 import type { Metadata, MetadataOption } from '@/api/types.ts';
 import { defineStore } from 'pinia';
 import { Command } from '@/api/cmd.ts';
+import { extractArchiveSize } from '@/pages/main/script/function.ts';
 
 interface LibraryState {
   items: Metadata[];
 }
-
-export type LibraryStore = ReturnType<typeof useLibraryStore>;
-
-export const LibraryKey: InjectionKey<LibraryStore> = Symbol('library');
 
 export const useLibraryStore = defineStore('library', {
   state: (): LibraryState => ({
@@ -17,6 +13,8 @@ export const useLibraryStore = defineStore('library', {
   }),
   getters: {
     size: (state: LibraryState) => state.items.length,
+    totalFileSize: (state: LibraryState) =>
+      state.items.reduce((sum, item) => sum + extractArchiveSize(item.archive_info), 0),
   },
   actions: {
     async fetch() {

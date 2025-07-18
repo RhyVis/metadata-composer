@@ -11,7 +11,7 @@ const dev = computed(() => import.meta.env.DEV);
 const window = getCurrentWindow();
 const { dark } = useQuasar();
 const { push } = useRouter();
-const { isDevMode } = storeToRefs(useGlobalStore());
+const { isDevMode, isDarkMode } = storeToRefs(useGlobalStore());
 
 const headerClass = computed(() =>
   dark.isActive ? ['bg-dark', 'text-white'] : ['bg-white', 'text-blue-grey-9'],
@@ -27,7 +27,7 @@ const contentClass = computed(() =>
       <q-toolbar>
         <q-toolbar-title>
           <div class="row items-center r-no-sel">
-            <q-avatar>
+            <q-avatar @click="push('/')">
               <img :src="Icon" alt="C" />
             </q-avatar>
             <span class="q-pl-sm text-bold">Composer</span>
@@ -50,15 +50,35 @@ const contentClass = computed(() =>
               flat
               push
               round
-              @click="dark.toggle()"
+              @click="isDarkMode = !isDarkMode"
             />
             <q-btn flat icon="settings" push round @click="push('config')" />
           </q-btn-group>
           <q-separator class="q-mx-xs" inset vertical />
           <q-btn-group flat push>
-            <q-btn flat icon="minimize" push size="sm" @click="window.minimize()" />
-            <q-btn flat icon="maximize" push size="sm" @click="window.maximize()" />
-            <q-btn flat icon="close" push size="sm" @click="window.close()" />
+            <q-btn
+              flat
+              icon="fa-solid fa-window-minimize"
+              push
+              size="sm"
+              @click="window.minimize()"
+            />
+            <q-btn
+              color="primary"
+              flat
+              icon="fa-solid fa-window-maximize"
+              push
+              size="sm"
+              @click="window.toggleMaximize()"
+            />
+            <q-btn
+              color="red"
+              flat
+              icon="fa-solid fa-xmark"
+              push
+              size="sm"
+              @click="window.close()"
+            />
           </q-btn-group>
         </div>
       </q-toolbar>

@@ -14,19 +14,36 @@ import { useNotify } from '@/composables/useNotify.ts';
 import { isDeployable, isDeployed } from '@/pages/main/script/function.ts';
 import { selectDirectory } from '@/api/dialog.ts';
 import { useConfigStore } from '@/stores/config.ts';
+import { formatBytes } from '@/api/util.ts';
 
 const { push } = useRouter();
 const { notifySuccess, notifyError } = useNotify();
 const { dark, loading } = useQuasar();
-const { pagination, visibleColumns } = storeToRefs(useTableStore());
 const { searchTag, searchByRegex, rows } = useTable();
-const { fetch } = useLibraryStore();
+
 const config = useConfigStore();
-const { root_deploy } = storeToRefs(useConfigStore());
+const library = useLibraryStore();
 const tableStore = useTableStore();
+const { fetch } = library;
+const { pagination, visibleColumns } = storeToRefs(useTableStore());
+const { totalFileSize, size } = storeToRefs(library);
+const { root_deploy } = storeToRefs(useConfigStore());
 
 const textClazz = computed(() => (dark.isActive ? 'text-grey-5' : 'text-grey-9'));
 
+const handleReload = async () => {
+  console.info('Reloading table data...');
+  loading.show();
+  try {
+    await fetch();
+    notifySuccess('数据已刷新');
+  } catch (e) {
+    console.error(e);
+    notifyError('数据刷新失败', e);
+  } finally {
+    loading.hide();
+  }
+};
 const handleEdit = (id: string) => {
   console.info(`Editing item with id: ${id}`);
   push(`/edit/${id}`);
@@ -40,7 +57,7 @@ const handleRemove = async (id: string) => {
     notifySuccess(`已成功删除 '${id}'`);
   } catch (e) {
     console.error(e);
-    notifyError(`删除 '${id}' 失败`, e instanceof Error ? e.message : String(e));
+    notifyError(`删除 '${id}' 失败`, e);
   } finally {
     loading.hide();
   }
@@ -103,7 +120,7 @@ const handleDeployOff = async (id: string) => {
     notifySuccess(`已成功取消部署 '${id}'`);
   } catch (e) {
     console.error(e);
-    notifyError(`取消部署 '${id}' 失败`, e instanceof Error ? e.message : String(e));
+    notifyError(`取消部署 '${id}' 失败`, e);
   } finally {
     loading.hide();
   }
@@ -112,7 +129,7 @@ const handleDeployOff = async (id: string) => {
 onMounted(() =>
   tableStore.$tauri.start().catch((e) => {
     console.error(`Failed to start table store: ${e}`);
-    notifyError('表格加载失败', e instanceof Error ? e.message : String(e));
+    notifyError('表格加载失败', e);
   }),
 );
 </script>
@@ -131,7 +148,14 @@ onMounted(() =>
         row-key="id"
       >
         <template #top-left>
-          <q-btn flat icon="add" label="新建" square @click="handleEdit('new')" />
+          <q-btn-group outline>
+            <q-btn outline @click="handleReload">
+              <div class="row items-center text-subtitle2">
+                {{ formatBytes(totalFileSize) }} | {{ size }}
+              </div>
+            </q-btn>
+            <q-btn icon="add" label="新建" outline square @click="handleEdit('new')" />
+          </q-btn-group>
         </template>
         <template #top-right>
           <div class="q-gutter-sm row items-center">

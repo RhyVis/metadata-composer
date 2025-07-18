@@ -35,7 +35,7 @@ impl PathExt for Path {
                 }
             }
         } else if self.is_dir() {
-            let walker = WalkDir::new(&self);
+            let walker = WalkDir::new(self);
             let mut total_size = 0;
 
             for entry in walker.into_iter().filter_map(Result::ok) {

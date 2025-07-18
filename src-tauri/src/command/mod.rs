@@ -4,7 +4,8 @@ use crate::command::append::DeployArg;
 use crate::core::data::metadata::{Metadata, MetadataOption};
 use crate::core::util::config::{InternalConfig, get_config, get_config_copy, update_config_field};
 use crate::core::{StringResult, data, util};
-use tauri::command;
+use tauri::{AppHandle, command};
+use tauri_plugin_pinia::ManagerExt;
 
 type CommandResult<T> = Result<T, String>;
 
@@ -46,6 +47,12 @@ pub fn metadata_deploy_off(key: String) -> CommandResult<()> {
 #[command]
 pub fn util_process_img(source: String) -> CommandResult<String> {
     util::img::process_image(source).string_result()
+}
+
+#[command]
+pub fn util_dark_state(app: AppHandle) -> bool {
+    app.pinia()
+        .try_get_or::<bool>("global", "isDarkMode", false)
 }
 
 #[command(async)]

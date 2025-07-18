@@ -1,11 +1,18 @@
 <script lang="ts" setup>
 import { useLibraryStore } from '@/stores/library.ts';
-import { onMounted } from 'vue';
+import { onMounted, watch } from 'vue';
 import { useGlobalStore } from '@/stores/global.ts';
 import { useNotify } from '@/composables/useNotify.ts';
 import { useConfigStore } from '@/stores/config.ts';
+import { useQuasar } from 'quasar';
+import { storeToRefs } from 'pinia';
+import { get } from '@vueuse/core';
 
 const { notifyError, notifySuccess } = useNotify();
+const { dark } = useQuasar();
+
+const global = useGlobalStore();
+const { isDarkMode } = storeToRefs(useGlobalStore());
 const { fetch } = useLibraryStore();
 
 onMounted(() => {
@@ -16,15 +23,25 @@ onMounted(() => {
       notifyError('加载数据库失败', e);
     },
   );
-  useGlobalStore()
-    .$tauri.start()
-    .then(
-      () => console.log('Tauri started successfully'),
-      (e) => {
-        console.error('Failed to start Tauri:', e);
-        notifyError('无法启动同步', e);
-      },
-    );
+  global.$tauri.start().then(
+    () => {
+      console.log('Global store started successfully');
+      dark.set(get(isDarkMode));
+      watch(isDarkMode, (darkMode) => {
+        if (darkMode) {
+          dark.set(true);
+          document.documentElement.classList.add('dark-style');
+        } else {
+          dark.set(false);
+          document.documentElement.classList.remove('dark-style');
+        }
+      });
+    },
+    (e) => {
+      console.error('Failed to start Tauri:', e);
+      notifyError('无法启动同步', e);
+    },
+  );
   useConfigStore()
     .sync()
     .then(

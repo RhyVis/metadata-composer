@@ -70,6 +70,7 @@ pub struct GameData {
 /// Represents the platform on which a game can run
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/api/types.ts")]
+#[allow(clippy::upper_case_acronyms)]
 pub enum GameSysPlatform {
     Windows,
     Linux,
@@ -318,7 +319,7 @@ impl Metadata {
             content_info: opt.content_info.unwrap_or_default(),
             archive_info: opt.archive_info.clone().unwrap_or_default(),
             deploy_info: DeployInfo::None,
-            create_time: time.clone(),
+            create_time: time,
             update_time: time,
             id,
         };
@@ -469,7 +470,7 @@ impl Metadata {
                         target_path.display()
                     );
 
-                    decompress(source_path, &target_path, password.as_deref())?;
+                    decompress(source_path, target_path, password.as_deref())?;
 
                     self.deploy_info = DeployInfo::new_dir(target_path.to_owned());
                     self.mark_update();

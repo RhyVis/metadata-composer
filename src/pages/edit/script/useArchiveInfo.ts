@@ -8,6 +8,9 @@ import { get, set } from '@vueuse/core';
 export const useArchiveInfo = (edit: UseEdit) => {
   const { editData, originalData, updateField } = edit;
 
+  const inputPath = ref<string | null>(null);
+  const inputPassword = ref<string | null>(null);
+
   const getInitialType = (): string => {
     const data: ArchiveInfo | null = editData.value.archive_info
       ? editData.value.archive_info
@@ -18,9 +21,19 @@ export const useArchiveInfo = (edit: UseEdit) => {
 
     function extractType(info: ArchiveInfo): string {
       if (info === 'None') return ArchiveTypeEnum.None;
-      if ('ArchiveFile' in info) return ArchiveTypeEnum.ArchiveFile;
-      if ('CommonFile' in info) return ArchiveTypeEnum.CommonFile;
-      if ('Directory' in info) return ArchiveTypeEnum.Directory;
+      if ('ArchiveFile' in info) {
+        set(inputPath, info.ArchiveFile.path);
+        set(inputPassword, info.ArchiveFile.password);
+        return ArchiveTypeEnum.ArchiveFile;
+      }
+      if ('CommonFile' in info) {
+        set(inputPath, info.CommonFile.path);
+        return ArchiveTypeEnum.CommonFile;
+      }
+      if ('Directory' in info) {
+        set(inputPath, info.Directory.path);
+        return ArchiveTypeEnum.Directory;
+      }
       return ArchiveTypeEnum.None;
     }
 
@@ -83,9 +96,6 @@ export const useArchiveInfo = (edit: UseEdit) => {
   };
 
   const currentType = ref(getInitialType());
-
-  const inputPath = ref<string | null>(null);
-  const inputPassword = ref<string | null>(null);
 
   const flagCreateArchive = computed({
     get: () => editData.value.flag_create_archive,

@@ -43,6 +43,7 @@ pub fn run() {
             metadata_deploy,
             metadata_deploy_off,
             util_process_img,
+            util_dark_state,
             path_resolve_img,
             config_get,
             config_update

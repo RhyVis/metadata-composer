@@ -52,6 +52,7 @@ const checkTagDuplicate = (alias: string): boolean => {
       <q-chip
         v-for="(tag, index) in editData.tags"
         :key="index"
+        outline
         removable
         @remove="handleRemoveTag(index)"
       >

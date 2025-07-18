@@ -12,7 +12,7 @@ pub fn process_image(source: impl AsRef<Path>) -> Result<String> {
     }
 
     let mut target = get_config()?.dir_image();
-    let img = image::open(&source)?;
+    let img = image::open(source)?;
 
     let width = img.width();
     let height = img.height();

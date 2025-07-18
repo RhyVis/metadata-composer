@@ -44,7 +44,7 @@ pub fn init_config() -> Result<()> {
 
         default_config
     } else {
-        let content = fs::read_to_string(&config_path)
+        let content = fs::read_to_string(config_path)
             .map_err(|e| anyhow!("Failed to read config file: {}", e))?;
         toml::from_str(&content).map_err(|e| anyhow!("Failed to parse config file: {}", e))?
     }
@@ -92,11 +92,15 @@ pub fn update_config_field(name: String, value: Option<String>) -> Result<()> {
             Ok(())
         }
         "root_deploy" => update_config(|config| {
-            config.root_deploy = if value.is_none() || value.clone().unwrap().is_empty() {
-                None
+            config.root_deploy = if let Some(value) = value {
+                if !value.is_empty() {
+                    Some(PathBuf::from(value))
+                } else {
+                    None
+                }
             } else {
-                Some(value.unwrap().into())
-            }
+                None
+            };
         }),
         _ => {
             warn!(
