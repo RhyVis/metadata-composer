@@ -45,12 +45,16 @@ export class Command {
     return await invoke('metadata_deploy_off', { key });
   }
 
-  static async utilProcessImg(source: string): Promise<string> {
-    return await invoke('util_process_img', { source });
+  static async utilProcessImgFile(source: string): Promise<string> {
+    return await invoke('util_process_img_file', { source });
   }
 
   static async utilProcessImgWeb(url: string): Promise<string> {
     return await invoke('util_process_img_web', { url });
+  }
+
+  static async utilProcessImgBytes(data: [Uint8Array, number, number]): Promise<string> {
+    return await invoke('util_process_img_bytes', { data });
   }
 
   static async utilClearUnusedImages(): Promise<number> {

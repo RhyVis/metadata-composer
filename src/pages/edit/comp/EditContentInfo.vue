@@ -17,7 +17,7 @@ const { isDevMode } = storeToRefs(useGlobalStore());
 const { edit } = defineProps<{
   edit: UseEdit;
 }>();
-const contentInfo = useContentInfo(edit);
+
 const {
   contentType,
   gInputVersion,
@@ -30,7 +30,8 @@ const {
   gInputDLSiteContentType,
   gViewDLSiteIdPrefix,
   gFetchDLSiteInfo,
-} = contentInfo;
+  gOpenDLSitePage,
+} = useContentInfo(edit);
 </script>
 
 <template>
@@ -106,9 +107,14 @@ const {
         stack-label
       >
         <template v-if="gInputDLSiteId" #after>
-          <q-btn flat icon="cloud_download" size="md" square @click="gFetchDLSiteInfo">
-            <q-tooltip>根据ID从DLSite官网获取信息</q-tooltip>
-          </q-btn>
+          <q-btn-group flat>
+            <q-btn flat icon="web" size="md" square @click="gOpenDLSitePage">
+              <q-tooltip>打开网址</q-tooltip>
+            </q-btn>
+            <q-btn flat icon="cloud_download" size="md" square @click="gFetchDLSiteInfo">
+              <q-tooltip>根据ID从DLSite官网获取信息</q-tooltip>
+            </q-btn>
+          </q-btn-group>
         </template>
       </q-input>
       <q-select

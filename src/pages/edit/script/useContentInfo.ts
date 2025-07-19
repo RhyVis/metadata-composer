@@ -6,7 +6,8 @@ import { Command } from '@/api/cmd.ts';
 import { isNumericOnly } from '@/api/util.ts';
 import { useNotify } from '@/composables/useNotify.ts';
 import { DLContentTypeEnum } from '@/pages/edit/script/define.ts';
-import { set } from '@vueuse/core';
+import { openUrl } from '@tauri-apps/plugin-opener';
+import { get, set } from '@vueuse/core';
 
 const defaultContentInfo = (): ContentInfo => ({
   type: 'Undefined',
@@ -270,6 +271,32 @@ export const useContentInfo = (edit: UseEdit) => {
     }
     return undefined;
   });
+  const gViewDLSiteUrlSeg = computed(() => {
+    if (
+      contentInfo.value.type === 'Game' &&
+      contentInfo.value.data.distribution.type === 'DLSite'
+    ) {
+      switch (gInputDLSiteContentType.value) {
+        case DLContentTypeEnum.Doujin:
+          return 'home';
+        case DLContentTypeEnum.Comics:
+          return 'comic';
+        case DLContentTypeEnum.PcGames:
+          return 'soft';
+        case DLContentTypeEnum.SmartphoneGames:
+          return 'app';
+        case DLContentTypeEnum.DoujinR18:
+          return 'maniax';
+        case DLContentTypeEnum.ComicsR18:
+          return 'books';
+        case DLContentTypeEnum.HGames:
+          return 'pro';
+        case DLContentTypeEnum.SmartphoneGamesR18:
+          return 'appx';
+      }
+    }
+    return undefined;
+  });
 
   const contentType = computed<ContentInfo['type']>({
     get: () => editData.value.content_info!.type,
@@ -337,6 +364,20 @@ export const useContentInfo = (edit: UseEdit) => {
       loading.hide();
     }
   };
+  const gOpenDLSitePage = async () => {
+    if (!isTypeGameDLSite.value || !gInputDLSiteId.value) {
+      console.warn('Attempted to open DLSite page on non-DLSite content type or without ID');
+      notifyWarning('请先设置 DLSite ID，然后再尝试打开页面');
+      return;
+    }
+    const url = `https://www.dlsite.com/${get(gViewDLSiteUrlSeg)}/work/=/product_id/${get(gViewDLSiteIdPrefix)}${get(gInputDLSiteId)}.html`;
+    try {
+      await openUrl(url);
+    } catch (e) {
+      console.error('Failed to open DLSite page:', e);
+      notifyError('打开 DLSite 页面失败，请检查网络连接或稍后再试', url);
+    }
+  };
 
   return {
     contentType,
@@ -349,6 +390,8 @@ export const useContentInfo = (edit: UseEdit) => {
     gInputDLSiteId,
     gInputDLSiteContentType,
     gViewDLSiteIdPrefix,
+    gViewDLSiteUrlSeg,
     gFetchDLSiteInfo,
+    gOpenDLSitePage,
   };
 };

@@ -8,7 +8,7 @@ import { extractFileName, truncateString } from '@/api/util.ts';
 import { useNotify } from '@/composables/useNotify.ts';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { listen, TauriEvent } from '@tauri-apps/api/event';
-import { readText } from '@tauri-apps/plugin-clipboard-manager';
+import { readImage, readText } from '@tauri-apps/plugin-clipboard-manager';
 import { set, useToggle } from '@vueuse/core';
 
 export const useImg = (edit: UseEdit) => {
@@ -21,6 +21,30 @@ export const useImg = (edit: UseEdit) => {
 
   const pasteUrl = async () => {
     try {
+      try {
+        const image = await readImage();
+        const size = await image.size();
+        const hash = await Command.utilProcessImgBytes([
+          await image.rgba(),
+          size.width,
+          size.height,
+        ]);
+        console.info(`Processed pasted image with hash: ${hash}`);
+        updateField('image', hash);
+        notifySuccess('图片处理成功', `粘贴图像 -> ${hash}`);
+        set(inputUrl, '');
+        return;
+      } catch (e) {
+        if (
+          e ==
+          'The clipboard contents were not available in the requested format or the clipboard is empty.'
+        ) {
+          console.info('Maybe not pasting image, trying text instead');
+        } else {
+          console.error('Not able to read image from clipboard');
+        }
+      }
+
       set(inputUrl, await readText());
       await requestImage();
     } catch (e) {
@@ -103,7 +127,7 @@ export const useImg = (edit: UseEdit) => {
             continue;
           }
           try {
-            const hash = await Command.utilProcessImg(path);
+            const hash = await Command.utilProcessImgFile(path);
             console.info(`Processed image with hash: ${hash}`);
             updateField('image', hash);
             notifySuccess('图片处理成功', `${fileName} -> ${hash}`);

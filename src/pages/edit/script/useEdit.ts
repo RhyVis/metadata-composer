@@ -2,16 +2,23 @@ import type { Ref } from 'vue';
 import type { Metadata, MetadataOption } from '@/api/types.ts';
 import type { EditPreset } from '@/pages/edit/script/define.ts';
 import { cloneDeep } from 'lodash-es';
+import { useQuasar } from 'quasar';
 import { computed, ref } from 'vue';
+import { useNotify } from '@/composables/useNotify.ts';
 import { useLibraryStore } from '@/stores/library.ts';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { get } from '@vueuse/core';
 
 type MaybeMetadata = Metadata | undefined;
 
 export type UseEdit = ReturnType<typeof useEdit>;
 
+const window = getCurrentWindow();
+
 export const useEdit = (initialData: Ref<MaybeMetadata>) => {
   const { update } = useLibraryStore();
+  const { loading } = useQuasar();
+  const { notifySuccess, notifyError } = useNotify();
 
   const isEditMode = computed(() => !!initialData.value?.id);
 
@@ -40,7 +47,26 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
     editData.value[field] = null as never;
   };
 
-  const updateData = async () => await update(get(editData));
+  const updateData = async (): Promise<boolean> => {
+    try {
+      loading.show();
+      const hideWindow = setTimeout(async () => {
+        await window.hide();
+      }, 2442);
+      await update(get(editData));
+      clearTimeout(hideWindow);
+      await window.show();
+      notifySuccess('保存成功', undefined, 1000);
+      return true;
+    } catch (e) {
+      console.error(e);
+      notifyError(isEditMode.value ? '更新失败' : '保存失败', e, 1000);
+      return false;
+    } finally {
+      loading.hide();
+      await window.show();
+    }
+  };
 
   const applyPreset = (preset: EditPreset) => {
     switch (preset) {

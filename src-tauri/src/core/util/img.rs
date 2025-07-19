@@ -1,7 +1,7 @@
 use crate::api::get_client;
 use crate::core::util::config::get_config;
 use anyhow::{Result, anyhow};
-use image::{DynamicImage, ImageFormat};
+use image::{DynamicImage, ImageFormat, RgbaImage};
 use image_hasher::HasherConfig;
 use log::info;
 use std::path::Path;
@@ -23,7 +23,7 @@ pub async fn process_image_web(url: &str) -> Result<String> {
     process_image_internal(img)
 }
 
-pub fn process_image(source: impl AsRef<Path>) -> Result<String> {
+pub fn process_image_file(source: impl AsRef<Path>) -> Result<String> {
     let source = source.as_ref();
     if !source.exists() || !source.is_file() {
         return Err(anyhow!(
@@ -32,6 +32,15 @@ pub fn process_image(source: impl AsRef<Path>) -> Result<String> {
         ));
     }
     let img = image::open(source)?;
+    process_image_internal(img)
+}
+
+pub fn process_image_bytes(data: (Vec<u8>, u32, u32)) -> Result<String> {
+    let (data, width, height) = data;
+    let img = RgbaImage::from_raw(width, height, data)
+        .ok_or_else(|| anyhow!("Failed to create image from raw data"))?;
+    let img = DynamicImage::ImageRgba8(img);
+
     process_image_internal(img)
 }
 

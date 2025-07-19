@@ -26,6 +26,17 @@
         }
       ]
     },
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "http:*"
+        },
+        {
+          "url": "https:*"
+        }
+      ]
+    },
     "dialog:default",
     "clipboard-manager:default",
     "clipboard-manager:allow-read-text",

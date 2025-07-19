@@ -11,20 +11,13 @@ import EditTag from '@/pages/edit/comp/EditTag.vue';
 import EditArchiveInfo from '@/pages/edit/comp/EditArchiveInfo.vue';
 import EditContentInfo from '@/pages/edit/comp/EditContentInfo.vue';
 import { Command } from '@/api/cmd.ts';
-import { useQuasar } from 'quasar';
 import EditImage from '@/pages/edit/comp/EditImage.vue';
 import { useGlobalStore } from '@/stores/global.ts';
 import { storeToRefs } from 'pinia';
-import { useNotify } from '@/composables/useNotify.ts';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 
 const { push } = useRouter();
-const { loading } = useQuasar();
-const { notifySuccess, notifyError } = useNotify();
 const { isDevMode } = storeToRefs(useGlobalStore());
 const { get: getById } = useLibraryStore();
-
-const window = getCurrentWindow();
 
 const getData = (): Metadata | undefined => {
   const param = useRouteParams('id');
@@ -48,23 +41,7 @@ const { editData, isEditMode, updateField, updateData, applyPreset } = edit;
 const collectionList = ref<string[]>([]);
 
 const handleUpdate = async () => {
-  try {
-    loading.show();
-    const hideWindow = setTimeout(async () => {
-      await window.hide();
-    }, 2442);
-    await updateData();
-    clearTimeout(hideWindow);
-    await window.show();
-    notifySuccess('保存成功', undefined, 1000);
-    await push('/');
-  } catch (e) {
-    console.error(e);
-    notifyError('保存失败', e, 1000);
-  } finally {
-    loading.hide();
-    await window.show();
-  }
+  if (await updateData()) await push('/');
 };
 
 onMounted(() => {
@@ -108,7 +85,7 @@ onMounted(() => {
             transition-show="scale"
           >
             <q-list style="min-width: 100px">
-              <q-item clickable @click="applyPreset('DoujinR18')">
+              <q-item v-close-popup clickable @click="applyPreset('DoujinR18')">
                 <q-item-section>DLSite R18 同人</q-item-section>
               </q-item>
             </q-list>

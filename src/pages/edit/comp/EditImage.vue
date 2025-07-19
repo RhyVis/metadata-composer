@@ -28,13 +28,15 @@ const { imageSrc, inputUrl, showImage, setShowImage, pasteUrl, requestImage, cle
       <q-btn v-else flat icon="add_photo_alternate" size="md" square>
         <q-popup-proxy style="width: 500px">
           <q-card>
-            <q-card-section>输入网址以从网络请求图片</q-card-section>
+            <q-card-section>粘贴网址请求图片或直接粘贴图片</q-card-section>
             <q-separator />
             <q-card-section>
               <q-input v-model="inputUrl" dense>
                 <template #after>
                   <q-btn-group flat>
-                    <q-btn flat icon="content_paste" round size="md" @click="pasteUrl" />
+                    <q-btn flat icon="content_paste" round size="md" @click="pasteUrl">
+                      <q-tooltip>粘贴链接或图片</q-tooltip>
+                    </q-btn>
                     <q-btn
                       v-close-popup
                       flat
@@ -42,7 +44,9 @@ const { imageSrc, inputUrl, showImage, setShowImage, pasteUrl, requestImage, cle
                       round
                       size="md"
                       @click="requestImage"
-                    />
+                    >
+                      <q-tooltip>从链接请求图片</q-tooltip>
+                    </q-btn>
                   </q-btn-group>
                 </template>
               </q-input>
