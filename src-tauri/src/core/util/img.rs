@@ -25,8 +25,11 @@ pub async fn process_image_web(url: &str) -> Result<String> {
 
 pub fn process_image(source: impl AsRef<Path>) -> Result<String> {
     let source = source.as_ref();
-    if !source.exists() {
-        return Err(anyhow!("Source image does not exist: {}", source.display()));
+    if !source.exists() || !source.is_file() {
+        return Err(anyhow!(
+            "Source image does not exist or not a file: {}",
+            source.display()
+        ));
     }
     let img = image::open(source)?;
     process_image_internal(img)
@@ -53,14 +56,17 @@ fn process_image_internal(img: DynamicImage) -> Result<String> {
     let hasher = HasherConfig::new().to_hasher();
     let hash = hasher.hash_image(&img);
     let hash_str = hash.to_base64();
+    let hash_str = hash_str.replace('/', "_").replace('+', "-");
 
     let mut target = get_config()?.dir_image();
     target.push(format!("{hash_str}.png"));
+    info!("Saving processed image to: {}", target.display());
     if !target.exists() {
-        img.save_with_format(&target, ImageFormat::Png)?;
-        info!("Processed image saved to: {}", target.display());
+        img.save_with_format(&target, ImageFormat::Png)
+            .map_err(|e| anyhow!("Failed to save image: {}", e))?;
+        info!("Image saved successfully: {}", hash_str);
     } else {
-        info!("Image already exists, skipping: {}", target.display());
+        info!("Image already exists, skipping save: {}", hash_str);
     }
 
     Ok(hash_str)

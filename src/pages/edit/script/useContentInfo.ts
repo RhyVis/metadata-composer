@@ -13,7 +13,7 @@ const defaultContentInfo = (): ContentInfo => ({
 });
 
 const defaultGameData = (): GameData => ({
-  version: '',
+  version: '1.0.0',
   developer: null,
   publisher: null,
   sys_platform: [],

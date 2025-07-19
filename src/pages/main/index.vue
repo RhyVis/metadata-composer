@@ -88,6 +88,7 @@ const handleDeploy = async (id: string, useDeployDir: boolean) => {
       notifyError(`部署 '${id}' 失败`, e);
     } finally {
       loading.hide();
+      await window.show();
     }
   } else {
     try {
@@ -112,6 +113,7 @@ const handleDeploy = async (id: string, useDeployDir: boolean) => {
           notifyError(`部署 '${id}' 失败`, e);
         } finally {
           loading.hide();
+          await window.show();
         }
       } else {
         notifyError('部署取消', '未选择有效的目录');

@@ -43,7 +43,7 @@ const getData = (): Metadata | undefined => {
 const id = ref('');
 const data = ref<Metadata | undefined>(getData());
 const edit = useEdit(data);
-const { editData, isEditMode, updateField, updateData } = edit;
+const { editData, isEditMode, updateField, updateData, applyPreset } = edit;
 
 const collectionList = ref<string[]>([]);
 
@@ -63,6 +63,7 @@ const handleUpdate = async () => {
     notifyError('保存失败', e, 1000);
   } finally {
     loading.hide();
+    await window.show();
   }
 };
 
@@ -93,6 +94,30 @@ onMounted(() => {
         <q-separator inset />
       </template>
 
+      <q-card-section class="row items-center">
+        <div class="text-h6 r-no-sel">
+          <template v-if="isEditMode">编辑 {{ editData.title || editData.id }}</template>
+          <template v-else>新建元数据</template>
+        </div>
+        <q-space />
+        <q-btn icon="bookmarks" label="预设" outline size="md">
+          <q-menu
+            anchor="center middle"
+            self="top right"
+            transition-hide="scale"
+            transition-show="scale"
+          >
+            <q-list style="min-width: 100px">
+              <q-item clickable @click="applyPreset('DoujinR18')">
+                <q-item-section>DLSite R18 同人</q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </q-btn>
+      </q-card-section>
+
+      <q-separator inset />
+
       <q-card-section>
         <q-form @submit.prevent>
           <!-- Title Input -->
@@ -119,6 +144,16 @@ onMounted(() => {
             use-input
             @update:model-value="updateField('collection', $event as string)"
           />
+          <q-input
+            :model-value="editData.description"
+            autogrow
+            clearable
+            hint="内容描述"
+            label="描述"
+            stack-label
+            type="textarea"
+            @update:model-value="updateField('description', $event as string)"
+          />
           <!-- Image Input -->
           <EditImage :edit="edit" />
           <!-- Content Info -->
@@ -132,9 +167,9 @@ onMounted(() => {
 
       <q-card-actions>
         <q-space />
-        <q-btn-group flat>
-          <q-btn flat icon="close" label="退出" @click="push('/')" />
-          <q-btn :label="isEditMode ? '更新' : '保存'" flat icon="save" @click="handleUpdate" />
+        <q-btn-group outline>
+          <q-btn icon="close" label="退出" outline @click="push('/')" />
+          <q-btn :label="isEditMode ? '更新' : '保存'" icon="save" outline @click="handleUpdate" />
         </q-btn-group>
       </q-card-actions>
     </q-card>

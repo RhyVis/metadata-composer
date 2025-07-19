@@ -75,3 +75,5 @@ export const DLContentTypeOptions: QSelectOption[] = [
   { label: '美少女游戏 R18', value: DLContentTypeEnum.HGames },
   { label: '手机游戏 R18', value: DLContentTypeEnum.SmartphoneGamesR18 },
 ];
+
+export type EditPreset = 'DoujinR18';
