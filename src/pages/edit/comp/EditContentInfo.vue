@@ -29,6 +29,7 @@ const {
   gInputDLSiteId,
   gInputDLSiteContentType,
   gViewDLSiteIdPrefix,
+  gFetchDLSiteInfo,
 } = contentInfo;
 </script>
 
@@ -103,7 +104,13 @@ const {
         hint="DLSite的ID"
         label="DLSite商店ID"
         stack-label
-      />
+      >
+        <template v-if="gInputDLSiteId" #after>
+          <q-btn flat icon="cloud_download" size="md" square @click="gFetchDLSiteInfo">
+            <q-tooltip>根据ID从DLSite官网获取信息</q-tooltip>
+          </q-btn>
+        </template>
+      </q-input>
       <q-select
         v-model="gInputDLSiteContentType"
         :options="DLContentTypeOptions"

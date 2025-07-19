@@ -1,4 +1,11 @@
-import type { DeployArg, InternalConfig, Metadata, MetadataOption } from '@/api/types.ts';
+import type {
+  DeployArg,
+  DLFetchArg,
+  DLFetchInfo,
+  InternalConfig,
+  Metadata,
+  MetadataOption,
+} from '@/api/types.ts';
 import { invoke } from '@tauri-apps/api/core';
 
 export class Command {
@@ -44,6 +51,10 @@ export class Command {
 
   static async utilClearUnusedImages(): Promise<number> {
     return await invoke('util_clear_unused_images');
+  }
+
+  static async utilDlFetchInfo(arg: DLFetchArg): Promise<DLFetchInfo> {
+    return await invoke('util_dl_fetch_info', { arg });
   }
 
   static async pathResolveImg(hash: string): Promise<string> {

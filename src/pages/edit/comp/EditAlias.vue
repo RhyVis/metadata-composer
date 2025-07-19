@@ -12,6 +12,11 @@ const { editData } = edit;
 const addCache = ref('');
 const inputRef = ref<QInput>();
 
+if (!editData.value.alias) {
+  console.info('Initializing alias as an empty array');
+  editData.value.alias = [];
+}
+
 const handleRemoveAlias = (index: number) => {
   editData.value.alias?.splice(index, 1);
 };

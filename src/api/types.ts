@@ -15,6 +15,10 @@ export type ContentInfo = { "type": "Undefined" } | { "type": "Game", "data": Ga
  */
 export type DLContentType = "Doujin" | "Comics" | "PcGames" | "SmartphoneGames" | "DoujinR18" | "ComicsR18" | "HGames" | "SmartphoneGamesR18";
 
+export type DLFetchArg = { id: string, content_type: DLContentType, };
+
+export type DLFetchInfo = { title: string, circle: string, scenario: Array<string>, illustration: Array<string>, category: Array<string>, tags: Array<string>, description: Array<string>, };
+
 export type DeployArg = { use_config_dir: boolean, target_dir: string | null, };
 
 export type DeployInfo = { "type": "None" } | { "type": "File", "data": { path: string, } } | { "type": "Directory", "data": { path: string, } };

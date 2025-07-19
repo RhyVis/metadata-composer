@@ -110,7 +110,7 @@ impl GameDistribution {
         match self {
             Self::Unknown => format!("Unknown-{}", Utc::now().format("%Y%m%d%H%M%S")),
             Self::Steam { app_id } => app_id.to_string(),
-            Self::DLSite { id, content_type } => format!("{}{}", content_type.name_prefix(), id),
+            Self::DLSite { id, content_type } => content_type.build_id(id),
         }
     }
 }
@@ -430,7 +430,7 @@ impl Metadata {
             file_name,
             target_path.display()
         );
-        compress(raw_path, &target_path, password.as_deref(), Some(9))?;
+        compress(raw_path, &target_path, password.as_deref())?;
 
         self.archive_info = ArchiveInfo::ArchiveFile {
             size: target_path.calculate_size(),

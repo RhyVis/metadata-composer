@@ -44,3 +44,11 @@ pub enum Whether<This, That> {
     This(This),
     That(That),
 }
+
+#[derive(Debug)]
+#[allow(dead_code)]
+pub enum Language {
+    EnUs,
+    ZhCn,
+    JaJp,
+}

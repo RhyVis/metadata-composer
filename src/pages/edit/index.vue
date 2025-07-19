@@ -48,11 +48,11 @@ const handleUpdate = async () => {
   try {
     loading.show();
     await updateData();
-    notifySuccess(`已成功保存 ${editData.value.id || '未命名'}`);
+    notifySuccess('保存成功', undefined, 1000);
     await push('/');
   } catch (e) {
     console.error(e);
-    notifyError('保存失败', e instanceof Error ? e.message : e);
+    notifyError('保存失败', e, 1000);
   } finally {
     loading.hide();
   }

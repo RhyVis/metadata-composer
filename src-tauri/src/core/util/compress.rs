@@ -16,48 +16,37 @@ pub fn compress(
     input_dir: impl AsRef<Path>,
     output_file: impl AsRef<Path>,
     password: Option<&str>,
-    compression_level: Option<u32>,
 ) -> Result<()> {
     if !exist_7z_exe() {
         return Err(anyhow!("7z not found in path"));
     }
 
     info!(
-        "Compressing with 7z: input_dir: {}, output_file: {}, password: {:?}, compression_level: {:?}",
+        "Compressing with 7z: input_dir: {}, output_file: {}, password: {:?}",
         input_dir.as_ref().display(),
         output_file.as_ref().display(),
-        password,
-        compression_level
+        password
     );
 
     let input_path = input_dir.as_ref().to_owned();
     let output_path = output_file.as_ref().to_owned();
     let password = password.map(|s| s.to_owned());
-    let compression_level = match compression_level {
-        Some(level) => {
-            if level <= 9 {
-                level
-            } else {
-                9
-            }
-        }
-        None => 9,
-    };
 
     let mut command = create_hidden_command("7z");
 
     command
         .arg("a")
-        .arg("-t7z")
         .arg(output_path)
         .arg(input_path.join("*"))
-        .arg(format!("-mx={compression_level}"))
-        .arg("-ms")
+        .arg("-t7z")
+        .arg("-mx9")
+        .arg("-ms4g")
+        .arg("-md64m")
         .arg("-mmt")
         .arg("-r");
 
     if let Some(pwd) = password {
-        command.arg(format!("-p{pwd}")).arg("-mhe=on");
+        command.arg(format!("-p{pwd}")).arg("-mhe");
     }
 
     command
@@ -101,7 +90,8 @@ pub fn decompress(
         .arg("x")
         .arg(input_path)
         .arg(format!("-o{}", output_path.display()))
-        .arg("-aoa");
+        .arg("-aoa")
+        .arg("-y");
 
     if let Some(pwd) = password {
         command.arg(format!("-p{pwd}"));

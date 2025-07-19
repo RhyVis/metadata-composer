@@ -1,9 +1,10 @@
 pub mod append;
 
-use crate::command::append::DeployArg;
+use crate::api::dl_site::{DLContentFetch, DLFetchInfo};
+use crate::command::append::{DLFetchArg, DeployArg};
 use crate::core::data::metadata::{Metadata, MetadataOption};
 use crate::core::util::config::{InternalConfig, get_config, get_config_copy, update_config_field};
-use crate::core::{StringResult, data, util};
+use crate::core::{Language, StringResult, data, util};
 use tauri::{AppHandle, command};
 use tauri_plugin_pinia::ManagerExt;
 
@@ -62,6 +63,14 @@ pub fn util_process_img(source: String) -> CommandResult<String> {
 #[command]
 pub fn util_clear_unused_images() -> CommandResult<u32> {
     data::clear_unused_images().string_result()
+}
+
+#[command]
+pub async fn util_dl_fetch_info(arg: DLFetchArg) -> CommandResult<DLFetchInfo> {
+    arg.content_type
+        .fetch_info(arg.id.as_str(), &Language::ZhCn)
+        .await
+        .string_result()
 }
 
 #[command]

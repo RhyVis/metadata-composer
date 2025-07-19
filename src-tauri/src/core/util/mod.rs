@@ -1,3 +1,4 @@
+use const_format::formatc;
 use std::process::Command;
 
 pub mod compress;
@@ -9,6 +10,8 @@ pub mod path_ext;
 pub const APP_ROOT: &str = ".";
 #[cfg(debug_assertions)]
 pub const APP_ROOT: &str = "./.dev";
+
+pub const APP_LOG_DIR: &str = formatc!("{APP_ROOT}/logs");
 
 pub fn create_hidden_command(cmd: &str) -> Command {
     let mut command = Command::new(cmd);

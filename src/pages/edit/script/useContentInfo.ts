@@ -1,8 +1,12 @@
 import type { ContentInfo, DLContentType, GameData, GameDistribution } from '@/api/types.ts';
 import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
+import { useQuasar } from 'quasar';
 import { computed } from 'vue';
+import { Command } from '@/api/cmd.ts';
 import { isNumericOnly } from '@/api/util.ts';
+import { useNotify } from '@/composables/useNotify.ts';
 import { DLContentTypeEnum } from '@/pages/edit/script/define.ts';
+import { set } from '@vueuse/core';
 
 const defaultContentInfo = (): ContentInfo => ({
   type: 'Undefined',
@@ -20,6 +24,8 @@ const defaultGameData = (): GameData => ({
 
 export const useContentInfo = (edit: UseEdit) => {
   const { editData, updateField } = edit;
+  const { loading } = useQuasar();
+  const { notifyWarning, notifyError } = useNotify();
 
   if (!editData.value.content_info) {
     console.info('Initializing content_info with default values');
@@ -32,6 +38,11 @@ export const useContentInfo = (edit: UseEdit) => {
   });
 
   // Type Game
+
+  const isTypeGameDLSite = computed(
+    () =>
+      contentInfo.value.type === 'Game' && contentInfo.value.data.distribution.type === 'DLSite',
+  );
 
   const gInputVersion = computed({
     get: () => (contentInfo.value.type === 'Game' ? contentInfo.value.data.version : ''),
@@ -165,7 +176,7 @@ export const useContentInfo = (edit: UseEdit) => {
     get: () =>
       contentInfo.value.type === 'Game' && contentInfo.value.data.distribution.type === 'DLSite'
         ? contentInfo.value.data.distribution.data.content_type
-        : 'Unknown',
+        : DLContentTypeEnum.Doujin,
     set: (val: DLContentType) => {
       if (
         contentInfo.value.type === 'Game' &&
@@ -279,6 +290,54 @@ export const useContentInfo = (edit: UseEdit) => {
     },
   });
 
+  const gFetchDLSiteInfo = async () => {
+    if (!isTypeGameDLSite.value) {
+      console.warn('Attempted to fetch DLSite info on non-DLSite content type');
+      return;
+    }
+
+    const id = gInputDLSiteId.value.trim();
+    if (!id) {
+      notifyWarning('DLSite ID 不能为空，请检查输入');
+      return;
+    }
+    if (!isNumericOnly(id)) {
+      notifyWarning('DLSite ID 应为不包含前缀的数字，请检查输入');
+      return;
+    }
+
+    try {
+      loading.show({
+        message: `正在获取 ${gViewDLSiteIdPrefix.value}${id} 的信息...`,
+      });
+      const data = await Command.utilDlFetchInfo({
+        id,
+        content_type: gInputDLSiteContentType.value,
+      });
+
+      if (data.title && !editData.value.title) {
+        updateField('title', data.title);
+      }
+      if (data.circle) {
+        if (!gInputDeveloper.value) set(gInputDeveloper, data.circle);
+        if (!gInputPublisher.value) set(gInputPublisher, data.circle);
+      }
+      if (data.tags && data.tags.length > 0) {
+        const tags = new Set(editData.value.tags);
+        data.tags.forEach((tag) => tags.add(tag));
+        updateField('tags', Array.from(tags));
+      }
+      if (data.description && !editData.value.description) {
+        updateField('description', data.description.join('\n'));
+      }
+    } catch (e) {
+      console.error('Failed to fetch DLSite info:', e);
+      notifyError('获取 DLSite 信息失败，请稍后再试');
+    } finally {
+      loading.hide();
+    }
+  };
+
   return {
     contentType,
     gInputVersion,
@@ -290,5 +349,6 @@ export const useContentInfo = (edit: UseEdit) => {
     gInputDLSiteId,
     gInputDLSiteContentType,
     gViewDLSiteIdPrefix,
+    gFetchDLSiteInfo,
   };
 };
