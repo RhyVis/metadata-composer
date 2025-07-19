@@ -16,12 +16,15 @@ import EditImage from '@/pages/edit/comp/EditImage.vue';
 import { useGlobalStore } from '@/stores/global.ts';
 import { storeToRefs } from 'pinia';
 import { useNotify } from '@/composables/useNotify.ts';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 
 const { push } = useRouter();
 const { loading } = useQuasar();
 const { notifySuccess, notifyError } = useNotify();
 const { isDevMode } = storeToRefs(useGlobalStore());
 const { get: getById } = useLibraryStore();
+
+const window = getCurrentWindow();
 
 const getData = (): Metadata | undefined => {
   const param = useRouteParams('id');
@@ -40,14 +43,19 @@ const getData = (): Metadata | undefined => {
 const id = ref('');
 const data = ref<Metadata | undefined>(getData());
 const edit = useEdit(data);
-const { editData, updateField, updateData } = edit;
+const { editData, isEditMode, updateField, updateData } = edit;
 
 const collectionList = ref<string[]>([]);
 
 const handleUpdate = async () => {
   try {
     loading.show();
+    const hideWindow = setTimeout(async () => {
+      await window.hide();
+    }, 2442);
     await updateData();
+    clearTimeout(hideWindow);
+    await window.show();
     notifySuccess('保存成功', undefined, 1000);
     await push('/');
   } catch (e) {
@@ -76,7 +84,7 @@ onMounted(() => {
           <q-separator />
           <div class="text-caption">ID: {{ id }}</div>
           <div class="text-caption">Data: {{ data ?? '`undefined`' }}</div>
-          <div class="text-caption">EditMode: {{ edit.isEditMode }}</div>
+          <div class="text-caption">EditMode: {{ isEditMode }}</div>
           <div class="text-caption">
             EditData:
             <pre>{{ editData }}</pre>
@@ -125,7 +133,8 @@ onMounted(() => {
       <q-card-actions>
         <q-space />
         <q-btn-group flat>
-          <q-btn flat icon="save" label="保存" @click="handleUpdate" />
+          <q-btn flat icon="close" label="退出" @click="push('/')" />
+          <q-btn :label="isEditMode ? '更新' : '保存'" flat icon="save" @click="handleUpdate" />
         </q-btn-group>
       </q-card-actions>
     </q-card>

@@ -1,11 +1,8 @@
 <script lang="ts" setup>
 import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
-import { onMounted, ref, watch } from 'vue';
-import { Command } from '@/api/cmd.ts';
-import { convertFileSrc } from '@tauri-apps/api/core';
-import { set, useToggle } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
 import { useGlobalStore } from '@/stores/global.ts';
+import { useImg } from '@/pages/edit/script/useImg.ts';
 
 const { isDevMode } = storeToRefs(useGlobalStore());
 
@@ -13,35 +10,8 @@ const { edit } = defineProps<{
   edit: UseEdit;
 }>();
 const { editData } = edit;
-const imageSrc = ref(undefined);
-
-const [showImage, setShowImage] = useToggle(false);
-
-const updateAssetUrl = async (hash: string | null) => {
-  if (hash) {
-    try {
-      const path = await Command.pathResolveImg(hash);
-      const assetUrl = convertFileSrc(path);
-      set(imageSrc, assetUrl);
-    } catch (e) {
-      console.error(e);
-    }
-  } else {
-    set(imageSrc, undefined);
-  }
-};
-const clearImage = () => {
-  editData.value.image = null;
-  setShowImage(false);
-};
-
-watch(
-  () => editData.value.image,
-  async (newHash) => await updateAssetUrl(newHash),
-);
-onMounted(async () => {
-  await updateAssetUrl(editData.value.image);
-});
+const { imageSrc, inputUrl, showImage, setShowImage, pasteUrl, requestImage, clearImage } =
+  useImg(edit);
 </script>
 
 <template>
@@ -53,8 +23,33 @@ onMounted(async () => {
   </q-card>
   <q-field hint="此处存储的为图片哈希值" label="图片" stack-label>
     <div>{{ editData.image ?? '拖拽文件到窗口以上传图片' }}</div>
-    <template v-if="imageSrc" #after>
-      <q-btn flat icon="image" size="md" square @click="setShowImage(true)" />
+    <template #after>
+      <q-btn v-if="imageSrc" flat icon="image" size="md" square @click="setShowImage(true)" />
+      <q-btn v-else flat icon="add_photo_alternate" size="md" square>
+        <q-popup-proxy style="width: 500px">
+          <q-card>
+            <q-card-section>输入网址以从网络请求图片</q-card-section>
+            <q-separator />
+            <q-card-section>
+              <q-input v-model="inputUrl" dense>
+                <template #after>
+                  <q-btn-group flat>
+                    <q-btn flat icon="content_paste" round size="md" @click="pasteUrl" />
+                    <q-btn
+                      v-close-popup
+                      flat
+                      icon="add_photo_alternate"
+                      round
+                      size="md"
+                      @click="requestImage"
+                    />
+                  </q-btn-group>
+                </template>
+              </q-input>
+            </q-card-section>
+          </q-card>
+        </q-popup-proxy>
+      </q-btn>
     </template>
   </q-field>
   <q-dialog v-model="showImage" persistent transition-hide="scale" transition-show="scale">

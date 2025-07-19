@@ -10,7 +10,7 @@ use tauri_plugin_pinia::ManagerExt;
 
 type CommandResult<T> = Result<T, String>;
 
-#[command]
+#[command(async)]
 pub fn metadata_update(opt: MetadataOption) -> CommandResult<Option<String>> {
     data::metadata_update(opt).string_result()
 }
@@ -30,17 +30,17 @@ pub fn metadata_delete(key: String) -> CommandResult<()> {
     data::metadata_delete(&key).string_result()
 }
 
-#[command]
+#[command(async)]
 pub fn metadata_collection_list() -> CommandResult<Vec<String>> {
     data::metadata_collection_list().string_result()
 }
 
-#[command]
+#[command(async)]
 pub fn metadata_deploy(key: String, arg: DeployArg) -> CommandResult<()> {
     data::metadata_deploy(key.as_str(), arg).string_result()
 }
 
-#[command]
+#[command(async)]
 pub fn metadata_deploy_off(key: String) -> CommandResult<()> {
     data::metadata_deploy_off(&key).string_result()
 }
@@ -58,6 +58,11 @@ pub fn metadata_import() -> CommandResult<()> {
 #[command]
 pub fn util_process_img(source: String) -> CommandResult<String> {
     util::img::process_image(source).string_result()
+}
+
+#[command]
+pub async fn util_process_img_web(url: String) -> CommandResult<String> {
+    util::img::process_image_web(&url).await.string_result()
 }
 
 #[command]

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
-import { useArchiveInfo } from '@/pages/edit/script/useArchiveInfo.ts';
+import { defaultPassword, useArchiveInfo } from '@/pages/edit/script/useArchiveInfo.ts';
 import { ArchiveTypeEnum, ArchiveTypeOptions } from '@/pages/edit/script/define.ts';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { useGlobalStore } from '@/stores/global.ts';
@@ -36,7 +36,7 @@ const openPathW = (path: string | null) => {
 
 const handlePassword = () => {
   if (!inputPassword.value) {
-    set(inputPassword, 'COMPOSER');
+    set(inputPassword, defaultPassword);
   } else {
     set(inputPassword, generateRandomAsciiString());
   }

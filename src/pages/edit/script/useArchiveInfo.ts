@@ -3,10 +3,13 @@ import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { computed } from 'vue';
 import { selectDirectory, selectFile } from '@/api/dialog.ts';
 import { useNotify } from '@/composables/useNotify.ts';
+import { set } from '@vueuse/core';
 
 const defaultArchiveInfo = (): ArchiveInfo => ({
   type: 'None',
 });
+
+export const defaultPassword = 'COMPOSER';
 
 export const useArchiveInfo = (edit: UseEdit) => {
   const { editData, updateField } = edit;
@@ -104,11 +107,14 @@ export const useArchiveInfo = (edit: UseEdit) => {
         notifyWarning('未选择路径', '请确保选择了一个有效的文件或目录路径');
         return;
       }
+
+      if (archiveType.value === 'ArchiveFile' && !inputPassword.value) {
+        set(inputPassword, defaultPassword);
+      }
+
       const obj = { ...archiveInfo.value };
       (obj as never)['data']['path'] = path as never;
-      if (path) {
-        updateField('archive_info', obj);
-      }
+      updateField('archive_info', obj);
     } catch (e) {
       console.error(e);
       notifyError('选择路径失败', e);

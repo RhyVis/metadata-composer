@@ -49,6 +49,10 @@ export class Command {
     return await invoke('util_process_img', { source });
   }
 
+  static async utilProcessImgWeb(url: string): Promise<string> {
+    return await invoke('util_process_img_web', { url });
+  }
+
   static async utilClearUnusedImages(): Promise<number> {
     return await invoke('util_clear_unused_images');
   }

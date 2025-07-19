@@ -17,9 +17,11 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.17.0",
+    "@tauri-apps/plugin-clipboard-manager": "~2.3.0",
     "@tauri-apps/plugin-dialog": "~2.3.0",
     "@tauri-apps/plugin-log": "~2.6.0",
     "@tauri-apps/plugin-opener": "~2.4.0",
+    "@tauri-apps/plugin-window-state": "~2.3.0",
     "@tauri-store/pinia": "^3.7.1",
     "@vueuse/core": "^13.5.0",
     "@vueuse/router": "^13.5.0",

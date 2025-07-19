@@ -15,11 +15,14 @@ import { isDeployable, isDeployed } from '@/pages/main/script/function.ts';
 import { selectDirectory } from '@/api/dialog.ts';
 import { useConfigStore } from '@/stores/config.ts';
 import { formatBytes } from '@/api/util.ts';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 
 const { push } = useRouter();
 const { notifySuccess, notifyError } = useNotify();
 const { dark, loading } = useQuasar();
 const { searchTag, searchByRegex, rows } = useTable();
+
+const window = getCurrentWindow();
 
 const config = useConfigStore();
 const library = useLibraryStore();
@@ -69,11 +72,17 @@ const handleDeploy = async (id: string, useDeployDir: boolean) => {
       message: `正在部署 '${id}'...`,
     });
     try {
+      const hideWindow = setTimeout(async () => {
+        await window.hide();
+      }, 2442);
       await Command.metadataDeploy(id, {
         use_config_dir: true,
         target_dir: null,
       });
+      clearTimeout(hideWindow);
+      await window.show();
       await fetch();
+      notifySuccess(`已成功部署 '${id}' 到设置目录`);
     } catch (e) {
       console.error(e);
       notifyError(`部署 '${id}' 失败`, e);
@@ -88,10 +97,14 @@ const handleDeploy = async (id: string, useDeployDir: boolean) => {
           message: `正在部署 '${id}' 到 ${path}...`,
         });
         try {
+          const hideWindow = setTimeout(async () => {
+            await window.hide();
+          }, 2442);
           await Command.metadataDeploy(id, {
             use_config_dir: false,
             target_dir: path,
           });
+          clearTimeout(hideWindow);
           await fetch();
           notifySuccess(`已成功部署 '${id}' 到 ${path}`);
         } catch (e) {
