@@ -15,6 +15,11 @@ const { notifyWarning } = useNotify();
 const addCache = ref('');
 const inputRef = ref<QInput>();
 
+if (!editData.value.tags) {
+  console.info('Initializing tags as an empty array');
+  editData.value.tags = [];
+}
+
 const handleRemoveTag = (index: number) => {
   editData.value.tags?.splice(index, 1);
 };
@@ -29,6 +34,7 @@ const handleAddTag = (alias: string) => {
 
   const tags = trimInput.split(/[\s，,；;|]+/).filter(Boolean);
   const duplicatedTags = [];
+  console.info(`Adding tags: ${tags.join(', ')}`);
 
   let added = false;
   for (const tag of tags) {

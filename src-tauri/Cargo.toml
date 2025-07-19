@@ -1,5 +1,5 @@
 [package]
-name = "app"
+name = "composer"
 description = "A manager for metadata"
 version = "0.2.0"
 authors = ["Rhynia"]
