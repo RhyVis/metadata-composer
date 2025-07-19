@@ -15,6 +15,7 @@
     "core:window:allow-toggle-maximize",
     "core:window:allow-hide",
     "core:window:allow-show",
+    "core:app:allow-default-window-icon",
     "log:default",
     "opener:default",
     "opener:allow-default-urls",

@@ -16,11 +16,13 @@ import { selectDirectory } from '@/api/dialog.ts';
 import { useConfigStore } from '@/stores/config.ts';
 import { formatBytes } from '@/api/util.ts';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { useTray } from '@/composables/useTray.ts';
 
 const { push } = useRouter();
 const { notifySuccess, notifyError } = useNotify();
 const { dark, loading } = useQuasar();
 const { searchTag, searchByRegex, rows } = useTable();
+const { tooltip } = useTray();
 
 const window = getCurrentWindow();
 
@@ -71,6 +73,7 @@ const handleDeploy = async (id: string, useDeployDir: boolean) => {
     loading.show({
       message: `正在部署 '${id}'...`,
     });
+    await tooltip(`正在部署 '${id}' 到设置目录...`);
     try {
       const hideWindow = setTimeout(async () => {
         await window.hide();
@@ -88,6 +91,7 @@ const handleDeploy = async (id: string, useDeployDir: boolean) => {
       notifyError(`部署 '${id}' 失败`, e);
     } finally {
       loading.hide();
+      await tooltip();
       await window.show();
     }
   } else {
@@ -97,6 +101,7 @@ const handleDeploy = async (id: string, useDeployDir: boolean) => {
         loading.show({
           message: `正在部署 '${id}' 到 ${path}...`,
         });
+        await tooltip(`正在部署 '${id}' 到 ${path}...`);
         try {
           const hideWindow = setTimeout(async () => {
             await window.hide();
@@ -114,6 +119,7 @@ const handleDeploy = async (id: string, useDeployDir: boolean) => {
         } finally {
           loading.hide();
           await window.show();
+          await tooltip();
         }
       } else {
         notifyError('部署取消', '未选择有效的目录');

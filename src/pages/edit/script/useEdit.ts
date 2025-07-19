@@ -5,6 +5,7 @@ import { cloneDeep } from 'lodash-es';
 import { useQuasar } from 'quasar';
 import { computed, ref } from 'vue';
 import { useNotify } from '@/composables/useNotify.ts';
+import { useTray } from '@/composables/useTray.ts';
 import { useLibraryStore } from '@/stores/library.ts';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { get } from '@vueuse/core';
@@ -19,6 +20,7 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
   const { update } = useLibraryStore();
   const { loading } = useQuasar();
   const { notifySuccess, notifyError } = useNotify();
+  const { tooltip } = useTray();
 
   const isEditMode = computed(() => !!initialData.value?.id);
 
@@ -50,6 +52,7 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
   const updateData = async (): Promise<boolean> => {
     try {
       loading.show();
+      await tooltip(`正在${isEditMode.value ? `更新 '${editData.value.title}' ` : '保存'}数据...`);
       const hideWindow = setTimeout(async () => {
         await window.hide();
       }, 2442);
@@ -64,6 +67,7 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
       return false;
     } finally {
       loading.hide();
+      await tooltip(null);
       await window.show();
     }
   };
