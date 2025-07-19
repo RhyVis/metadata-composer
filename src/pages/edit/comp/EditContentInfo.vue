@@ -19,53 +19,57 @@ const { edit } = defineProps<{
 }>();
 const contentInfo = useContentInfo(edit);
 const {
-  currentType,
-  gInputObject,
+  contentType,
+  gInputVersion,
+  gInputDeveloper,
+  gInputPublisher,
+  gInputSysPlatform,
   gInputDistributionType,
   gInputSteamAppId,
   gInputDLSiteId,
   gInputDLSiteContentType,
+  gViewDLSiteIdPrefix,
 } = contentInfo;
 </script>
 
 <template>
   <q-card class="q-my-sm" v-if="isDevMode">
     <q-card-section>
-      <div class="text-caption">Content Type: {{ currentType }}</div>
+      <div class="text-caption">Content Type: {{ contentType }}</div>
     </q-card-section>
   </q-card>
   <q-select
-    v-model="currentType"
+    v-model="contentType"
     :options="ContentTypeOptions"
     emit-value
     label="内容类型"
     map-options
     stack-label
   />
-  <template v-if="currentType == ContentTypeEnum.Game">
+  <template v-if="contentType == ContentTypeEnum.Game">
     <q-input
-      v-model="gInputObject.version"
+      v-model="gInputVersion"
       clearable
       hint="游戏本体的版本号，默认为1.0.0"
       label="版本"
       stack-label
     />
     <q-input
-      v-model="gInputObject.developer"
+      v-model="gInputDeveloper"
       clearable
       hint="游戏开发者的名称"
       label="开发者"
       stack-label
     />
     <q-input
-      v-model="gInputObject.publisher"
+      v-model="gInputPublisher"
       clearable
       hint="游戏发行商的名称"
       label="发行商"
       stack-label
     />
     <q-select
-      v-model="gInputObject.sys_platform"
+      v-model="gInputSysPlatform"
       :options="GameSysPlatformOptions"
       clearable
       emit-value
@@ -93,7 +97,13 @@ const {
       />
     </template>
     <template v-else-if="gInputDistributionType == GameDistributionEnum.DLSite">
-      <q-input v-model="gInputDLSiteId" hint="DLSite的ID" label="DLSite商店ID" stack-label />
+      <q-input
+        v-model="gInputDLSiteId"
+        :prefix="gViewDLSiteIdPrefix"
+        hint="DLSite的ID"
+        label="DLSite商店ID"
+        stack-label
+      />
       <q-select
         v-model="gInputDLSiteContentType"
         :options="DLContentTypeOptions"

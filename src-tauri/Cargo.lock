@@ -114,7 +114,7 @@ checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
 
 [[package]]
 name = "app"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "bson",
@@ -122,11 +122,13 @@ dependencies = [
  "const_format",
  "encoding_rs",
  "fs_extra",
+ "glob",
  "image",
  "image_hasher",
  "log",
  "redb",
  "serde",
+ "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",

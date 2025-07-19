@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use crate::core::data::init_data;
 use crate::core::util::config::init_config;
 use log::info;

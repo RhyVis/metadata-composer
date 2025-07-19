@@ -6,6 +6,8 @@ import { openPath } from '@tauri-apps/plugin-opener';
 import { useGlobalStore } from '@/stores/global.ts';
 import { storeToRefs } from 'pinia';
 import { useNotify } from '@/composables/useNotify.ts';
+import { set } from '@vueuse/core';
+import { generateRandomAsciiString } from '@/api/util.ts';
 
 const { isDevMode } = storeToRefs(useGlobalStore());
 const { notifyWarning, notifyError } = useNotify();
@@ -14,7 +16,7 @@ const { edit } = defineProps<{
   edit: UseEdit;
 }>();
 const editArchiveInfo = useArchiveInfo(edit);
-const { currentType, inputPath, inputPassword, flagCreateArchive, doSelect } = editArchiveInfo;
+const { archiveType, inputPath, inputPassword, flagCreateArchive, doSelect } = editArchiveInfo;
 
 const openPathW = (path: string | null) => {
   if (path) {
@@ -31,18 +33,26 @@ const openPathW = (path: string | null) => {
     notifyWarning('路径未定义', '请先选择一个路径');
   }
 };
+
+const handlePassword = () => {
+  if (!inputPassword.value) {
+    set(inputPassword, 'COMPOSER');
+  } else {
+    set(inputPassword, generateRandomAsciiString());
+  }
+};
 </script>
 
 <template>
   <q-card class="q-my-sm" v-if="isDevMode">
     <q-card-section>
-      <div class="text-caption">Current Type: {{ currentType }}</div>
+      <div class="text-caption">Current Type: {{ archiveType }}</div>
       <div class="text-caption">Input Path: {{ inputPath ?? '`undefined`' }}</div>
       <div class="text-caption">Input Password: {{ inputPassword ?? '`undefined`' }}</div>
     </q-card-section>
   </q-card>
   <q-select
-    v-model="currentType"
+    v-model="archiveType"
     :options="ArchiveTypeOptions"
     emit-value
     hint="存储在磁盘上的方式"
@@ -50,7 +60,7 @@ const openPathW = (path: string | null) => {
     map-options
     stack-label
   ></q-select>
-  <template v-if="currentType == ArchiveTypeEnum.ArchiveFile">
+  <template v-if="archiveType == ArchiveTypeEnum.ArchiveFile">
     <q-field :label="flagCreateArchive ? '源文件路径' : '压缩包路径'" stack-label>
       <div @click="openPathW(inputPath)">
         {{ inputPath }}
@@ -72,9 +82,13 @@ const openPathW = (path: string | null) => {
         </q-btn>
       </template>
     </q-field>
-    <q-input v-model="inputPassword" label="密码" stack-label />
+    <q-input v-model="inputPassword" label="密码" stack-label>
+      <template #after>
+        <q-btn flat icon="password" size="md" square @click="handlePassword" />
+      </template>
+    </q-input>
   </template>
-  <template v-else-if="currentType == ArchiveTypeEnum.CommonFile">
+  <template v-else-if="archiveType == ArchiveTypeEnum.CommonFile">
     <q-field label="源路径" stack-label>
       <div @click="openPathW(inputPath)">
         {{ inputPath }}
@@ -84,7 +98,7 @@ const openPathW = (path: string | null) => {
       </template>
     </q-field>
   </template>
-  <template v-else-if="currentType == ArchiveTypeEnum.Directory">
+  <template v-else-if="archiveType == ArchiveTypeEnum.Directory">
     <q-field label="源路径" stack-label>
       <div @click="openPathW(inputPath)">
         {{ inputPath }}

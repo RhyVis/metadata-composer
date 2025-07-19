@@ -1,129 +1,124 @@
 import type { ArchiveInfo } from '@/api/types.ts';
 import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
-import { computed, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { selectDirectory, selectFile } from '@/api/dialog.ts';
-import { ArchiveTypeEnum } from '@/pages/edit/script/define.ts';
-import { get, set } from '@vueuse/core';
+import { useNotify } from '@/composables/useNotify.ts';
+
+const defaultArchiveInfo = (): ArchiveInfo => ({
+  type: 'None',
+});
 
 export const useArchiveInfo = (edit: UseEdit) => {
-  const { editData, originalData, updateField } = edit;
+  const { editData, updateField } = edit;
+  const { notifyError, notifyWarning } = useNotify();
 
-  const inputPath = ref<string | null>(null);
-  const inputPassword = ref<string | null>(null);
+  if (!editData.value.archive_info) {
+    console.info('Initializing archive_info with default values');
+    updateField('archive_info', defaultArchiveInfo());
+  }
 
-  const getInitialType = (): string => {
-    const data: ArchiveInfo | null = editData.value.archive_info
-      ? editData.value.archive_info
-      : originalData.value?.archive_info
-        ? originalData.value.archive_info
-        : null;
-    if (!data) return ArchiveTypeEnum.None;
-
-    function extractType(info: ArchiveInfo): string {
-      if (info === 'None') return ArchiveTypeEnum.None;
-      if ('ArchiveFile' in info) {
-        set(inputPath, info.ArchiveFile.path);
-        set(inputPassword, info.ArchiveFile.password);
-        return ArchiveTypeEnum.ArchiveFile;
-      }
-      if ('CommonFile' in info) {
-        set(inputPath, info.CommonFile.path);
-        return ArchiveTypeEnum.CommonFile;
-      }
-      if ('Directory' in info) {
-        set(inputPath, info.Directory.path);
-        return ArchiveTypeEnum.Directory;
-      }
-      return ArchiveTypeEnum.None;
-    }
-
-    return extractType(data);
-  };
-
-  const generateArchiveInfo = (): ArchiveInfo => {
-    switch (currentType.value) {
-      case ArchiveTypeEnum.None: {
-        return 'None';
-      }
-      case ArchiveTypeEnum.ArchiveFile: {
-        const pwd = get(inputPassword);
-        return pwd
-          ? {
-              ArchiveFile: {
-                size: 0,
-                path: get(inputPath) ?? '',
-                password: get(inputPassword),
-              },
-            }
-          : {
-              ArchiveFile: {
-                size: 0,
-                path: get(inputPath) ?? '',
-                password: null,
-              },
-            };
-      }
-      case ArchiveTypeEnum.CommonFile: {
-        return {
-          CommonFile: {
-            size: 0,
-            path: get(inputPath) ?? '',
+  const archiveInfo = computed<ArchiveInfo>(() => editData.value.archive_info!);
+  const inputPath = computed({
+    get: () => (archiveInfo.value.type === 'None' ? '' : archiveInfo.value.data.path),
+    set: (val: string) => {
+      if (archiveInfo.value.type === 'None') {
+        console.warn('Attempted to set path on non-archive type');
+      } else {
+        updateField('archive_info', {
+          type: archiveInfo.value.type,
+          data: {
+            ...archiveInfo.value.data,
+            path: val,
           },
-        };
+        } as ArchiveInfo);
       }
-      case ArchiveTypeEnum.Directory: {
-        return {
-          Directory: {
-            size: 0,
-            path: get(inputPath) ?? '',
+    },
+  });
+  const inputPassword = computed({
+    get: () => (archiveInfo.value.type === 'ArchiveFile' ? archiveInfo.value.data.password : ''),
+    set: (val: string) => {
+      if (archiveInfo.value.type !== 'ArchiveFile') {
+        console.warn('Attempted to set password on non-archive type');
+      } else {
+        updateField('archive_info', {
+          type: 'ArchiveFile',
+          data: {
+            ...archiveInfo.value.data,
+            password: val || null,
           },
-        };
+        });
       }
-      default: {
-        console.warn('Unexpected archive type:', currentType.value);
-        set(currentType, ArchiveTypeEnum.None);
-        return 'None';
-      }
-    }
-  };
-
-  const doSelect = async (dir: boolean) => {
-    try {
-      set(inputPath, dir ? await selectDirectory() : await selectFile());
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const currentType = ref(getInitialType());
-
-  const flagCreateArchive = computed({
-    get: () => editData.value.flag_create_archive,
-    set: (value: boolean) => {
-      console.info(`Setting flag_create_archive to: ${value}`);
-      updateField('flag_create_archive', value);
     },
   });
 
-  watch(currentType, (newType) => {
-    console.info(`Archive type changed: ${newType}`);
-    if (newType == ArchiveTypeEnum.None) {
-      updateField('archive_info', newType);
-    } else {
-      set(inputPath, null);
-      set(inputPassword, null);
-      updateField('archive_info', generateArchiveInfo());
+  const archiveType = computed({
+    get: () => archiveInfo.value.type,
+    set: (val: ArchiveInfo['type']) => {
+      switch (val) {
+        case 'ArchiveFile': {
+          updateField('archive_info', {
+            type: 'ArchiveFile',
+            data: {
+              size: 0,
+              path: '',
+              password: null,
+            },
+          });
+          break;
+        }
+        case 'CommonFile': {
+          updateField('archive_info', {
+            type: 'CommonFile',
+            data: {
+              size: 0,
+              path: '',
+            },
+          });
+          break;
+        }
+        case 'Directory': {
+          updateField('archive_info', {
+            type: 'Directory',
+            data: {
+              size: 0,
+              path: '',
+            },
+          });
+          break;
+        }
+        default: {
+          updateField('archive_info', defaultArchiveInfo());
+        }
+      }
+    },
+  });
+
+  const doSelect = async (dir: boolean) => {
+    if (archiveType.value === 'None') {
+      console.warn('Attempted to select path for non-archive type');
+      return;
     }
+    try {
+      const path = dir ? await selectDirectory() : await selectFile();
+      if (!path) {
+        notifyWarning('未选择路径', '请确保选择了一个有效的文件或目录路径');
+        return;
+      }
+      const obj = { ...archiveInfo.value };
+      (obj as never)['data']['path'] = path as never;
+      if (path) {
+        updateField('archive_info', obj);
+      }
+    } catch (e) {
+      console.error(e);
+      notifyError('选择路径失败', e);
+    }
+  };
+
+  const flagCreateArchive = computed({
+    get: () => editData.value.flag_create_archive,
+    set: (val: boolean) => updateField('flag_create_archive', val),
   });
 
-  watch(inputPath, (newPath) => {
-    if (!newPath) return;
-    updateField('archive_info', generateArchiveInfo());
-  });
-  watch(inputPassword, (newPassword) => {
-    if (!newPassword) return;
-    updateField('archive_info', generateArchiveInfo());
-  });
-
-  return { currentType, inputPath, inputPassword, flagCreateArchive, doSelect };
+  return { archiveType, inputPath, inputPassword, flagCreateArchive, doSelect };
 };

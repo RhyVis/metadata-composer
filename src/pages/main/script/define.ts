@@ -2,7 +2,7 @@ import type { QSelectOption, QTableColumn } from 'quasar';
 import type { Metadata } from '@/api/types.ts';
 import { date } from 'quasar';
 import { formatBytes } from '@/api/util.ts';
-import { extractArchiveSize, extractContentType, joinArray } from '@/pages/main/script/function.ts';
+import { extractArchiveSize, joinArray } from '@/pages/main/script/function.ts';
 
 export const MainColDef: QTableColumn<Metadata>[] = [
   {
@@ -46,7 +46,7 @@ export const MainColDef: QTableColumn<Metadata>[] = [
     name: 'content_info',
     label: '内容',
     classes: 'r-no-sel',
-    field: (row) => extractContentType(row.content_info),
+    field: (row) => row.content_info.type,
   },
   {
     name: 'archive_size',

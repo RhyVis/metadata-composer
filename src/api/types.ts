@@ -3,26 +3,21 @@
 /**
  * Represents archive information for a data item, such as size and path
  */
-export type ArchiveInfo = "None" | { "ArchiveFile": { size: number, path: string, password: string | null, } } | { "CommonFile": { size: number, path: string, } } | { "Directory": { size: number, path: string, } };
-
-/**
- * Represents collection information for grouping data items
- */
-export type CollectionDef = { id: string, name: string, };
+export type ArchiveInfo = { "type": "None" } | { "type": "ArchiveFile", "data": { size: number, path: string, password: string | null, } } | { "type": "CommonFile", "data": { size: number, path: string, } } | { "type": "Directory", "data": { size: number, path: string, } };
 
 /**
  * Represents the type of content for a data item, with detailed information
  */
-export type ContentInfo = "Undefined" | { "Game": GameData };
+export type ContentInfo = { "type": "Undefined" } | { "type": "Game", "data": GameData };
 
 /**
  * Types of content available on the DLSite.
  */
-export type DLContentType = "Maniax" | "Books" | "Pro" | "AppX";
+export type DLContentType = "Doujin" | "Comics" | "PcGames" | "SmartphoneGames" | "DoujinR18" | "ComicsR18" | "HGames" | "SmartphoneGamesR18";
 
 export type DeployArg = { use_config_dir: boolean, target_dir: string | null, };
 
-export type DeployInfo = "None" | { "File": { path: string, } } | { "Directory": { path: string, } };
+export type DeployInfo = { "type": "None" } | { "type": "File", "data": { path: string, } } | { "type": "Directory", "data": { path: string, } };
 
 /**
  * Represents game data, including version, developer, publisher, and platform information
@@ -32,7 +27,7 @@ export type GameData = { version: string, developer: string | null, publisher: s
 /**
  * Represents the distribution method of a game, such as Steam or DLSite
  */
-export type GameDistribution = "Unknown" | { "Steam": { app_id: number, } } | { "DLSite": { id: string, content_type: DLContentType, } };
+export type GameDistribution = { "type": "Unknown" } | { "type": "Steam", "data": { app_id: string, } } | { "type": "DLSite", "data": { id: string, content_type: DLContentType, } };
 
 /**
  * Represents the platform on which a game can run

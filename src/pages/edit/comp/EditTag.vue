@@ -3,11 +3,14 @@ import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { ref } from 'vue';
 import { set } from '@vueuse/core';
 import type { QInput } from 'quasar';
+import { useNotify } from '@/composables/useNotify.ts';
 
 const { edit } = defineProps<{
   edit: UseEdit;
 }>();
 const { editData } = edit;
+
+const { notifyWarning } = useNotify();
 
 const addCache = ref('');
 const inputRef = ref<QInput>();
@@ -17,11 +20,31 @@ const handleRemoveTag = (index: number) => {
 };
 const handleAddTag = (alias: string) => {
   inputRef.value?.validate();
-  if (alias && !editData.value.tags?.includes(alias)) {
-    editData.value.tags = [...(editData.value.tags || []), alias];
+
+  const trimInput = alias.trim();
+  if (!trimInput) {
+    notifyWarning('标签不能为空', undefined, 1000);
+    return;
+  }
+
+  const tags = trimInput.split(/[\s，,；;|]+/).filter(Boolean);
+  const duplicatedTags = [];
+
+  let added = false;
+  for (const tag of tags) {
+    if (checkTagDuplicate(tag)) {
+      duplicatedTags.push(tag);
+    } else {
+      editData.value.tags?.push(tag);
+      added = true;
+    }
+  }
+
+  if (added) {
     set(addCache, '');
-  } else {
-    console.warn('Tag is empty or already exists');
+  }
+  if (duplicatedTags.length > 0) {
+    notifyWarning(`标签 ${duplicatedTags.join(', ')} 已存在`, undefined, 1000);
   }
 };
 

@@ -2,6 +2,7 @@ import type { Ref } from 'vue';
 import type { DragDropPayload } from '@/api/event.ts';
 import type { Metadata, MetadataOption } from '@/api/types.ts';
 import type { Event, UnlistenFn } from '@tauri-apps/api/event';
+import { cloneDeep } from 'lodash-es';
 import { useQuasar } from 'quasar';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Command } from '@/api/cmd.ts';
@@ -22,19 +23,23 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
 
   const isEditMode = computed(() => !!initialData.value?.id);
 
-  const originalData = ref<MaybeMetadata>(get(initialData));
-  const editData = ref<MetadataOption>({
-    id: initialData.value?.id ?? null,
-    title: initialData.value?.title ?? null,
-    alias: initialData.value?.alias ?? null,
-    tags: initialData.value?.tags ?? null,
-    collection: initialData.value?.collection ?? null,
-    description: initialData.value?.description ?? null,
-    image: initialData.value?.image ?? null,
-    content_info: initialData.value?.content_info ?? null,
-    archive_info: initialData.value?.archive_info ?? null,
-    flag_create_archive: false,
-  });
+  const mapEditData = (): MetadataOption => {
+    const copy: MaybeMetadata = cloneDeep(initialData.value);
+    return {
+      id: copy?.id ?? null,
+      title: copy?.title ?? null,
+      alias: copy?.alias ?? null,
+      tags: copy?.tags ?? null,
+      collection: copy?.collection ?? null,
+      description: copy?.description ?? null,
+      image: copy?.image ?? null,
+      content_info: copy?.content_info ?? null,
+      archive_info: copy?.archive_info ?? null,
+      flag_create_archive: false,
+    };
+  };
+
+  const editData = ref<MetadataOption>(mapEditData());
 
   const updateField = <K extends keyof MetadataOption>(field: K, value: MetadataOption[K]) => {
     editData.value[field] = value;
@@ -42,6 +47,7 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
   const clearField = <K extends keyof MetadataOption>(field: K) => {
     editData.value[field] = null as never;
   };
+
   const updateData = async () => await update(get(editData));
 
   let fileDropListener: UnlistenFn | null = null;
@@ -97,7 +103,6 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
 
   return {
     isEditMode,
-    originalData,
     editData,
     updateField,
     clearField,

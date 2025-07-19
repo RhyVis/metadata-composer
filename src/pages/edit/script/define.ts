@@ -8,10 +8,10 @@ export const enum ArchiveTypeEnum {
 }
 
 export const ArchiveTypeOptions: QSelectOption[] = [
-  { label: 'None', value: ArchiveTypeEnum.None },
-  { label: 'Archive File', value: ArchiveTypeEnum.ArchiveFile },
-  { label: 'Common File', value: ArchiveTypeEnum.CommonFile },
-  { label: 'Directory', value: ArchiveTypeEnum.Directory },
+  { label: '无', value: ArchiveTypeEnum.None },
+  { label: '压缩档', value: ArchiveTypeEnum.ArchiveFile },
+  { label: '文件', value: ArchiveTypeEnum.CommonFile },
+  { label: '目录', value: ArchiveTypeEnum.Directory },
 ];
 
 export const enum ContentTypeEnum {
@@ -20,8 +20,8 @@ export const enum ContentTypeEnum {
 }
 
 export const ContentTypeOptions: QSelectOption[] = [
-  { label: 'Undefined', value: ContentTypeEnum.Undefined },
-  { label: 'Game', value: ContentTypeEnum.Game },
+  { label: '未知', value: ContentTypeEnum.Undefined },
+  { label: '游戏', value: ContentTypeEnum.Game },
 ];
 
 export const enum GameSysPlatformEnum {
@@ -38,7 +38,7 @@ export const GameSysPlatformOptions: QSelectOption[] = [
   { label: 'Linux', value: GameSysPlatformEnum.Linux },
   { label: 'MacOS', value: GameSysPlatformEnum.MacOS },
   { label: 'Android', value: GameSysPlatformEnum.Android },
-  { label: 'IOS', value: GameSysPlatformEnum.IOS },
+  { label: 'iOS', value: GameSysPlatformEnum.IOS },
   { label: 'Web', value: GameSysPlatformEnum.Web },
 ];
 
@@ -49,21 +49,29 @@ export const enum GameDistributionEnum {
 }
 
 export const GameDistributionOptions: QSelectOption[] = [
-  { label: 'Unknown', value: GameDistributionEnum.Unknown },
+  { label: '未知', value: GameDistributionEnum.Unknown },
   { label: 'Steam', value: GameDistributionEnum.Steam },
   { label: 'DLSite', value: GameDistributionEnum.DLSite },
 ];
 
 export const enum DLContentTypeEnum {
-  Maniax = 'Maniax',
-  Books = 'Books',
-  Pro = 'Pro',
-  AppX = 'AppX',
+  Doujin = 'Doujin',
+  Comics = 'Comics',
+  PcGames = 'PcGames',
+  SmartphoneGames = 'SmartphoneGames',
+  DoujinR18 = 'DoujinR18',
+  ComicsR18 = 'ComicsR18',
+  HGames = 'HGames',
+  SmartphoneGamesR18 = 'SmartphoneGamesR18',
 }
 
 export const DLContentTypeOptions: QSelectOption[] = [
-  { label: 'Maniax', value: DLContentTypeEnum.Maniax },
-  { label: 'Books', value: DLContentTypeEnum.Books },
-  { label: 'Pro', value: DLContentTypeEnum.Pro },
-  { label: 'AppX', value: DLContentTypeEnum.AppX },
+  { label: '同人', value: DLContentTypeEnum.Doujin },
+  { label: '漫画', value: DLContentTypeEnum.Comics },
+  { label: 'PC软件', value: DLContentTypeEnum.PcGames },
+  { label: '手机游戏', value: DLContentTypeEnum.SmartphoneGames },
+  { label: '同人 R18', value: DLContentTypeEnum.DoujinR18 },
+  { label: '漫画 R18', value: DLContentTypeEnum.ComicsR18 },
+  { label: '美少女游戏 R18', value: DLContentTypeEnum.HGames },
+  { label: '手机游戏 R18', value: DLContentTypeEnum.SmartphoneGamesR18 },
 ];

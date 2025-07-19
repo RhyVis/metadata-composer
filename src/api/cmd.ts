@@ -26,12 +26,24 @@ export class Command {
     return await invoke('metadata_deploy', { key, arg });
   }
 
+  static async metadataExport(): Promise<void> {
+    return await invoke('metadata_export');
+  }
+
+  static async metadataImport(): Promise<void> {
+    return await invoke('metadata_import');
+  }
+
   static async metadataDeployOff(key: string): Promise<void> {
     return await invoke('metadata_deploy_off', { key });
   }
 
   static async utilProcessImg(source: string): Promise<string> {
     return await invoke('util_process_img', { source });
+  }
+
+  static async utilClearUnusedImages(): Promise<number> {
+    return await invoke('util_clear_unused_images');
   }
 
   static async pathResolveImg(hash: string): Promise<string> {

@@ -1,16 +1,15 @@
 use crate::command::append::DeployArg;
 use crate::core::data::metadata::{Metadata, MetadataOption};
-use crate::core::util::config::get_config;
+use crate::core::util::config::{InternalConfig, get_config, get_config_copy};
 use anyhow::{Result, anyhow};
 use const_format::formatc;
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use redb::{Database, ReadableTable, ReadableTableMetadata, TableDefinition};
 use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 use std::sync::{OnceLock, RwLock};
 
-pub mod collection;
 pub mod metadata;
 
 pub fn init_data() -> Result<()> {
@@ -21,6 +20,10 @@ pub fn init_data() -> Result<()> {
 const LIB_FILE_STEM: &str = "lib";
 const LIB_FILE_EXT: &str = "bin";
 const LIB_FILE_NAME: &str = formatc!("{LIB_FILE_STEM}.{LIB_FILE_EXT}");
+const LIB_FILE_EXPORT_EXT: &str = "json";
+const LIB_FILE_EXPORT_NAME: &str = formatc!("{LIB_FILE_STEM}.{LIB_FILE_EXPORT_EXT}");
+
+const DIR_BACKUP: &str = "backup";
 
 const TABLE_METADATA: TableDefinition<&str, Vec<u8>> = TableDefinition::new("metadata");
 
@@ -29,8 +32,9 @@ static DB: OnceLock<Database> = OnceLock::new();
 static COLLECTION_TEMP: OnceLock<RwLock<HashSet<String>>> = OnceLock::new();
 
 fn init_library() -> Result<()> {
-    fn create_db() -> Result<Database> {
-        let config = get_config()?;
+    let config = get_config_copy()?;
+
+    fn create_db(config: &InternalConfig) -> Result<Database> {
         let db_path = config.root_data().join(LIB_FILE_NAME);
         Ok(Database::create(db_path)?)
     }
@@ -42,13 +46,104 @@ fn init_library() -> Result<()> {
         Ok(db)
     }
 
-    DB.set(configure_db(create_db()?)?)
+    fn backup_db(config: &InternalConfig) -> Result<()> {
+        let backup_dir = config.root_data().join(DIR_BACKUP);
+        if !backup_dir.exists() {
+            fs::create_dir_all(&backup_dir)?;
+        }
+
+        let db_path = config.root_data().join(LIB_FILE_NAME);
+        if !db_path.exists() {
+            return Ok(());
+        }
+
+        let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S");
+        let backup_filename = format!("{}_{}.{}", LIB_FILE_STEM, timestamp, LIB_FILE_EXT);
+        let backup_path = backup_dir.join(&backup_filename);
+
+        fs::copy(&db_path, &backup_path)?;
+        info!("Database backup created at: {}", backup_path.display());
+
+        let pattern = format!("{}_{}.{}", LIB_FILE_STEM, "*", LIB_FILE_EXT);
+        let entries = fs::read_dir(&backup_dir)?
+            .filter_map(Result::ok)
+            .filter(|entry| {
+                if let Some(name) = entry.file_name().to_str() {
+                    return glob::Pattern::new(&pattern).unwrap().matches(name);
+                }
+                false
+            })
+            .collect::<Vec<_>>();
+
+        if entries.len() > 5 {
+            let mut entries_with_time = entries
+                .iter()
+                .filter_map(|entry| {
+                    entry
+                        .metadata()
+                        .ok()
+                        .and_then(|meta| meta.modified().ok().map(|time| (entry.path(), time)))
+                })
+                .collect::<Vec<_>>();
+
+            entries_with_time.sort_by_key(|(_, time)| *time);
+
+            for (path, _) in entries_with_time.iter().take(entries_with_time.len() - 5) {
+                if let Err(e) = fs::remove_file(path) {
+                    warn!("Failed to remove old backup file {}: {}", path.display(), e);
+                } else {
+                    info!("Removed old backup file: {}", path.display());
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    backup_db(&config)?;
+
+    DB.set(configure_db(create_db(&config)?)?)
         .expect("Library database already initialized");
     COLLECTION_TEMP
         .set(RwLock::new(HashSet::new()))
         .map_err(|_| anyhow!("Failed to initialize collection temporary storage"))?;
 
     sync_collection_all()?;
+
+    Ok(())
+}
+
+pub fn export_library() -> Result<()> {
+    let path = get_config()?.root_data().join(LIB_FILE_EXPORT_NAME);
+    let all = metadata_get_all()?;
+    let json = serde_json::to_string(&all)
+        .map_err(|e| anyhow!("Failed to serialize metadata to JSON: {}", e))?;
+
+    fs::write(&path, json)?;
+
+    info!("Library exported to {}", path.display());
+
+    Ok(())
+}
+
+pub fn import_library() -> Result<()> {
+    let path = get_config()?.root_data().join(LIB_FILE_EXPORT_NAME);
+    if !path.exists() {
+        return Err(anyhow!("Library export file not found: {}", path.display()));
+    }
+
+    let json = fs::read_to_string(&path)
+        .map_err(|e| anyhow!("Failed to read library export file: {}", e))?;
+
+    let entries: Vec<Metadata> =
+        serde_json::from_str(&json).map_err(|e| anyhow!("Failed to deserialize JSON: {}", e))?;
+
+    for entry in entries {
+        sync_collection(&entry)?;
+        metadata_set_internal(&entry.id.to_string(), entry)?;
+    }
+
+    info!("Library imported from {}", path.display());
 
     Ok(())
 }
@@ -110,7 +205,19 @@ fn metadata_create_internal(opt: MetadataOption) -> Result<String> {
 fn metadata_patch_internal(key: String, opt: MetadataOption) -> Result<()> {
     let db = get_db()?;
     if let Some(mut exist) = metadata_get_internal(key.as_str())? {
+        let exist_archive_info = exist.archive_info.clone();
         exist.patch(opt);
+
+        if exist_archive_info.eq(&exist.archive_info) {
+            debug!("No changes detected in archive info for key '{}'", key);
+        } else {
+            debug!(
+                "Archive info changed for key '{}': {:?}",
+                key, exist.archive_info
+            );
+            exist.archive_info.update_size()?;
+        }
+
         sync_collection(&exist)?;
         let write = db.begin_write()?;
         {
@@ -276,4 +383,54 @@ pub fn metadata_deploy_off(key: &str) -> Result<()> {
     } else {
         Err(anyhow!("Key '{}' not found in library", key))
     }
+}
+
+pub fn clear_unused_images() -> Result<u32> {
+    let all_used_images = metadata_get_all()?
+        .iter()
+        .map(|data| data.image.clone())
+        .flatten()
+        .collect::<HashSet<_>>();
+    let dir_image = get_config()?.dir_image();
+    if !dir_image.exists() || !dir_image.is_dir() {
+        return Err(anyhow!(
+            "Image directory does not exist or is not a directory: {}",
+            dir_image.display()
+        ));
+    }
+
+    let entries = fs::read_dir(&dir_image)?;
+    let mut removed_count = 0u32;
+
+    for entry in entries {
+        let entry = entry?;
+        let path = entry.path();
+
+        if path.is_file() && path.extension().map_or(false, |ext| ext == "png") {
+            if let Some(file_name) = path
+                .file_stem()
+                .and_then(|s| Some(s.to_string_lossy().to_string()))
+            {
+                if !all_used_images.contains(&file_name) {
+                    fs::remove_file(&path)?;
+                    debug!("Removed unused image: {}", path.display());
+                    removed_count += 1;
+                }
+            }
+        }
+    }
+
+    if removed_count > 0 {
+        info!(
+            "Removed {} unused images from directory: {}",
+            removed_count,
+            dir_image.display()
+        );
+    } else {
+        info!(
+            "No unused images found in directory: {}",
+            dir_image.display()
+        );
+    }
+    Ok(removed_count)
 }

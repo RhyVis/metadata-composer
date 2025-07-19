@@ -45,8 +45,23 @@ pub fn metadata_deploy_off(key: String) -> CommandResult<()> {
 }
 
 #[command]
+pub fn metadata_export() -> CommandResult<()> {
+    data::export_library().string_result()
+}
+
+#[command]
+pub fn metadata_import() -> CommandResult<()> {
+    data::import_library().string_result()
+}
+
+#[command]
 pub fn util_process_img(source: String) -> CommandResult<String> {
     util::img::process_image(source).string_result()
+}
+
+#[command]
+pub fn util_clear_unused_images() -> CommandResult<u32> {
+    data::clear_unused_images().string_result()
 }
 
 #[command]

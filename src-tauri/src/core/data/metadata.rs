@@ -17,7 +17,8 @@ use ts_rs::TS;
 use uuid::Uuid;
 
 /// Represents the type of content for a data item, with detailed information
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, Default)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
+#[serde(tag = "type", content = "data")]
 #[ts(export, export_to = "../../src/api/types.ts")]
 pub enum ContentInfo {
     #[default]
@@ -56,7 +57,7 @@ impl ContentInfo {
 }
 
 /// Represents game data, including version, developer, publisher, and platform information
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/api/types.ts")]
 pub struct GameData {
     #[serde(default = "default_version")]
@@ -68,7 +69,7 @@ pub struct GameData {
 }
 
 /// Represents the platform on which a game can run
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/api/types.ts")]
 #[allow(clippy::upper_case_acronyms)]
 pub enum GameSysPlatform {
@@ -81,13 +82,14 @@ pub enum GameSysPlatform {
 }
 
 /// Represents the distribution method of a game, such as Steam or DLSite
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, Default)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
+#[serde(tag = "type", content = "data")]
 #[ts(export, export_to = "../../src/api/types.ts")]
 pub enum GameDistribution {
     #[default]
     Unknown,
     Steam {
-        app_id: u32,
+        app_id: String,
     },
     DLSite {
         id: String,
@@ -108,13 +110,14 @@ impl GameDistribution {
         match self {
             Self::Unknown => format!("Unknown-{}", Utc::now().format("%Y%m%d%H%M%S")),
             Self::Steam { app_id } => app_id.to_string(),
-            Self::DLSite { id, .. } => id.to_string(),
+            Self::DLSite { id, content_type } => format!("{}{}", content_type.name_prefix(), id),
         }
     }
 }
 
 /// Represents archive information for a data item, such as size and path
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, Default)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
+#[serde(tag = "type", content = "data")]
 #[ts(export, export_to = "../../src/api/types.ts")]
 pub enum ArchiveInfo {
     #[default]
@@ -184,9 +187,30 @@ impl ArchiveInfo {
             }
         }
     }
+
+    pub(super) fn update_size(&mut self) -> Result<()> {
+        let path = match self.try_resolve()? {
+            This(path) => path,
+            That(_) => {
+                warn!("ArchiveInfo is not resolved, cannot update size.");
+                return Ok(());
+            }
+        };
+
+        let size = path.calculate_size();
+        match self {
+            ArchiveInfo::ArchiveFile { size: s, .. } => *s = size,
+            ArchiveInfo::CommonFile { size: s, .. } => *s = size,
+            ArchiveInfo::Directory { size: s, .. } => *s = size,
+            ArchiveInfo::None => unreachable!(),
+        }
+        info!("Updated archive info size to: {}", size);
+        Ok(())
+    }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, Default)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
+#[serde(tag = "type", content = "data")]
 #[ts(export, export_to = "../../src/api/types.ts")]
 pub enum DeployInfo {
     #[default]
@@ -238,7 +262,7 @@ impl DeployInfo {
 }
 
 /// Basic metadata structure for data item
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/api/types.ts")]
 pub struct Metadata {
     /// Unique identifier for the data item,
@@ -567,7 +591,9 @@ mod test {
             developer: Some("Dev".to_string()),
             publisher: Some("Pub".to_string()),
             sys_platform: vec![GameSysPlatform::Windows],
-            distribution: GameDistribution::Steam { app_id: 12345 },
+            distribution: GameDistribution::Steam {
+                app_id: "fff".to_string(),
+            },
         });
         let c2_rel = c2.path_rel();
         println!("{:?}", c2_rel);
