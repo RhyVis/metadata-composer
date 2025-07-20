@@ -1,0 +1,41 @@
+name: build-on-push
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: x86_64-pc-windows-msvc
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Tauri application
+        run: pnpm tauri build
+
+      - name: Upload composer.exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: composer-executable
+          path: src-tauri/target/release/composer.exe
+          if-no-files-found: error
