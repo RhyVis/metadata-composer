@@ -10,8 +10,7 @@ const { edit } = defineProps<{
   edit: UseEdit;
 }>();
 const { editData } = edit;
-const { imageSrc, inputUrl, showImage, setShowImage, pasteUrl, requestImage, clearImage } =
-  useImg(edit);
+const { imageSrc, showImage, setShowImage, pasteImg, clearImage } = useImg(edit);
 </script>
 
 <template>
@@ -25,35 +24,7 @@ const { imageSrc, inputUrl, showImage, setShowImage, pasteUrl, requestImage, cle
     <div>{{ editData.image ?? '拖拽文件到窗口以上传图片' }}</div>
     <template #after>
       <q-btn v-if="imageSrc" flat icon="image" size="md" square @click="setShowImage(true)" />
-      <q-btn v-else flat icon="add_photo_alternate" size="md" square>
-        <q-popup-proxy style="width: 500px">
-          <q-card>
-            <q-card-section>粘贴网址请求图片或直接粘贴图片</q-card-section>
-            <q-separator />
-            <q-card-section>
-              <q-input v-model="inputUrl" dense>
-                <template #after>
-                  <q-btn-group flat>
-                    <q-btn flat icon="content_paste" round size="md" @click="pasteUrl">
-                      <q-tooltip>粘贴链接或图片</q-tooltip>
-                    </q-btn>
-                    <q-btn
-                      v-close-popup
-                      flat
-                      icon="add_photo_alternate"
-                      round
-                      size="md"
-                      @click="requestImage"
-                    >
-                      <q-tooltip>从链接请求图片</q-tooltip>
-                    </q-btn>
-                  </q-btn-group>
-                </template>
-              </q-input>
-            </q-card-section>
-          </q-card>
-        </q-popup-proxy>
-      </q-btn>
+      <q-btn v-else flat icon="add_photo_alternate" size="md" square @click="pasteImg" />
     </template>
   </q-field>
   <q-dialog v-model="showImage" persistent transition-hide="scale" transition-show="scale">

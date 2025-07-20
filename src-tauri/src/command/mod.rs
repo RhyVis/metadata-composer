@@ -55,7 +55,7 @@ pub fn metadata_import() -> CommandResult<()> {
     data::import_library().string_result()
 }
 
-#[command]
+#[command(async)]
 pub fn util_process_img_file(source: String) -> CommandResult<String> {
     util::img::process_image_file(source).string_result()
 }
@@ -65,7 +65,7 @@ pub async fn util_process_img_web(url: String) -> CommandResult<String> {
     util::img::process_image_web(&url).await.string_result()
 }
 
-#[command]
+#[command(async)]
 pub fn util_process_img_bytes(data: (Vec<u8>, u32, u32)) -> CommandResult<String> {
     util::img::process_image_bytes(data).string_result()
 }

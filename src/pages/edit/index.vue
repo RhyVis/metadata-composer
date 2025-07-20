@@ -4,8 +4,7 @@ import { onMounted, ref } from 'vue';
 import { set } from '@vueuse/core';
 import { useRouter } from 'vue-router';
 import { useLibraryStore } from '@/stores/library.ts';
-import type { Metadata } from '@/api/types.ts';
-import { useEdit } from '@/pages/edit/script/useEdit.ts';
+import { type MaybeMetadata, useEdit } from '@/pages/edit/script/useEdit.ts';
 import EditAlias from '@/pages/edit/comp/EditAlias.vue';
 import EditTag from '@/pages/edit/comp/EditTag.vue';
 import EditArchiveInfo from '@/pages/edit/comp/EditArchiveInfo.vue';
@@ -19,7 +18,7 @@ const { push } = useRouter();
 const { isDevMode } = storeToRefs(useGlobalStore());
 const { get: getById } = useLibraryStore();
 
-const getData = (): Metadata | undefined => {
+const initData = (): MaybeMetadata => {
   const param = useRouteParams('id');
   if (!param.value) {
     console.info('No ID provided, switching to NEW mode');
@@ -34,7 +33,7 @@ const getData = (): Metadata | undefined => {
 };
 
 const id = ref('');
-const data = ref<Metadata | undefined>(getData());
+const data = ref<MaybeMetadata>(initData());
 const edit = useEdit(data);
 const { editData, isEditMode, updateField, updateData, applyPreset } = edit;
 
@@ -45,11 +44,10 @@ const handleUpdate = async () => {
 };
 
 onMounted(() => {
-  Command.metadataCollectionList()
-    .then((value) => set(collectionList, value))
-    .catch((e) => {
-      console.error('Failed to fetch collection list:', e);
-    });
+  Command.metadataCollectionList().then(
+    (list) => set(collectionList, list),
+    (err) => console.error('Failed to fetch collection list:', err),
+  );
 });
 </script>
 
@@ -104,7 +102,7 @@ onMounted(() => {
             hint="标题内容"
             label="标题"
             stack-label
-            @update:model-value="updateField('title', $event as string)"
+            @update:model-value="updateField('title', ($event as string).trim())"
           />
           <!-- Alias Input -->
           <EditAlias :edit="edit" />
@@ -119,7 +117,7 @@ onMounted(() => {
             new-value-mode="add-unique"
             stack-label
             use-input
-            @update:model-value="updateField('collection', $event as string)"
+            @update:model-value="updateField('collection', ($event as string).trim())"
           />
           <q-input
             :model-value="editData.description"

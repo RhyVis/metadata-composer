@@ -10,9 +10,9 @@ import { useLibraryStore } from '@/stores/library.ts';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { get } from '@vueuse/core';
 
-type MaybeMetadata = Metadata | undefined;
-
 export type UseEdit = ReturnType<typeof useEdit>;
+
+export type MaybeMetadata = Metadata | undefined;
 
 const window = getCurrentWindow();
 
@@ -51,14 +51,18 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
 
   const updateData = async (): Promise<boolean> => {
     try {
-      loading.show();
-      await tooltip(`正在${isEditMode.value ? `更新 '${editData.value.title}' ` : '保存'}数据...`);
+      const msg = `正在${isEditMode.value ? '更新 ' : '保存 '}${editData.value.title || editData.value.id} 数据...`;
+      loading.show({
+        message: msg,
+      });
+      await tooltip(msg);
       const hideWindow = setTimeout(async () => {
         await window.hide();
       }, 2442);
+
       await update(get(editData));
+
       clearTimeout(hideWindow);
-      await window.show();
       notifySuccess('保存成功', undefined, 1000);
       return true;
     } catch (e) {
@@ -67,7 +71,7 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
       return false;
     } finally {
       loading.hide();
-      await tooltip(null);
+      await tooltip();
       await window.show();
     }
   };

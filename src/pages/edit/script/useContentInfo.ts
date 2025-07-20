@@ -53,7 +53,7 @@ export const useContentInfo = (edit: UseEdit) => {
           type: 'Game',
           data: {
             ...contentInfo.value.data,
-            version: val,
+            version: val.trim(),
           },
         });
       } else {
@@ -69,7 +69,7 @@ export const useContentInfo = (edit: UseEdit) => {
           type: 'Game',
           data: {
             ...contentInfo.value.data,
-            developer: val,
+            developer: val ? val.trim() : null,
           },
         });
       } else {
@@ -85,7 +85,7 @@ export const useContentInfo = (edit: UseEdit) => {
           type: 'Game',
           data: {
             ...contentInfo.value.data,
-            publisher: val,
+            publisher: val ? val.trim() : null,
           },
         });
       } else {
@@ -113,7 +113,7 @@ export const useContentInfo = (edit: UseEdit) => {
     get: () =>
       contentInfo.value.type === 'Game' && contentInfo.value.data.distribution.type === 'Steam'
         ? contentInfo.value.data.distribution.data.app_id
-        : '0',
+        : '',
     set: (val: string) => {
       if (
         contentInfo.value.type === 'Game' &&

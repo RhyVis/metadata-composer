@@ -47,7 +47,7 @@ export const useArchiveInfo = (edit: UseEdit) => {
           type: 'ArchiveFile',
           data: {
             ...archiveInfo.value.data,
-            password: val || null,
+            password: val ? val.trim() : null,
           },
         });
       }

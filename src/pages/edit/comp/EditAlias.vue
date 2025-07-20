@@ -20,10 +20,11 @@ if (!editData.value.alias) {
 const handleRemoveAlias = (index: number) => {
   editData.value.alias?.splice(index, 1);
 };
-const handleAddAlias = (alias: string) => {
+const handleAddAlias = () => {
   inputRef.value?.validate();
-  if (alias && !editData.value.alias?.includes(alias)) {
-    editData.value.alias = [...(editData.value.alias || []), alias];
+  const trim = addCache.value.trim();
+  if (trim && !editData.value.alias?.includes(trim)) {
+    editData.value.alias = [...(editData.value.alias || []), trim];
     set(addCache, '');
   } else {
     console.warn('Alias is empty or already exists');
@@ -47,7 +48,7 @@ const checkAliasDuplicate = (alias: string): boolean => {
     ref="inputRef"
     stack-label
     @clear="addCache = ''"
-    @keyup.enter="handleAddAlias(addCache)"
+    @keyup.enter="handleAddAlias"
   />
   <div>
     <template v-if="!editData.alias || editData.alias.length === 0">

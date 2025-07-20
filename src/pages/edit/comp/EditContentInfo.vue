@@ -48,6 +48,8 @@ const {
     map-options
     stack-label
   />
+
+  <!-- Type Game Data -->
   <template v-if="contentType == ContentTypeEnum.Game">
     <q-input
       v-model="gInputVersion"
@@ -89,15 +91,11 @@ const {
       map-options
       stack-label
     />
+    <!-- Dist Steam -->
     <template v-if="gInputDistributionType == GameDistributionEnum.Steam">
-      <q-input
-        v-model="gInputSteamAppId"
-        hint="Steam商店的ID"
-        label="Steam App ID"
-        stack-label
-        type="number"
-      />
+      <q-input v-model="gInputSteamAppId" hint="Steam商店的ID" label="Steam App ID" stack-label />
     </template>
+    <!-- Dist DLSite -->
     <template v-else-if="gInputDistributionType == GameDistributionEnum.DLSite">
       <q-input
         v-model="gInputDLSiteId"

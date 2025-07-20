@@ -17,13 +17,15 @@ export const useImg = (edit: UseEdit) => {
   const { notifyWarning, notifySuccess, notifyError } = useNotify();
 
   const [showImage, setShowImage] = useToggle(false);
-  const inputUrl = ref('');
 
-  const pasteUrl = async () => {
+  const pasteImg = async () => {
     try {
       try {
         const image = await readImage();
         const size = await image.size();
+        loading.show({
+          message: `正在处理粘贴的图像... (${size.width}x${size.height})`,
+        });
         const hash = await Command.utilProcessImgBytes([
           await image.rgba(),
           size.width,
@@ -32,7 +34,6 @@ export const useImg = (edit: UseEdit) => {
         console.info(`Processed pasted image with hash: ${hash}`);
         updateField('image', hash);
         notifySuccess('图片处理成功', `粘贴图像 -> ${hash}`);
-        set(inputUrl, '');
         return;
       } catch (e) {
         if (
@@ -43,16 +44,17 @@ export const useImg = (edit: UseEdit) => {
         } else {
           console.error('Not able to read image from clipboard');
         }
+      } finally {
+        loading.hide();
       }
 
-      set(inputUrl, await readText());
-      await requestImage();
+      await requestImage(await readText());
     } catch (e) {
-      console.error(e);
+      console.error(`Failed to paste image link: ${e}`);
     }
   };
-  const requestImage = async () => {
-    const trim = inputUrl.value.trim();
+  const requestImage = async (url: string) => {
+    const trim = url.trim();
     if (!trim) {
       notifyWarning('请使用有效链接');
       return;
@@ -61,14 +63,18 @@ export const useImg = (edit: UseEdit) => {
     console.info(`Processing image from URL: '${trim}'`);
 
     try {
+      loading.show({
+        message: `正在处理图像链接: ${truncateString(trim)}`,
+      });
       const hash = await Command.utilProcessImgWeb(trim);
       console.info(`Processed image with hash: ${hash}`);
-      set(inputUrl, '');
       updateField('image', hash);
       notifySuccess('图片处理成功', `${truncateString(trim)} -> ${hash}`);
     } catch (e) {
       console.error(e);
       notifyError(`处理 '${truncateString(trim)}' 图像失败`, e);
+    } finally {
+      loading.hide();
     }
   };
 
@@ -149,5 +155,5 @@ export const useImg = (edit: UseEdit) => {
     }
   });
 
-  return { imageSrc, inputUrl, showImage, setShowImage, pasteUrl, requestImage, clearImage };
+  return { imageSrc, showImage, setShowImage, pasteImg, clearImage };
 };
