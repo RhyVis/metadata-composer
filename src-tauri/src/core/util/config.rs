@@ -23,7 +23,7 @@ const DIR_NAME_IMAGE: &str = "image";
 
 static CONFIG: OnceLock<RwLock<InternalConfig>> = OnceLock::new();
 
-pub fn init_config(config_dir: PathBuf) -> Result<()> {
+pub fn init_config(config_dir: PathBuf, root_path: Option<PathBuf>) -> Result<()> {
     let config_path = config_dir.join(CONFIG_FILE_NAME);
     CONFIG_PATH
         .set(config_path.to_owned())
@@ -32,19 +32,25 @@ pub fn init_config(config_dir: PathBuf) -> Result<()> {
     info!("Trying to load config from: {}", config_path.display());
     let config: InternalConfig = if !config_path.exists() {
         warn!("Config file does not exist at {}", config_path.display());
-        let default_config = RawConfig::default();
+        let mut default_config = RawConfig::default();
         if let Some(parent_path) = config_path.parent() {
             if !parent_path.exists() {
                 fs::create_dir_all(parent_path)?;
             }
         }
+        if let Some(initial_root_path) = root_path {
+            info!(
+                "Providing initial root path: {}",
+                initial_root_path.display()
+            );
+            default_config.root_data = Some(initial_root_path.display().to_string());
+        }
 
-        let internal_config: InternalConfig = default_config.clone().into();
         fs::write(
             &config_path,
             format!(
                 "# Config File\n\n{}",
-                toml::to_string_pretty(&internal_config)
+                toml::to_string_pretty(&InternalConfig::from(default_config.clone()))
                     .map_err(|e| anyhow!("Failed to serialize default config: {}", e))?
             ),
         )

@@ -1,7 +1,7 @@
 use crate::core::data::init_data;
 use crate::core::util::config::init_config;
 use crate::core::util::get_app_root_path;
-use anyhow::anyhow;
+use anyhow::{Result, anyhow};
 use log::info;
 use std::sync::OnceLock;
 use tauri::{AppHandle, Manager};
@@ -12,21 +12,43 @@ pub mod util;
 
 static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
 
-fn init_core_internal(app_handle: &AppHandle) -> anyhow::Result<()> {
+fn init_core_internal(app: &AppHandle) -> Result<()> {
     info!("Core initialization started");
 
-    init_config(if cfg!(debug_assertions) {
-        get_app_root_path().to_owned()
+    let root_path = if !check_init_flag() {
+        app.dialog()
+            .message(
+                "Seems that the application is running for the first time.\n\
+                You'll need to specify the root directory to store data.",
+            )
+            .title("Initialization Required")
+            .blocking_show();
+        let path_chosen = app
+            .dialog()
+            .file()
+            .set_title("Root Directory Selection")
+            .blocking_pick_folder()
+            .and_then(|path| path.into_path().ok());
+        create_init_flag()?;
+        path_chosen
     } else {
-        app_handle
-            .path()
-            .app_config_dir()
-            .map_err(|e| anyhow!("Failed to get app config directory: {}", e))?
-    })?;
+        None
+    };
+
+    init_config(
+        if cfg!(debug_assertions) {
+            get_app_root_path().to_owned()
+        } else {
+            app.path()
+                .app_config_dir()
+                .map_err(|e| anyhow!("Failed to get app config directory: {}", e))?
+        },
+        root_path,
+    )?;
     init_data()?;
 
     APP_HANDLE
-        .set(app_handle.clone())
+        .set(app.clone())
         .map_err(|_| anyhow::anyhow!("Core already initialized"))?;
 
     info!("Core initialized successfully");
@@ -82,4 +104,20 @@ pub enum Language {
     EnUs,
     ZhCn,
     JaJp,
+}
+
+const INIT_FLAG_NAME: &str = "INIT";
+
+fn check_init_flag() -> bool {
+    let root = get_app_root_path();
+    let init_flag_path = root.join(INIT_FLAG_NAME);
+    init_flag_path.exists()
+}
+
+fn create_init_flag() -> Result<()> {
+    let root = get_app_root_path();
+    let init_flag_path = root.join(INIT_FLAG_NAME);
+    std::fs::File::create(init_flag_path)
+        .map_err(|e| anyhow!("Failed to create init flag: {}", e))?;
+    Ok(())
 }
