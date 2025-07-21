@@ -9,6 +9,8 @@ import { useNotify } from '@/composables/useNotify.ts';
 import { useTray } from '@/composables/useTray.ts';
 import { useLibraryStore } from '@/stores/library.ts';
 import { listen } from '@tauri-apps/api/event';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { sendNotification } from '@tauri-apps/plugin-notification';
 import { get, useToggle } from '@vueuse/core';
 
 export type UseEdit = ReturnType<typeof useEdit>;
@@ -16,6 +18,8 @@ export type UseEdit = ReturnType<typeof useEdit>;
 export type MaybeMetadata = Metadata | undefined;
 
 type EditableField = Exclude<keyof MetadataOption, 'id'>;
+
+const window = getCurrentWindow();
 
 export const useEdit = (initialData: Ref<MaybeMetadata>) => {
   const { update } = useLibraryStore();
@@ -83,7 +87,10 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
       await update(get(editData));
       setEverEdited(false);
 
-      notifySuccess(`${isEditMode.value ? '更新成功' : '创建失败'}`, undefined, 1000);
+      const successMsg = isEditMode.value ? '更新成功' : '创建成功';
+      notifySuccess(successMsg, undefined, 1000);
+      if (!(await window.isVisible())) sendNotification(successMsg);
+
       return true;
     } catch (e) {
       console.error(e);

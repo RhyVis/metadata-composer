@@ -10,18 +10,18 @@ pub trait PathExt {
     /// or encountered an error.
     fn calculate_size(&self) -> u64;
 
-    async fn calculate_size_async(&self) -> u64;
+    fn calculate_size_async(&self) -> impl Future<Output = u64> + Send;
 
     /// Checks if the directory is empty.
     /// If not a directory, it returns false.
     fn is_dir_empty(&self) -> bool;
 
-    async fn is_dir_empty_async(&self) -> bool;
+    fn is_dir_empty_async(&self) -> impl Future<Output = bool> + Send;
 
     /// Clears a path if it's a dir
     fn clear_dir(&self) -> std::io::Result<()>;
 
-    async fn clear_dir_async(&self) -> std::io::Result<()>;
+    fn clear_dir_async(&self) -> impl Future<Output = std::io::Result<()>> + Send;
 }
 
 impl PathExt for Path {

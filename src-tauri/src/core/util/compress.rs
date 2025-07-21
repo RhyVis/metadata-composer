@@ -3,11 +3,11 @@ use anyhow::{Result, anyhow};
 use encoding_rs::GBK;
 use log::{debug, error, info};
 use regex::Regex;
-use std::fs;
 use std::path::Path;
 use tauri::Emitter;
 use tauri_plugin_shell::ShellExt;
 use tauri_plugin_shell::process::CommandEvent;
+use tokio::fs as tfs;
 
 const EVENT_COMPRESSION_PROGRESS: &str = "compression_progress";
 const EVENT_DECOMPRESSION_PROGRESS: &str = "decompression_progress";
@@ -35,7 +35,8 @@ pub async fn compress(
     let password = password.map(|s| s.to_owned());
 
     if output_path.exists() {
-        fs::remove_file(&output_path)
+        tfs::remove_file(&output_path)
+            .await
             .map_err(|e| anyhow!("Failed to remove existing output file: {e}"))?;
         info!("Removed existing output file: {}", output_path.display());
     }
@@ -59,7 +60,9 @@ pub async fn compress(
     let mut last_progress = 0u32;
 
     let mut exit_code = None;
-    let (mut rx, _child) = command.spawn()?;
+    let (mut rx, _child) = command
+        .spawn()
+        .map_err(|e| anyhow!("Failed to spawn compression command: {e}"))?;
     while let Some(event) = rx.recv().await {
         match event {
             CommandEvent::Stdout(out) => {
@@ -155,7 +158,9 @@ pub async fn decompress(
     let mut last_progress = 0u32;
 
     let mut exit_code = None;
-    let (mut rx, _child) = command.spawn()?;
+    let (mut rx, _child) = command
+        .spawn()
+        .map_err(|e| anyhow!("Failed to spawn decompression command: {e}"))?;
     while let Some(event) = rx.recv().await {
         match event {
             CommandEvent::Stdout(out) => {

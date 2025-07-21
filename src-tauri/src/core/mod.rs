@@ -1,8 +1,10 @@
 use crate::core::data::init_data;
 use crate::core::util::config::init_config;
+use crate::core::util::get_app_root_path;
+use anyhow::anyhow;
 use log::info;
 use std::sync::OnceLock;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
 pub mod data;
@@ -13,7 +15,14 @@ static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
 fn init_core_internal(app_handle: &AppHandle) -> anyhow::Result<()> {
     info!("Core initialization started");
 
-    init_config()?;
+    init_config(if cfg!(debug_assertions) {
+        get_app_root_path().to_owned()
+    } else {
+        app_handle
+            .path()
+            .app_config_dir()
+            .map_err(|e| anyhow!("Failed to get app config directory: {}", e))?
+    })?;
     init_data()?;
 
     APP_HANDLE

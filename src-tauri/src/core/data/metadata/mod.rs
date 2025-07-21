@@ -222,7 +222,13 @@ impl Metadata {
         let file_name = format!("{}.a", self.content_info.file_name());
 
         let mut target_path = dir_base.join(&dir_rel);
-        fs::create_dir_all(&target_path)?;
+        tfs::create_dir_all(&target_path).await.map_err(|e| {
+            anyhow!(
+                "Failed to create directory {}: {}",
+                target_path.display(),
+                e
+            )
+        })?;
         target_path.push(&file_name);
 
         info!(
@@ -230,7 +236,12 @@ impl Metadata {
             file_name,
             target_path.display()
         );
-        compress(raw_path, &target_path, password.as_deref()).await?;
+        compress(raw_path, &target_path, password.as_deref())
+            .await
+            .map_err(|e| {
+                error!("Failed to compress archive: {}", e);
+                anyhow!("Failed to compress archive: {}", e)
+            })?;
 
         self.archive_info = ArchiveInfo::ArchiveFile {
             size: target_path.calculate_size(),

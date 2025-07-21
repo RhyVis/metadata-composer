@@ -54,6 +54,7 @@
         }
       ]
     },
-    "process:default"
+    "process:default",
+    "notification:default"
   ]
 }

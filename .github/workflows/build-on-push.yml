@@ -1,7 +1,7 @@
 name: build-on-push
 on:
   push:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   build:
@@ -31,9 +31,16 @@ jobs:
       - name: Build Tauri application
         run: pnpm tauri build
 
-      - name: Upload composer.exe artifact
+      - name: Get version from tauri.conf.json
+        id: get-version
+        shell: bash
+        run: |
+          VERSION=$(grep -o '"version": "[^"]*"' src-tauri/tauri.conf.json | head -1 | cut -d'"' -f4)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: composer-executable
-          path: src-tauri/target/release/composer.exe
+          name: composer-installer
+          path: src-tauri/target/release/bundle/nsis/composer_${{ steps.get-version.outputs.version }}_x64-setup.exe
           if-no-files-found: error

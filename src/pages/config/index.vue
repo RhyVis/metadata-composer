@@ -154,6 +154,18 @@ onMounted(() =>
           <q-btn flat icon="upload" square @click="handleImport" />
         </q-item-section>
       </q-item>
+
+      <q-item-label header>目录</q-item-label>
+
+      <q-item v-ripple clickable @click="Command.openConfigDir()">
+        <q-item-section>打开配置目录</q-item-section>
+        <q-item-label caption> 配置文件为 config.toml </q-item-label>
+      </q-item>
+
+      <q-item v-ripple clickable @click="Command.openLogDir()">
+        <q-item-section>打开日志目录</q-item-section>
+        <q-item-label caption> 日志文件为 composer.log </q-item-label>
+      </q-item>
     </q-list>
   </q-page>
 </template>

@@ -6,7 +6,8 @@ use crate::core::data::metadata::{Metadata, MetadataOption};
 use crate::core::util::config::{InternalConfig, get_config, get_config_copy, update_config_field};
 use crate::core::{Language, StringResult, data, util};
 use std::path::{Path, PathBuf};
-use tauri::{AppHandle, command};
+use tauri::{AppHandle, Manager, command};
+use tauri_plugin_opener::open_path;
 use tauri_plugin_pinia::ManagerExt;
 
 type CommandResult<T> = Result<T, String>;
@@ -90,6 +91,28 @@ pub async fn util_dl_fetch_info(arg: DLFetchArg) -> CommandResult<DLFetchInfo> {
 pub fn util_dark_state(app: AppHandle) -> bool {
     app.pinia()
         .try_get_or::<bool>("global", "isDarkMode", false)
+}
+
+#[command]
+pub fn open_config_dir(app: AppHandle) -> CommandResult<()> {
+    open_path(
+        app.path()
+            .app_config_dir()
+            .map_err(|e| format!("Failed to get app config directory: {}", e))?,
+        None::<&str>,
+    )
+    .string_result()
+}
+
+#[command]
+pub fn open_log_dir(app: AppHandle) -> CommandResult<()> {
+    open_path(
+        app.path()
+            .app_log_dir()
+            .map_err(|e| format!("Failed to get app log directory: {}", e))?,
+        None::<&str>,
+    )
+    .string_result()
 }
 
 #[command]

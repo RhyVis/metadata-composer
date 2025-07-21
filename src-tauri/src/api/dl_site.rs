@@ -109,7 +109,11 @@ pub struct DLFetchInfo {
 }
 
 pub trait DLContentFetch {
-    async fn fetch_info(&self, id: &str, lang: &Language) -> Result<DLFetchInfo>;
+    fn fetch_info(
+        &self,
+        id: &str,
+        lang: &Language,
+    ) -> impl Future<Output = Result<DLFetchInfo>> + Send;
 }
 
 impl DLContentFetch for DLContentType {
@@ -119,8 +123,17 @@ impl DLContentFetch for DLContentType {
 
         info!("Requesting {url} for content type: {:?}", self);
 
-        let response = client.get(&url).send().await?;
-        let document = Html::parse_document(&response.text().await?);
+        let response = client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| anyhow!("Could not fetch content type for {}: {}", url, e))?;
+        let document = Html::parse_document(
+            &response
+                .text()
+                .await
+                .map_err(|e| anyhow!("Failed to parse response text for {}: {}", url, e))?,
+        );
 
         let title_selector = Selector::parse("#work_name").to_anyhow()?;
         let title = document
