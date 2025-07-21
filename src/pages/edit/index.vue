@@ -2,7 +2,7 @@
 import { useRouteParams } from '@vueuse/router';
 import { onMounted, ref } from 'vue';
 import { set } from '@vueuse/core';
-import { useRouter } from 'vue-router';
+import { onBeforeRouteLeave, useRouter } from 'vue-router';
 import { useLibraryStore } from '@/stores/library.ts';
 import { type MaybeMetadata, useEdit } from '@/pages/edit/script/useEdit.ts';
 import EditAlias from '@/pages/edit/comp/EditAlias.vue';
@@ -13,8 +13,10 @@ import { Command } from '@/api/cmd.ts';
 import EditImage from '@/pages/edit/comp/EditImage.vue';
 import { useGlobalStore } from '@/stores/global.ts';
 import { storeToRefs } from 'pinia';
+import { useQuasar } from 'quasar';
 
 const { push } = useRouter();
+const { dialog } = useQuasar();
 const { isDevMode } = storeToRefs(useGlobalStore());
 const { get: getById } = useLibraryStore();
 
@@ -35,7 +37,7 @@ const initData = (): MaybeMetadata => {
 const id = ref('');
 const data = ref<MaybeMetadata>(initData());
 const edit = useEdit(data);
-const { editData, isEditMode, updateField, updateData, applyPreset } = edit;
+const { editData, isEditMode, pageLock, everEdited, updateField, updateData, applyPreset } = edit;
 
 const collectionList = ref<string[]>([]);
 
@@ -48,6 +50,30 @@ onMounted(() => {
     (list) => set(collectionList, list),
     (err) => console.error('Failed to fetch collection list:', err),
   );
+});
+
+onBeforeRouteLeave((_to, _from, next) => {
+  if (pageLock.value) {
+    console.warn('Page is locked, cannot leave the edit page.');
+    next(false);
+  } else if (everEdited.value) {
+    dialog({
+      title: '确认离开',
+      message: '有未保存的更改，确定要离开吗？',
+      ok: '离开',
+      cancel: '取消',
+    })
+      .onOk(() => {
+        console.info('Leaving the edit page.');
+        next();
+      })
+      .onCancel(() => {
+        console.info('Cancelled leaving the edit page.');
+        next(false);
+      });
+  } else {
+    next();
+  }
 });
 </script>
 

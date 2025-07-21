@@ -149,11 +149,7 @@ export const useImg = (edit: UseEdit) => {
       (error) => console.error('Failed to listen for drag-drop events:', error),
     );
   });
-  onUnmounted(() => {
-    if (fileDropListener) {
-      fileDropListener();
-    }
-  });
+  onUnmounted(() => fileDropListener?.());
 
   return { imageSrc, showImage, setShowImage, pasteImg, clearImage };
 };

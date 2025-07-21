@@ -9,11 +9,13 @@ import { useNotify } from '@/composables/useNotify.ts';
 import { useTray } from '@/composables/useTray.ts';
 import { useLibraryStore } from '@/stores/library.ts';
 import { listen } from '@tauri-apps/api/event';
-import { get } from '@vueuse/core';
+import { get, useToggle } from '@vueuse/core';
 
 export type UseEdit = ReturnType<typeof useEdit>;
 
 export type MaybeMetadata = Metadata | undefined;
+
+type EditableField = Exclude<keyof MetadataOption, 'id'>;
 
 export const useEdit = (initialData: Ref<MaybeMetadata>) => {
   const { update } = useLibraryStore();
@@ -22,6 +24,8 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
   const { tooltip } = useTray();
 
   const isEditMode = computed(() => !!initialData.value?.id);
+  const [everEdited, setEverEdited] = useToggle(false);
+  const [pageLock, setPageLock] = useToggle(false);
 
   const mapEditData = (): MetadataOption => {
     const copy: MaybeMetadata = cloneDeep(initialData.value);
@@ -41,11 +45,13 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
 
   const editData = ref<MetadataOption>(mapEditData());
 
-  const updateField = <K extends keyof MetadataOption>(field: K, value: MetadataOption[K]) => {
+  const updateField = <K extends EditableField>(field: K, value: MetadataOption[K]) => {
     editData.value[field] = value;
+    setEverEdited(true);
   };
-  const clearField = <K extends keyof MetadataOption>(field: K) => {
+  const clearField = <K extends EditableField>(field: K) => {
     editData.value[field] = null as never;
+    setEverEdited(true);
   };
 
   const updatingMsg = computed(
@@ -73,7 +79,9 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
         (error) => console.error(`Failed to listen to compression_progress: ${error}`),
       );
 
+      setPageLock(true);
       await update(get(editData));
+      setEverEdited(false);
 
       notifySuccess(`${isEditMode.value ? '更新成功' : '创建失败'}`, undefined, 1000);
       return true;
@@ -85,6 +93,7 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
       loading.hide();
       eventHandle?.();
       await tooltip();
+      setPageLock(false);
     }
   };
 
@@ -119,6 +128,8 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
 
   return {
     isEditMode,
+    everEdited,
+    pageLock,
     editData,
     updateField,
     clearField,

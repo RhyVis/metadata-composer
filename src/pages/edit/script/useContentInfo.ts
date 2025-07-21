@@ -36,7 +36,7 @@ export const useContentInfo = (edit: UseEdit) => {
 
   const contentInfo = computed<ContentInfo>({
     get: () => editData.value.content_info!,
-    set: (val: ContentInfo) => (editData.value.content_info = val),
+    set: (val: ContentInfo) => updateField('content_info', val),
   });
 
   // Type Game

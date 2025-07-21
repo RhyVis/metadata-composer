@@ -27,7 +27,7 @@ const { root_deploy, hasDeployRoot } = storeToRefs(useConfigStore());
 
 const { handleReload, handleRemove, handleDeploy, handleDeployOff } = useOperation();
 
-const textClazz = computed(() => (dark.isActive ? 'text-grey-5' : 'text-grey-9'));
+const innerTextClazz = computed(() => (dark.isActive ? 'text-grey-5' : 'text-grey-9'));
 
 const handleEdit = (id: string) => {
   console.info(`Editing item with id: ${id}`);
@@ -133,7 +133,7 @@ onMounted(() =>
                       <div
                         class="text-body2 q-ml-xs"
                         v-for="(line, lineIdx) in col.value"
-                        :class="textClazz"
+                        :class="innerTextClazz"
                         :key="lineIdx"
                       >
                         {{ line }}
@@ -175,7 +175,7 @@ onMounted(() =>
                     <!-- Common Fields -->
                     <template v-else>
                       <div class="r-no-sel text-weight-medium">{{ col.label }}</div>
-                      <div class="text-body2 q-ml-xs" :class="textClazz">{{ col.value }}</div>
+                      <div class="text-body2 q-ml-xs" :class="innerTextClazz">{{ col.value }}</div>
                     </template>
                   </q-item-section>
                 </q-item>

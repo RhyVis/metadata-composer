@@ -2,7 +2,7 @@ import 'quasar/src/css/index.sass';
 import '@quasar/extras/material-icons/material-icons.css';
 import '@quasar/extras/fontawesome-v6/fontawesome-v6.css';
 import '@/assets/main.scss';
-import { Loading, Notify, Quasar } from 'quasar';
+import { Dialog, Loading, Notify, Quasar } from 'quasar';
 import quasarLang from 'quasar/lang/zh-CN';
 import { createApp } from 'vue';
 import { initKeyBlocker, initLogger } from '@/api/hook.ts';
@@ -25,6 +25,7 @@ app.use(router);
 app.use(Quasar, {
   plugins: {
     Notify,
+    Dialog,
     Loading,
   },
   lang: quasarLang,
