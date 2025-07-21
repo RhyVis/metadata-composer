@@ -8,9 +8,12 @@ import {
   GameDistributionEnum,
   GameDistributionOptions,
   GameSysPlatformOptions,
+  GameTypeEnum,
+  GameTypeOptions,
 } from '@/pages/edit/script/define.ts';
 import { storeToRefs } from 'pinia';
 import { useGlobalStore } from '@/stores/global.ts';
+import { isNumericOnly, isValidFileSystemString } from '@/api/util.ts';
 
 const { isDevMode } = storeToRefs(useGlobalStore());
 
@@ -21,6 +24,7 @@ const { edit } = defineProps<{
 const {
   contentType,
   gInputVersion,
+  gInputGameType,
   gInputDeveloper,
   gInputPublisher,
   gInputSysPlatform,
@@ -28,6 +32,8 @@ const {
   gInputSteamAppId,
   gInputDLSiteId,
   gInputDLSiteContentType,
+  gInputOtherName,
+  gInputOtherId,
   gViewDLSiteIdPrefix,
   gFetchDLSiteInfo,
   gOpenDLSitePage,
@@ -42,11 +48,13 @@ const {
   </q-card>
   <q-select
     v-model="contentType"
+    :clearable="contentType != ContentTypeEnum.Undefined"
     :options="ContentTypeOptions"
     emit-value
     label="内容类型"
     map-options
     stack-label
+    @clear="contentType = ContentTypeEnum.Undefined"
   />
 
   <!-- Type Game Data -->
@@ -57,6 +65,18 @@ const {
       hint="游戏本体的版本号，默认为1.0.0"
       label="版本"
       stack-label
+      @clear="gInputVersion = '1.0.0'"
+    />
+    <q-select
+      v-model="gInputGameType"
+      :options="GameTypeOptions"
+      clearable
+      emit-value
+      hint="游戏内容类型"
+      label="类型"
+      map-options
+      stack-label
+      @clear="gInputGameType = GameTypeEnum.Unspecified"
     />
     <q-input
       v-model="gInputDeveloper"
@@ -93,13 +113,28 @@ const {
     />
     <!-- Dist Steam -->
     <template v-if="gInputDistributionType == GameDistributionEnum.Steam">
-      <q-input v-model="gInputSteamAppId" hint="Steam商店的ID" label="Steam App ID" stack-label />
+      <q-input
+        v-model="gInputSteamAppId"
+        :rules="[
+          (val) => !!val || 'Steam App ID不能为空',
+          (val) => isNumericOnly(val) || 'Steam App ID必须是数字',
+          (val) => val.length <= 32 || 'Steam App ID长度不能超过16个字符',
+        ]"
+        hint="Steam商店的ID"
+        label="Steam App ID"
+        stack-label
+      />
     </template>
     <!-- Dist DLSite -->
     <template v-else-if="gInputDistributionType == GameDistributionEnum.DLSite">
       <q-input
         v-model="gInputDLSiteId"
         :prefix="gViewDLSiteIdPrefix"
+        :rules="[
+          (val) => !!val || 'DLSite商店ID不能为空',
+          (val) => isNumericOnly(val) || 'DLSite商店ID必须是数字',
+          (val) => val.length <= 32 || 'DLSite商店ID长度不能超过16个字符',
+        ]"
         hint="DLSite的ID"
         label="DLSite商店ID"
         stack-label
@@ -121,6 +156,30 @@ const {
         emit-value
         label="内容类型"
         map-options
+        stack-label
+      />
+    </template>
+    <template v-else-if="gInputDistributionType == GameDistributionEnum.Other">
+      <q-input
+        v-model="gInputOtherName"
+        :rules="[
+          (val) => !!val || '名称不能为空',
+          (val) => val.length <= 32 || '名称长度不能超过32个字符',
+          isValidFileSystemString,
+        ]"
+        hint="其他发行方式的名称"
+        label="名称"
+        stack-label
+      />
+      <q-input
+        v-model="gInputOtherId"
+        :rules="[
+          (val) => !!val || 'ID不能为空',
+          (val) => val.length <= 64 || 'ID长度不能超过64个字符',
+          isValidFileSystemString,
+        ]"
+        hint="其他发行方式的ID"
+        label="ID"
         stack-label
       />
     </template>

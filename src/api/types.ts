@@ -19,6 +19,8 @@ export type DLFetchArg = { id: string, content_type: DLContentType, };
 
 export type DLFetchInfo = { title: string, circle: string, scenario: Array<string>, illustration: Array<string>, category: Array<string>, tags: Array<string>, description: Array<string>, };
 
+export type DLSiteDistributionData = { id: string, content_type: DLContentType, };
+
 export type DeployArg = { use_config_dir: boolean, target_dir: string | null, };
 
 export type DeployInfo = { "type": "None" } | { "type": "File", "data": { path: string, } } | { "type": "Directory", "data": { path: string, } };
@@ -26,17 +28,22 @@ export type DeployInfo = { "type": "None" } | { "type": "File", "data": { path: 
 /**
  * Represents game data, including version, developer, publisher, and platform information
  */
-export type GameData = { version: string, developer: string | null, publisher: string | null, sys_platform: Array<GameSysPlatform>, distribution: GameDistribution, };
+export type GameData = { version: string, game_type: GameType, developer: string | null, publisher: string | null, sys_platform: Array<GameSysPlatform>, distribution: GameDistribution, };
 
 /**
  * Represents the distribution method of a game, such as Steam or DLSite
  */
-export type GameDistribution = { "type": "Unknown" } | { "type": "Steam", "data": { app_id: string, } } | { "type": "DLSite", "data": { id: string, content_type: DLContentType, } };
+export type GameDistribution = { "type": "Unknown" } | { "type": "Steam", "data": SteamDistributionData } | { "type": "DLSite", "data": DLSiteDistributionData } | { "type": "Other", "data": OtherDistributionData };
 
 /**
  * Represents the platform on which a game can run
  */
 export type GameSysPlatform = "Windows" | "Linux" | "MacOS" | "Android" | "IOS" | "Web";
+
+/**
+ * Represents the type of game, such as RPG Maker
+ */
+export type GameType = "Unspecified" | "RPG" | "SLG" | "AVG";
 
 export type InternalConfig = { root_data: string, root_deploy: string | null, };
 
@@ -89,4 +96,8 @@ deploy_info: DeployInfo, create_time: string, update_time: string, };
 /**
  * Fields in [Metadata] with optional, used in communication with the frontend
  */
-export type MetadataOption = { id: string | null, title: string | null, alias: Array<string> | null, tags: Array<string> | null, collection: string | null, description: string | null, image: string | null, content_info: ContentInfo | null, archive_info: ArchiveInfo | null, flag_create_archive: boolean, };
+export type MetadataOption = { id: string | null, title?: string | null, alias: Array<string> | null, tags: Array<string> | null, collection: string | null, description: string | null, image: string | null, content_info: ContentInfo | null, archive_info: ArchiveInfo | null, flag_create_archive: boolean, };
+
+export type OtherDistributionData = { name: string, id: string, };
+
+export type SteamDistributionData = { app_id: string, };

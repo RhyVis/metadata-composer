@@ -6,10 +6,17 @@ use std::sync::OnceLock;
 use std::time::Duration;
 
 pub mod dl_site;
+pub mod http;
 
 static CLIENT: OnceLock<Client> = OnceLock::new();
 
-pub fn init_client() -> Result<()> {
+/// Initializes the API components of the application.
+pub fn init_api() -> Result<()> {
+    init_client()?;
+    Ok(())
+}
+
+fn init_client() -> Result<()> {
     fn create_client() -> Result<Client> {
         Client::builder()
             .timeout(Duration::from_secs(30))
@@ -26,15 +33,6 @@ pub fn init_client() -> Result<()> {
     Ok(())
 }
 
-pub fn get_client() -> &'static Client {
-    #[cfg(debug_assertions)]
-    {
-        if CLIENT.get().is_none() {
-            init_client().unwrap();
-        }
-    }
-
-    CLIENT
-        .get()
-        .expect("HTTP client not initialized. Call `init_client()` first.")
+fn get_client() -> &'static Client {
+    CLIENT.get().expect("HTTP client not initialized.")
 }

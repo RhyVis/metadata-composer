@@ -1,5 +1,3 @@
-use crate::api::dl_site::DLContentType;
-use crate::core::Whether;
 use crate::core::Whether::{That, This};
 use crate::core::util::compress::{compress, decompress};
 use crate::core::util::config::get_config_copy;
@@ -12,254 +10,19 @@ use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
+use tauri::async_runtime;
+use tokio::fs as tfs;
 use ts_rs::TS;
 use uuid::Uuid;
 
-/// Represents the type of content for a data item, with detailed information
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
-#[serde(tag = "type", content = "data")]
-#[ts(export, export_to = "../../src/api/types.ts")]
-pub enum ContentInfo {
-    #[default]
-    Undefined,
+mod archive_info;
+mod content_info;
+mod deploy_info;
 
-    Game(GameData),
-}
-
-impl ContentInfo {
-    fn dir_name(&self) -> Vec<&'static str> {
-        match self {
-            ContentInfo::Undefined => vec!["undefined"],
-            ContentInfo::Game(data) => vec!["game", data.distribution.dir_name()],
-        }
-    }
-
-    /// Returns the relative path starting from `.`, but it **should** start from `config.dir_archive()`
-    ///
-    /// This is used to store in metadata
-    fn path_rel(&self) -> PathBuf {
-        let mut base = PathBuf::new();
-        for dir in self.dir_name() {
-            base.push(dir);
-        }
-        base
-    }
-
-    fn file_name(&self) -> String {
-        match self {
-            ContentInfo::Undefined => {
-                format!("UndefinedContent-{}", Utc::now().format("%Y%m%d%H%M%S"))
-            }
-            ContentInfo::Game(data) => data.distribution.file_name(),
-        }
-    }
-}
-
-/// Represents game data, including version, developer, publisher, and platform information
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/api/types.ts")]
-pub struct GameData {
-    #[serde(default = "default_version")]
-    pub version: String,
-    pub developer: Option<String>,
-    pub publisher: Option<String>,
-    pub sys_platform: Vec<GameSysPlatform>,
-    pub distribution: GameDistribution,
-}
-
-/// Represents the platform on which a game can run
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/api/types.ts")]
-#[allow(clippy::upper_case_acronyms)]
-pub enum GameSysPlatform {
-    Windows,
-    Linux,
-    MacOS,
-    Android,
-    IOS,
-    Web,
-}
-
-/// Represents the distribution method of a game, such as Steam or DLSite
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
-#[serde(tag = "type", content = "data")]
-#[ts(export, export_to = "../../src/api/types.ts")]
-pub enum GameDistribution {
-    #[default]
-    Unknown,
-    Steam {
-        app_id: String,
-    },
-    DLSite {
-        id: String,
-        content_type: DLContentType,
-    },
-}
-
-impl GameDistribution {
-    fn dir_name(&self) -> &'static str {
-        match self {
-            GameDistribution::Unknown => "unknown",
-            GameDistribution::Steam { .. } => "steam",
-            GameDistribution::DLSite { .. } => "dl",
-        }
-    }
-
-    fn file_name(&self) -> String {
-        match self {
-            Self::Unknown => format!("Unknown-{}", Utc::now().format("%Y%m%d%H%M%S")),
-            Self::Steam { app_id } => app_id.to_string(),
-            Self::DLSite { id, content_type } => content_type.build_id(id),
-        }
-    }
-}
-
-/// Represents archive information for a data item, such as size and path
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
-#[serde(tag = "type", content = "data")]
-#[ts(export, export_to = "../../src/api/types.ts")]
-pub enum ArchiveInfo {
-    #[default]
-    None,
-    ArchiveFile {
-        #[ts(type = "number")]
-        size: u64,
-        path: String,
-        password: Option<String>,
-    },
-    CommonFile {
-        #[ts(type = "number")]
-        size: u64,
-        path: String,
-    },
-    Directory {
-        #[ts(type = "number")]
-        size: u64,
-        path: String,
-    },
-}
-
-impl ArchiveInfo {
-    fn try_resolve(&self) -> Result<Whether<PathBuf, Self>> {
-        match self {
-            ArchiveInfo::None => {
-                warn!("Trying to resolve None archive info, returning self");
-                Ok(That(ArchiveInfo::None))
-            }
-            ArchiveInfo::ArchiveFile { path, .. } => {
-                let path_seg = Path::new(path);
-                let mut path_base = get_config_copy()?.dir_archive();
-                path_base.push(path_seg);
-                if path_base.exists() {
-                    Ok(This(path_base))
-                } else {
-                    warn!(
-                        "The specified archive file does not exist: {}",
-                        path_base.display()
-                    );
-                    Ok(That(ArchiveInfo::None))
-                }
-            }
-            ArchiveInfo::CommonFile { path, .. } => {
-                let path = Path::new(path);
-                if path.exists() {
-                    Ok(This(path.to_owned()))
-                } else {
-                    warn!(
-                        "The specified common file does not exist: {}",
-                        path.display()
-                    );
-                    Ok(That(ArchiveInfo::None))
-                }
-            }
-            ArchiveInfo::Directory { path, .. } => {
-                let path = Path::new(path);
-                if path.exists() && path.is_dir() {
-                    Ok(This(path.to_owned()))
-                } else {
-                    warn!(
-                        "The specified directory does not exist or is not a directory: {}",
-                        path.display()
-                    );
-                    Ok(That(ArchiveInfo::None))
-                }
-            }
-        }
-    }
-
-    pub(super) fn update_size(&mut self) -> Result<()> {
-        let path = match self.try_resolve()? {
-            This(path) => path,
-            That(_) => {
-                warn!("ArchiveInfo is not resolved, cannot update size.");
-                return Ok(());
-            }
-        };
-
-        let size = path.calculate_size();
-        match self {
-            ArchiveInfo::ArchiveFile { size: s, .. } => *s = size,
-            ArchiveInfo::CommonFile { size: s, .. } => *s = size,
-            ArchiveInfo::Directory { size: s, .. } => *s = size,
-            ArchiveInfo::None => unreachable!(),
-        }
-        info!("Updated archive info size to: {}", size);
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
-#[serde(tag = "type", content = "data")]
-#[ts(export, export_to = "../../src/api/types.ts")]
-pub enum DeployInfo {
-    #[default]
-    None,
-    File {
-        path: PathBuf,
-    },
-    Directory {
-        path: PathBuf,
-    },
-}
-
-impl DeployInfo {
-    fn new_file(path: PathBuf) -> Self {
-        DeployInfo::File { path }
-    }
-
-    fn new_dir(path: PathBuf) -> Self {
-        DeployInfo::Directory { path }
-    }
-
-    fn try_resolve(&self) -> Whether<PathBuf, DeployInfo> {
-        match self {
-            DeployInfo::None => {
-                warn!("DeployInfo is unset, cannot resolve path.");
-                That(DeployInfo::None)
-            }
-            DeployInfo::File { path } => {
-                if path.exists() {
-                    This(path.clone())
-                } else {
-                    warn!("The specified file path does not exist: {}", path.display());
-                    That(DeployInfo::None)
-                }
-            }
-            DeployInfo::Directory { path } => {
-                if path.exists() {
-                    This(path.clone())
-                } else {
-                    warn!(
-                        "The specified directory path does not exist: {}",
-                        path.display()
-                    );
-                    That(DeployInfo::None)
-                }
-            }
-        }
-    }
-}
+pub use archive_info::*;
+pub use content_info::*;
+pub use deploy_info::*;
 
 /// Basic metadata structure for data item
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS)]
@@ -270,23 +33,32 @@ pub struct Metadata {
     pub id: Uuid,
 
     /// The title of the data item
+    #[serde(default)]
     pub title: String,
     /// The other names of the data item
+    #[serde(default)]
     pub alias: Vec<String>,
     /// Tags associated with the data item
+    #[serde(default)]
     pub tags: Vec<String>,
     /// Collection names, if any
+    #[serde(default)]
     pub collection: Option<String>,
     /// Description of the data item
+    #[serde(default)]
     pub description: Option<String>,
     /// Image hash, if any
+    #[serde(default)]
     pub image: Option<String>,
 
     /// The content type of the data item
+    #[serde(default)]
     pub content_info: ContentInfo,
     /// Archive information
+    #[serde(default)]
     pub archive_info: ArchiveInfo,
     /// Deployment information, if any
+    #[serde(default)]
     pub deploy_info: DeployInfo,
 
     pub create_time: DateTime<Utc>,
@@ -297,8 +69,12 @@ fn default_id() -> Uuid {
     Uuid::new_v4()
 }
 
-fn default_version() -> String {
-    String::from("1.0.0")
+#[allow(dead_code)]
+fn is_none_or_empty<T: AsRef<str>>(s: &Option<T>) -> bool {
+    match s {
+        Some(value) => value.as_ref().is_empty(),
+        None => true,
+    }
 }
 
 /// Fields in [Metadata] with optional, used in communication with the frontend
@@ -307,7 +83,7 @@ fn default_version() -> String {
 pub struct MetadataOption {
     #[serde(default)]
     pub id: Option<Uuid>,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_none_or_empty")]
     pub title: Option<String>,
     #[serde(default)]
     pub alias: Option<Vec<String>>,
@@ -329,7 +105,7 @@ pub struct MetadataOption {
 }
 
 impl Metadata {
-    pub fn create(opt: MetadataOption) -> Result<Self> {
+    pub async fn create(opt: MetadataOption) -> Result<Self> {
         let id = default_id();
         let time = Utc::now();
         info!("Creating metadata: {} at {}", id, time);
@@ -351,7 +127,7 @@ impl Metadata {
         if opt.flag_create_archive {
             if let Some(archive_info) = opt.archive_info {
                 if let ArchiveInfo::ArchiveFile { .. } = archive_info {
-                    created.process_archive()?;
+                    created.process_archive().await?;
                 }
             } else {
                 warn!(
@@ -363,7 +139,8 @@ impl Metadata {
         Ok(created)
     }
 
-    pub fn patch(&mut self, opt: MetadataOption) {
+    pub async fn patch(&mut self, opt: MetadataOption) -> Result<()> {
+        info!("Patching metadata: {} with {:?}", self.id, opt);
         if let Some(title) = opt.title {
             self.title = title;
         }
@@ -386,18 +163,41 @@ impl Metadata {
             self.content_info = content_info;
         }
         if let Some(archive_info) = opt.archive_info {
-            self.archive_info = archive_info;
+            if opt.flag_create_archive {
+                if let ArchiveInfo::ArchiveFile { .. } = archive_info {
+                    if let This(existing_path) = self.archive_info.try_resolve()? {
+                        info!(
+                            "Found existing archive file: {}, removing",
+                            existing_path.display()
+                        );
+                        fs::remove_file(existing_path).unwrap_or_else(|e| {
+                            warn!("Failed to remove existing archive file: {}", e);
+                        });
+                    }
+                    self.archive_info = archive_info;
+                    self.process_archive().await?;
+                } else {
+                    warn!(
+                        "Set 'flag_create_archive' but archive_info is not ArchiveFile, skipping archive creation."
+                    );
+                }
+            } else {
+                self.archive_info = archive_info;
+            }
         }
+
         let update_time = Utc::now();
         self.update_time = update_time;
         info!("Updating metadata: {} at {}", self.id, update_time);
+
+        Ok(())
     }
 
     pub fn mark_update(&mut self) {
         self.update_time = Utc::now();
     }
 
-    fn process_archive(&mut self) -> Result<()> {
+    async fn process_archive(&mut self) -> Result<()> {
         let (raw_path, password) = match self.archive_info.clone() {
             ArchiveInfo::ArchiveFile { path, password, .. } => (path, password),
             _ => unreachable!(),
@@ -422,7 +222,13 @@ impl Metadata {
         let file_name = format!("{}.a", self.content_info.file_name());
 
         let mut target_path = dir_base.join(&dir_rel);
-        fs::create_dir_all(&target_path)?;
+        tfs::create_dir_all(&target_path).await.map_err(|e| {
+            anyhow!(
+                "Failed to create directory {}: {}",
+                target_path.display(),
+                e
+            )
+        })?;
         target_path.push(&file_name);
 
         info!(
@@ -430,7 +236,12 @@ impl Metadata {
             file_name,
             target_path.display()
         );
-        compress(raw_path, &target_path, password.as_deref())?;
+        compress(raw_path, &target_path, password.as_deref())
+            .await
+            .map_err(|e| {
+                error!("Failed to compress archive: {}", e);
+                anyhow!("Failed to compress archive: {}", e)
+            })?;
 
         self.archive_info = ArchiveInfo::ArchiveFile {
             size: target_path.calculate_size(),
@@ -442,8 +253,8 @@ impl Metadata {
         Ok(())
     }
 
-    pub fn deploy(&mut self, target: impl AsRef<Path>) -> Result<bool> {
-        let target_path = target.as_ref();
+    pub async fn deploy(&mut self, target: impl AsRef<Path>) -> Result<bool> {
+        let target_path = target.as_ref().to_owned();
         if !target_path.exists() {
             return Err(anyhow!(
                 "Target path does not exist: {}",
@@ -471,7 +282,7 @@ impl Metadata {
                         target_file.display()
                     );
 
-                    fs::copy(&source_path, &target_file)?;
+                    tfs::copy(&source_path, &target_file).await?;
                     self.deploy_info = DeployInfo::new_file(target_file.clone());
                     self.mark_update();
 
@@ -494,7 +305,7 @@ impl Metadata {
                         target_path.display()
                     );
 
-                    decompress(source_path, target_path, password.as_deref())?;
+                    decompress(source_path, &target_path, password.as_deref()).await?;
 
                     self.deploy_info = DeployInfo::new_dir(target_path.to_owned());
                     self.mark_update();
@@ -518,11 +329,15 @@ impl Metadata {
                         target_path.display()
                     );
 
-                    dir::copy(
-                        source_path,
-                        target_path,
-                        &CopyOptions::new().copy_inside(true).overwrite(true),
-                    )?;
+                    let target_clone = target_path.clone();
+                    async_runtime::spawn_blocking(move || {
+                        dir::copy(
+                            source_path,
+                            target_clone,
+                            &CopyOptions::new().copy_inside(true).overwrite(true),
+                        )
+                    })
+                    .await??;
 
                     self.deploy_info = DeployInfo::new_dir(target_path.to_owned());
                     self.mark_update();
@@ -541,7 +356,7 @@ impl Metadata {
         }
     }
 
-    pub fn deploy_off(&mut self) -> Result<bool> {
+    pub async fn deploy_off(&mut self) -> Result<bool> {
         let path = match self.deploy_info.try_resolve() {
             This(path) => path,
             That(update) => {
@@ -557,7 +372,7 @@ impl Metadata {
             }
             DeployInfo::File { .. } => {
                 info!("Removing deployed file at: {}", path.display());
-                fs::remove_file(&path)?;
+                tfs::remove_file(&path).await?;
                 self.deploy_info = DeployInfo::None;
                 self.mark_update();
                 info!("File deployed off successfully.");
@@ -578,6 +393,7 @@ impl Metadata {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::path::PathBuf;
 
     #[test]
     fn test_content_info() {
@@ -591,9 +407,10 @@ mod test {
             developer: Some("Dev".to_string()),
             publisher: Some("Pub".to_string()),
             sys_platform: vec![GameSysPlatform::Windows],
-            distribution: GameDistribution::Steam {
-                app_id: "fff".to_string(),
-            },
+            distribution: GameDistribution::Steam(SteamDistributionData {
+                app_id: "123456".to_string(),
+            }),
+            game_type: GameType::RPG,
         });
         let c2_rel = c2.path_rel();
         println!("{:?}", c2_rel);

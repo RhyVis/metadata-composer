@@ -1,29 +1,45 @@
-use crate::api::init_client;
-use crate::command::*;
+use crate::api::init_api;
 use crate::core::init_core;
 use crate::core::util::APP_LOG_DIR;
+use crate::init::BuilderExt;
 use std::path::PathBuf;
-use tauri::{generate_context, generate_handler};
+use tauri::{Manager, generate_context};
 
-mod api;
-mod command;
-mod core;
+pub mod api;
+pub mod cmd;
+pub mod core;
+pub mod init;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_window_state::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_pinia::init())
-        .plugin(tauri_plugin_single_instance::init(|_app, _args, _cwd| {}))
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            let window = app
+                .get_webview_window("main")
+                .expect("Failed to get main window");
+            let _ = window.show();
+            let _ = window.set_focus();
+        }))
         .setup(|app| {
             let handle = app.handle();
 
             if cfg!(debug_assertions) {
                 handle.plugin(
                     tauri_plugin_log::Builder::default()
+                        .target(tauri_plugin_log::Target::new(
+                            tauri_plugin_log::TargetKind::Folder {
+                                path: PathBuf::from(APP_LOG_DIR),
+                                file_name: None,
+                            },
+                        ))
                         .level(log::LevelFilter::Debug)
                         .build(),
                 )?;
@@ -32,9 +48,8 @@ pub fn run() {
                     tauri_plugin_log::Builder::default()
                         .level(log::LevelFilter::Info)
                         .target(tauri_plugin_log::Target::new(
-                            tauri_plugin_log::TargetKind::Folder {
-                                path: PathBuf::from(APP_LOG_DIR),
-                                file_name: None,
+                            tauri_plugin_log::TargetKind::LogDir {
+                                file_name: Some(String::from("composer")),
                             },
                         ))
                         .max_file_size(500_000)
@@ -43,31 +58,12 @@ pub fn run() {
                 )?;
             }
 
-            init_core(handle)?;
-            init_client()?;
+            init_core(handle);
+            init_api()?;
 
             Ok(())
         })
-        .invoke_handler(generate_handler![
-            metadata_update,
-            metadata_get_all,
-            metadata_get,
-            metadata_delete,
-            metadata_collection_list,
-            metadata_deploy,
-            metadata_deploy_off,
-            metadata_export,
-            metadata_import,
-            util_process_img_file,
-            util_process_img_web,
-            util_process_img_bytes,
-            util_clear_unused_images,
-            util_dl_fetch_info,
-            util_dark_state,
-            path_resolve_img,
-            config_get,
-            config_update
-        ])
+        .register_invoke_handler()
         .run(generate_context!())
-        .expect("error while running tauri application");
+        .expect("Error while running application");
 }

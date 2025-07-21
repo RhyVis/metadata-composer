@@ -17,7 +17,7 @@ export const useArchiveInfo = (edit: UseEdit) => {
 
   if (!editData.value.archive_info) {
     console.info('Initializing archive_info with default values');
-    updateField('archive_info', defaultArchiveInfo());
+    editData.value.archive_info = defaultArchiveInfo();
   }
 
   const archiveInfo = computed<ArchiveInfo>(() => editData.value.archive_info!);

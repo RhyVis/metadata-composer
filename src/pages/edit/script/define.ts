@@ -1,4 +1,5 @@
 import type { QSelectOption } from 'quasar';
+import type { GameType } from '@/api/types.ts';
 
 export const enum ArchiveTypeEnum {
   None = 'None',
@@ -24,6 +25,20 @@ export const ContentTypeOptions: QSelectOption[] = [
   { label: '游戏', value: ContentTypeEnum.Game },
 ];
 
+export const GameTypeEnum = {
+  Unspecified: 'Unspecified',
+  RPG: 'RPG',
+  SLG: 'SLG',
+  AVG: 'AVG',
+} as const satisfies Record<string, GameType>;
+
+export const GameTypeOptions: QSelectOption[] = [
+  { label: '未指定', value: GameTypeEnum.Unspecified },
+  { label: '角色扮演游戏 (RPG)', value: GameTypeEnum.RPG },
+  { label: '策略游戏 (SLG)', value: GameTypeEnum.SLG },
+  { label: '冒险游戏 (AVG)', value: GameTypeEnum.AVG },
+];
+
 export const enum GameSysPlatformEnum {
   Windows = 'Windows',
   Linux = 'Linux',
@@ -46,12 +61,14 @@ export const enum GameDistributionEnum {
   Unknown = 'Unknown',
   Steam = 'Steam',
   DLSite = 'DLSite',
+  Other = 'Other',
 }
 
 export const GameDistributionOptions: QSelectOption[] = [
   { label: '未知', value: GameDistributionEnum.Unknown },
   { label: 'Steam', value: GameDistributionEnum.Steam },
   { label: 'DLSite', value: GameDistributionEnum.DLSite },
+  { label: '其他', value: GameDistributionEnum.Other },
 ];
 
 export const enum DLContentTypeEnum {

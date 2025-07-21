@@ -8,9 +8,12 @@ import { storeToRefs } from 'pinia';
 import { useNotify } from '@/composables/useNotify.ts';
 import { set } from '@vueuse/core';
 import { generateRandomAsciiString } from '@/api/util.ts';
+import { Command } from '@/api/cmd.ts';
+import { useDarkStyle } from '@/composables/useDarkStyle.ts';
 
 const { isDevMode } = storeToRefs(useGlobalStore());
 const { notifyWarning, notifyError } = useNotify();
+const { textClass } = useDarkStyle();
 
 const { edit } = defineProps<{
   edit: UseEdit;
@@ -18,16 +21,17 @@ const { edit } = defineProps<{
 const editArchiveInfo = useArchiveInfo(edit);
 const { archiveType, inputPath, inputPassword, flagCreateArchive, doSelect } = editArchiveInfo;
 
-const openPathW = (path: string | null) => {
+const handlePathOpen = async (path: string | null, resolveArchive: boolean = false) => {
   if (path) {
     try {
-      openPath(path);
+      if (resolveArchive) {
+        await openPath(await Command.pathResolveArchive(path));
+      } else {
+        await openPath(path);
+      }
     } catch (e) {
       console.error(e);
-      notifyError(
-        '打开路径失败',
-        `无法打开路径: ${path}. 错误信息: ${e instanceof Error ? e.message : String(e)}`,
-      );
+      notifyError('打开路径失败', e);
     }
   } else {
     notifyWarning('路径未定义', '请先选择一个路径');
@@ -62,7 +66,7 @@ const handlePassword = () => {
   ></q-select>
   <template v-if="archiveType == ArchiveTypeEnum.ArchiveFile">
     <q-field :label="flagCreateArchive ? '源文件路径' : '压缩包路径'" stack-label>
-      <div @click="openPathW(inputPath)">
+      <div :class="textClass" @click="handlePathOpen(inputPath, true)">
         {{ inputPath }}
       </div>
       <template #after>
@@ -76,9 +80,9 @@ const handlePassword = () => {
           square
           @click="doSelect(flagCreateArchive)"
         >
-          <q-tooltip>{{
-            flagCreateArchive ? '选择文件夹，压缩将不包含文件夹本身' : '选择压缩包'
-          }}</q-tooltip>
+          <q-tooltip>
+            {{ flagCreateArchive ? '选择文件夹，压缩将不包含文件夹本身' : '选择压缩包' }}
+          </q-tooltip>
         </q-btn>
       </template>
     </q-field>
@@ -90,7 +94,7 @@ const handlePassword = () => {
   </template>
   <template v-else-if="archiveType == ArchiveTypeEnum.CommonFile">
     <q-field label="源路径" stack-label>
-      <div @click="openPathW(inputPath)">
+      <div :class="textClass" @click="handlePathOpen(inputPath)">
         {{ inputPath }}
       </div>
       <template #after>
@@ -100,7 +104,7 @@ const handlePassword = () => {
   </template>
   <template v-else-if="archiveType == ArchiveTypeEnum.Directory">
     <q-field label="源路径" stack-label>
-      <div @click="openPathW(inputPath)">
+      <div :class="textClass" @click="handlePathOpen(inputPath)">
         {{ inputPath }}
       </div>
       <template #after>

@@ -1,6 +1,5 @@
 use crate::core::util::APP_ROOT;
 use anyhow::{Result, anyhow};
-use const_format::formatc;
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -9,10 +8,14 @@ use std::sync::{OnceLock, RwLock, RwLockReadGuard};
 use ts_rs::TS;
 
 const CONFIG_FILE_NAME: &str = "config.toml";
-const CONFIG_PATH: &str = formatc!("{APP_ROOT}/{CONFIG_FILE_NAME}");
 
-fn config_path() -> &'static Path {
-    Path::new(CONFIG_PATH)
+static CONFIG_PATH: OnceLock<PathBuf> = OnceLock::new();
+
+pub fn config_path() -> &'static Path {
+    CONFIG_PATH
+        .get()
+        .expect("Config file not initialized")
+        .as_ref()
 }
 
 const DIR_NAME_ARCHIVE: &str = "archive";
@@ -20,25 +23,44 @@ const DIR_NAME_IMAGE: &str = "image";
 
 static CONFIG: OnceLock<RwLock<InternalConfig>> = OnceLock::new();
 
-pub fn init_config() -> Result<()> {
-    let config_path = config_path();
+pub fn init_config(config_dir: PathBuf, root_path: Option<PathBuf>) -> Result<()> {
+    let config_path = config_dir.join(CONFIG_FILE_NAME);
+    CONFIG_PATH
+        .set(config_path.to_owned())
+        .map_err(|_| anyhow!("Config path already initialized"))?;
+
     info!("Trying to load config from: {}", config_path.display());
     let config: InternalConfig = if !config_path.exists() {
-        warn!("Config file does not exist");
-        let default_config = RawConfig::default();
+        warn!("Config file does not exist at {}", config_path.display());
+        let mut default_config = RawConfig::default();
         if let Some(parent_path) = config_path.parent() {
-            fs::create_dir_all(parent_path)?;
+            if !parent_path.exists() {
+                fs::create_dir_all(parent_path)?;
+            }
+        }
+        if let Some(initial_root_path) = root_path {
+            info!(
+                "Providing initial root path: {}",
+                initial_root_path.display()
+            );
+            default_config.root_data = Some(initial_root_path.display().to_string());
         }
 
-        let internal_config: InternalConfig = default_config.clone().into();
         fs::write(
-            config_path,
+            &config_path,
             format!(
                 "# Config File\n\n{}",
-                toml::to_string_pretty(&internal_config)
+                toml::to_string_pretty(&InternalConfig::from(default_config.clone()))
                     .map_err(|e| anyhow!("Failed to serialize default config: {}", e))?
             ),
-        )?;
+        )
+        .map_err(|e| {
+            anyhow!(
+                "Failed to write default config to {}: {}",
+                config_path.display(),
+                e
+            )
+        })?;
 
         info!("Created default config file at: {}", config_path.display());
 
@@ -50,7 +72,9 @@ pub fn init_config() -> Result<()> {
     }
     .into();
 
-    config.check()?;
+    config
+        .check()
+        .map_err(|e| anyhow!("Config check failed: {}", e))?;
 
     CONFIG
         .set(RwLock::new(config))
@@ -147,7 +171,8 @@ impl InternalConfig {
     fn check(&self) -> Result<()> {
         let root_data = &self.root_data;
         if !root_data.exists() {
-            fs::create_dir_all(root_data)?;
+            fs::create_dir_all(root_data)
+                .map_err(|e| anyhow!("Failed to create root data directory: {}", e))?;
         }
         if let Some(root_deploy) = &self.root_deploy {
             if !root_deploy.exists() {

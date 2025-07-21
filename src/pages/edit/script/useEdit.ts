@@ -1,18 +1,23 @@
 import type { Ref } from 'vue';
 import type { Metadata, MetadataOption } from '@/api/types.ts';
 import type { EditPreset } from '@/pages/edit/script/define.ts';
+import type { UnlistenFn } from '@tauri-apps/api/event';
 import { cloneDeep } from 'lodash-es';
 import { useQuasar } from 'quasar';
 import { computed, ref } from 'vue';
 import { useNotify } from '@/composables/useNotify.ts';
 import { useTray } from '@/composables/useTray.ts';
 import { useLibraryStore } from '@/stores/library.ts';
+import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { get } from '@vueuse/core';
+import { sendNotification } from '@tauri-apps/plugin-notification';
+import { get, useToggle } from '@vueuse/core';
 
 export type UseEdit = ReturnType<typeof useEdit>;
 
 export type MaybeMetadata = Metadata | undefined;
+
+type EditableField = Exclude<keyof MetadataOption, 'id'>;
 
 const window = getCurrentWindow();
 
@@ -23,6 +28,8 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
   const { tooltip } = useTray();
 
   const isEditMode = computed(() => !!initialData.value?.id);
+  const [everEdited, setEverEdited] = useToggle(false);
+  const [pageLock, setPageLock] = useToggle(false);
 
   const mapEditData = (): MetadataOption => {
     const copy: MaybeMetadata = cloneDeep(initialData.value);
@@ -42,37 +49,58 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
 
   const editData = ref<MetadataOption>(mapEditData());
 
-  const updateField = <K extends keyof MetadataOption>(field: K, value: MetadataOption[K]) => {
+  const updateField = <K extends EditableField>(field: K, value: MetadataOption[K]) => {
     editData.value[field] = value;
+    setEverEdited(true);
   };
-  const clearField = <K extends keyof MetadataOption>(field: K) => {
+  const clearField = <K extends EditableField>(field: K) => {
     editData.value[field] = null as never;
+    setEverEdited(true);
   };
 
+  const updatingMsg = computed(
+    () =>
+      `正在${isEditMode.value ? '更新 ' : '创建 '}${editData.value.title || editData.value.id || '未知'} 数据...`,
+  );
+
   const updateData = async (): Promise<boolean> => {
+    let eventHandle: UnlistenFn | undefined;
     try {
-      const msg = `正在${isEditMode.value ? '更新 ' : '保存 '}${editData.value.title || editData.value.id} 数据...`;
+      const msg = get(updatingMsg);
       loading.show({
         message: msg,
       });
       await tooltip(msg);
-      const hideWindow = setTimeout(async () => {
-        await window.hide();
-      }, 2442);
 
+      listen<number>('compression_progress', (event) => {
+        loading.show({
+          message: `${msg}<br>压缩进度: ${event.payload}%`,
+          html: true,
+        });
+        tooltip(`${msg}\n压缩进度: ${event.payload}%`).catch(console.error);
+      }).then(
+        (handle) => (eventHandle = handle),
+        (error) => console.error(`Failed to listen to compression_progress: ${error}`),
+      );
+
+      setPageLock(true);
       await update(get(editData));
+      setEverEdited(false);
 
-      clearTimeout(hideWindow);
-      notifySuccess('保存成功', undefined, 1000);
+      const successMsg = isEditMode.value ? '更新成功' : '创建成功';
+      notifySuccess(successMsg, undefined, 1000);
+      if (!(await window.isVisible())) sendNotification(successMsg);
+
       return true;
     } catch (e) {
       console.error(e);
-      notifyError(isEditMode.value ? '更新失败' : '保存失败', e, 1000);
+      notifyError(isEditMode.value ? '更新失败' : '创建失败', e, 1000);
       return false;
     } finally {
       loading.hide();
+      eventHandle?.();
       await tooltip();
-      await window.show();
+      setPageLock(false);
     }
   };
 
@@ -84,9 +112,10 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
           type: 'Game',
           data: {
             version: '1.0.0',
+            game_type: 'RPG',
             developer: null,
             publisher: null,
-            sys_platform: [],
+            sys_platform: ['Windows'],
             distribution: {
               type: 'DLSite',
               data: {
@@ -106,6 +135,8 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
 
   return {
     isEditMode,
+    everEdited,
+    pageLock,
     editData,
     updateField,
     clearField,

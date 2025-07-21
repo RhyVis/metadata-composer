@@ -65,8 +65,20 @@ export class Command {
     return await invoke('util_dl_fetch_info', { arg });
   }
 
+  static async openConfigDir(): Promise<void> {
+    return await invoke('open_config_dir');
+  }
+
+  static async openLogDir(): Promise<void> {
+    return await invoke('open_log_dir');
+  }
+
   static async pathResolveImg(hash: string): Promise<string> {
     return await invoke('path_resolve_img', { hash });
+  }
+
+  static async pathResolveArchive(path: string): Promise<string> {
+    return await invoke('path_resolve_archive', { path });
   }
 
   static async configGet(): Promise<InternalConfig> {
