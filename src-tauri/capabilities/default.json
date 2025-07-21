@@ -53,6 +53,7 @@
           "sidecar": true
         }
       ]
-    }
+    },
+    "process:default"
   ]
 }

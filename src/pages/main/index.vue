@@ -9,142 +9,29 @@ import AsyncImage from '@/components/AsyncImage.vue';
 import { computed, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useLibraryStore } from '@/stores/library.ts';
-import { Command } from '@/api/cmd.ts';
 import { useNotify } from '@/composables/useNotify.ts';
 import { isDeployable, isDeployed } from '@/pages/main/script/function.ts';
-import { selectDirectory } from '@/api/dialog.ts';
 import { useConfigStore } from '@/stores/config.ts';
 import { formatBytes } from '@/api/util.ts';
-import { getCurrentWindow } from '@tauri-apps/api/window';
-import { useTray } from '@/composables/useTray.ts';
+import { useOperation } from '@/pages/main/script/useOperation.ts';
 
 const { push } = useRouter();
-const { notifySuccess, notifyError } = useNotify();
-const { dark, loading } = useQuasar();
+const { notifyError } = useNotify();
+const { dark } = useQuasar();
 const { searchTag, searchByRegex, rows } = useTable();
-const { tooltip } = useTray();
 
-const window = getCurrentWindow();
-
-const config = useConfigStore();
-const library = useLibraryStore();
 const tableStore = useTableStore();
-const { fetch } = library;
-const { pagination, visibleColumns } = storeToRefs(useTableStore());
-const { totalFileSize, size } = storeToRefs(library);
-const { root_deploy } = storeToRefs(useConfigStore());
+const { pagination, visibleColumns } = storeToRefs(tableStore);
+const { totalFileSize, size } = storeToRefs(useLibraryStore());
+const { root_deploy, hasDeployRoot } = storeToRefs(useConfigStore());
+
+const { handleReload, handleRemove, handleDeploy, handleDeployOff } = useOperation();
 
 const textClazz = computed(() => (dark.isActive ? 'text-grey-5' : 'text-grey-9'));
 
-const handleReload = async () => {
-  console.info('Reloading table data...');
-  loading.show();
-  try {
-    await fetch();
-    notifySuccess('数据已刷新');
-  } catch (e) {
-    console.error(e);
-    notifyError('数据刷新失败', e);
-  } finally {
-    loading.hide();
-  }
-};
 const handleEdit = (id: string) => {
   console.info(`Editing item with id: ${id}`);
   push(`/edit/${id}`);
-};
-const handleRemove = async (id: string) => {
-  console.info(`Removing item with id: ${id}`);
-  loading.show();
-  try {
-    await Command.metadataDelete(id);
-    await fetch();
-    notifySuccess(`已成功删除 '${id}'`);
-  } catch (e) {
-    console.error(e);
-    notifyError(`删除 '${id}' 失败`, e);
-  } finally {
-    loading.hide();
-  }
-};
-const handleDeploy = async (id: string, useDeployDir: boolean) => {
-  console.info(`Deploying item with id: ${id}`);
-  if (useDeployDir) {
-    loading.show({
-      message: `正在部署 '${id}'...`,
-    });
-    await tooltip(`正在部署 '${id}' 到设置目录...`);
-    try {
-      const hideWindow = setTimeout(async () => {
-        await window.hide();
-      }, 2442);
-      await Command.metadataDeploy(id, {
-        use_config_dir: true,
-        target_dir: null,
-      });
-      clearTimeout(hideWindow);
-      await window.show();
-      await fetch();
-      notifySuccess(`已成功部署 '${id}' 到设置目录`);
-    } catch (e) {
-      console.error(e);
-      notifyError(`部署 '${id}' 失败`, e);
-    } finally {
-      loading.hide();
-      await tooltip();
-      await window.show();
-    }
-  } else {
-    try {
-      const path = await selectDirectory();
-      if (path) {
-        loading.show({
-          message: `正在部署 '${id}' 到 ${path}...`,
-        });
-        await tooltip(`正在部署 '${id}' 到 ${path}...`);
-        try {
-          const hideWindow = setTimeout(async () => {
-            await window.hide();
-          }, 2442);
-          await Command.metadataDeploy(id, {
-            use_config_dir: false,
-            target_dir: path,
-          });
-          clearTimeout(hideWindow);
-          await fetch();
-          notifySuccess(`已成功部署 '${id}' 到 ${path}`);
-        } catch (e) {
-          console.error(e);
-          notifyError(`部署 '${id}' 失败`, e);
-        } finally {
-          loading.hide();
-          await window.show();
-          await tooltip();
-        }
-      } else {
-        notifyError('部署取消', '未选择有效的目录');
-      }
-    } catch (e) {
-      console.error(e);
-      notifyError('选择目录失败', e);
-    }
-  }
-};
-const handleDeployOff = async (id: string) => {
-  console.info(`Un-deploying item with id: ${id}`);
-  loading.show({
-    message: `正在取消部署 '${id}'...`,
-  });
-  try {
-    await Command.metadataDeployOff(id);
-    await fetch();
-    notifySuccess(`已成功取消部署 '${id}'`);
-  } catch (e) {
-    console.error(e);
-    notifyError(`取消部署 '${id}' 失败`, e);
-  } finally {
-    loading.hide();
-  }
 };
 
 onMounted(() =>
@@ -299,7 +186,7 @@ onMounted(() =>
                 <q-btn-group flat>
                   <template v-if="isDeployable(row as Metadata)">
                     <q-btn
-                      v-if="config.hasDeployRoot"
+                      v-if="hasDeployRoot"
                       color="primary"
                       flat
                       icon="create_new_folder"

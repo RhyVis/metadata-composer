@@ -21,6 +21,7 @@
     "@tauri-apps/plugin-dialog": "~2.3.0",
     "@tauri-apps/plugin-log": "~2.6.0",
     "@tauri-apps/plugin-opener": "~2.4.0",
+    "@tauri-apps/plugin-process": "~2.3.0",
     "@tauri-apps/plugin-shell": "~2.3.0",
     "@tauri-apps/plugin-window-state": "~2.3.0",
     "@tauri-store/pinia": "^3.7.1",

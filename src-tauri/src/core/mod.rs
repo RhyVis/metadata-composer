@@ -3,14 +3,14 @@ use crate::core::util::config::init_config;
 use log::info;
 use std::sync::OnceLock;
 use tauri::AppHandle;
+use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
 pub mod data;
 pub mod util;
 
 static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
 
-/// Initializes the core components of the application.
-pub fn init_core(app_handle: &AppHandle) -> anyhow::Result<()> {
+fn init_core_internal(app_handle: &AppHandle) -> anyhow::Result<()> {
     info!("Core initialization started");
 
     init_config()?;
@@ -21,7 +21,21 @@ pub fn init_core(app_handle: &AppHandle) -> anyhow::Result<()> {
         .map_err(|_| anyhow::anyhow!("Core already initialized"))?;
 
     info!("Core initialized successfully");
+
     Ok(())
+}
+
+/// Initializes the core components of the application.
+pub fn init_core(app_handle: &AppHandle) {
+    if let Err(err) = init_core_internal(app_handle) {
+        app_handle
+            .dialog()
+            .message(err.to_string())
+            .title("Core Initialization Error")
+            .kind(MessageDialogKind::Error)
+            .blocking_show();
+        app_handle.exit(666);
+    }
 }
 
 pub fn get_handle() -> AppHandle {

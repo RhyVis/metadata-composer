@@ -1,20 +1,19 @@
 import type { Ref } from 'vue';
 import type { Metadata, MetadataOption } from '@/api/types.ts';
 import type { EditPreset } from '@/pages/edit/script/define.ts';
+import type { UnlistenFn } from '@tauri-apps/api/event';
 import { cloneDeep } from 'lodash-es';
 import { useQuasar } from 'quasar';
 import { computed, ref } from 'vue';
 import { useNotify } from '@/composables/useNotify.ts';
 import { useTray } from '@/composables/useTray.ts';
 import { useLibraryStore } from '@/stores/library.ts';
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import { listen } from '@tauri-apps/api/event';
 import { get } from '@vueuse/core';
 
 export type UseEdit = ReturnType<typeof useEdit>;
 
 export type MaybeMetadata = Metadata | undefined;
-
-const window = getCurrentWindow();
 
 export const useEdit = (initialData: Ref<MaybeMetadata>) => {
   const { update } = useLibraryStore();
@@ -49,30 +48,43 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
     editData.value[field] = null as never;
   };
 
+  const updatingMsg = computed(
+    () =>
+      `正在${isEditMode.value ? '更新 ' : '创建 '}${editData.value.title || editData.value.id || '未知'} 数据...`,
+  );
+
   const updateData = async (): Promise<boolean> => {
+    let eventHandle: UnlistenFn | undefined;
     try {
-      const msg = `正在${isEditMode.value ? '更新 ' : '保存 '}${editData.value.title || editData.value.id} 数据...`;
+      const msg = get(updatingMsg);
       loading.show({
         message: msg,
       });
       await tooltip(msg);
-      const hideWindow = setTimeout(async () => {
-        await window.hide();
-      }, 2442);
+
+      listen<number>('compression_progress', (event) => {
+        loading.show({
+          message: `${msg}<br>压缩进度: ${event.payload}%`,
+          html: true,
+        });
+        tooltip(`${msg}\n压缩进度: ${event.payload}%`).catch(console.error);
+      }).then(
+        (handle) => (eventHandle = handle),
+        (error) => console.error(`Failed to listen to compression_progress: ${error}`),
+      );
 
       await update(get(editData));
 
-      clearTimeout(hideWindow);
-      notifySuccess('保存成功', undefined, 1000);
+      notifySuccess(`${isEditMode.value ? '更新成功' : '创建失败'}`, undefined, 1000);
       return true;
     } catch (e) {
       console.error(e);
-      notifyError(isEditMode.value ? '更新失败' : '保存失败', e, 1000);
+      notifyError(isEditMode.value ? '更新失败' : '创建失败', e, 1000);
       return false;
     } finally {
       loading.hide();
+      eventHandle?.();
       await tooltip();
-      await window.show();
     }
   };
 

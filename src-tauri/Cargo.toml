@@ -43,6 +43,8 @@ tauri-plugin-dialog = "2"
 tauri-plugin-pinia = "3.7"
 tauri-plugin-clipboard-manager = "2"
 tauri-plugin-shell = "2"
+tauri-plugin-process = "2"
+regex = "1.11.1"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-single-instance = "2"

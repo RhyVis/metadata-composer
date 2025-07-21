@@ -146,7 +146,7 @@ onMounted(() => {
         <q-space />
         <q-btn-group outline>
           <q-btn icon="close" label="退出" outline @click="push('/')" />
-          <q-btn :label="isEditMode ? '更新' : '保存'" icon="save" outline @click="handleUpdate" />
+          <q-btn :label="isEditMode ? '更新' : '创建'" icon="save" outline @click="handleUpdate" />
         </q-btn-group>
       </q-card-actions>
     </q-card>

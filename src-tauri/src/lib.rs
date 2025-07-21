@@ -12,6 +12,7 @@ mod core;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_window_state::Builder::new().build())
@@ -25,6 +26,12 @@ pub fn run() {
             if cfg!(debug_assertions) {
                 handle.plugin(
                     tauri_plugin_log::Builder::default()
+                        .target(tauri_plugin_log::Target::new(
+                            tauri_plugin_log::TargetKind::Folder {
+                                path: PathBuf::from(APP_LOG_DIR),
+                                file_name: None,
+                            },
+                        ))
                         .level(log::LevelFilter::Debug)
                         .build(),
                 )?;
@@ -44,7 +51,7 @@ pub fn run() {
                 )?;
             }
 
-            init_core(handle)?;
+            init_core(handle);
             init_api()?;
 
             Ok(())
