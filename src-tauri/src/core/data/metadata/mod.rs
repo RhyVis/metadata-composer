@@ -1,5 +1,3 @@
-use crate::api::dl_site::DLContentType;
-use crate::core::Whether;
 use crate::core::Whether::{That, This};
 use crate::core::util::compress::{compress, decompress};
 use crate::core::util::config::get_config_copy;
@@ -12,273 +10,19 @@ use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use tauri::async_runtime;
 use tokio::fs as tfs;
 use ts_rs::TS;
 use uuid::Uuid;
 
-/// Represents the type of content for a data item, with detailed information
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
-#[serde(tag = "type", content = "data")]
-#[ts(export, export_to = "../../src/api/types.ts")]
-pub enum ContentInfo {
-    #[default]
-    Undefined,
+mod archive_info;
+mod content_info;
+mod deploy_info;
 
-    Game(GameData),
-}
-
-impl ContentInfo {
-    fn dir_name(&self) -> Vec<&'static str> {
-        match self {
-            ContentInfo::Undefined => vec!["undefined"],
-            ContentInfo::Game(data) => vec!["game", data.distribution.dir_name()],
-        }
-    }
-
-    /// Returns the relative path starting from `.`, but it **should** start from `config.dir_archive()`
-    ///
-    /// This is used to store in metadata
-    fn path_rel(&self) -> PathBuf {
-        let mut base = PathBuf::new();
-        for dir in self.dir_name() {
-            base.push(dir);
-        }
-        base
-    }
-
-    fn file_name(&self) -> String {
-        match self {
-            ContentInfo::Undefined => {
-                format!("Content-{}", Utc::now().format("%Y%m%d%H%M%S"))
-            }
-            ContentInfo::Game(data) => data.distribution.file_name(),
-        }
-    }
-}
-
-/// Represents game data, including version, developer, publisher, and platform information
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/api/types.ts")]
-pub struct GameData {
-    #[serde(default = "default_version")]
-    pub version: String,
-    #[serde(default)]
-    pub game_type: GameType,
-    #[serde(default)]
-    pub developer: Option<String>,
-    #[serde(default)]
-    pub publisher: Option<String>,
-    #[serde(default)]
-    pub sys_platform: Vec<GameSysPlatform>,
-    #[serde(default)]
-    pub distribution: GameDistribution,
-}
-
-/// Represents the type of game, such as RPG Maker
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
-#[ts(export, export_to = "../../src/api/types.ts")]
-pub enum GameType {
-    #[default]
-    Unspecified,
-    RPG,
-    SLG,
-    AVG,
-}
-
-/// Represents the platform on which a game can run
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/api/types.ts")]
-#[allow(clippy::upper_case_acronyms)]
-pub enum GameSysPlatform {
-    Windows,
-    Linux,
-    MacOS,
-    Android,
-    IOS,
-    Web,
-}
-
-/// Represents the distribution method of a game, such as Steam or DLSite
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
-#[serde(tag = "type", content = "data")]
-#[ts(export, export_to = "../../src/api/types.ts")]
-pub enum GameDistribution {
-    #[default]
-    Unknown,
-    Steam {
-        app_id: String,
-    },
-    DLSite {
-        id: String,
-        content_type: DLContentType,
-    },
-}
-
-impl GameDistribution {
-    fn dir_name(&self) -> &'static str {
-        match self {
-            GameDistribution::Unknown => "unknown",
-            GameDistribution::Steam { .. } => "steam",
-            GameDistribution::DLSite { .. } => "dl",
-        }
-    }
-
-    fn file_name(&self) -> String {
-        match self {
-            Self::Unknown => format!("Unknown-{}", Utc::now().format("%Y%m%d%H%M%S")),
-            Self::Steam { app_id } => app_id.to_string(),
-            Self::DLSite { id, content_type } => content_type.build_id(id),
-        }
-    }
-}
-
-/// Represents archive information for a data item, such as size and path
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
-#[serde(tag = "type", content = "data")]
-#[ts(export, export_to = "../../src/api/types.ts")]
-pub enum ArchiveInfo {
-    #[default]
-    None,
-    ArchiveFile {
-        #[ts(type = "number")]
-        size: u64,
-        path: String,
-        password: Option<String>,
-    },
-    CommonFile {
-        #[ts(type = "number")]
-        size: u64,
-        path: String,
-    },
-    Directory {
-        #[ts(type = "number")]
-        size: u64,
-        path: String,
-    },
-}
-
-impl ArchiveInfo {
-    fn try_resolve(&self) -> Result<Whether<PathBuf, Self>> {
-        match self {
-            ArchiveInfo::None => {
-                warn!("Trying to resolve None archive info, returning self");
-                Ok(That(ArchiveInfo::None))
-            }
-            ArchiveInfo::ArchiveFile { path, .. } => {
-                let path_seg = Path::new(path);
-                let mut path_base = get_config_copy()?.dir_archive();
-                path_base.push(path_seg);
-                if path_base.exists() {
-                    Ok(This(path_base))
-                } else {
-                    warn!(
-                        "The specified archive file does not exist: {}",
-                        path_base.display()
-                    );
-                    Ok(That(ArchiveInfo::None))
-                }
-            }
-            ArchiveInfo::CommonFile { path, .. } => {
-                let path = Path::new(path);
-                if path.exists() {
-                    Ok(This(path.to_owned()))
-                } else {
-                    warn!(
-                        "The specified common file does not exist: {}",
-                        path.display()
-                    );
-                    Ok(That(ArchiveInfo::None))
-                }
-            }
-            ArchiveInfo::Directory { path, .. } => {
-                let path = Path::new(path);
-                if path.exists() && path.is_dir() {
-                    Ok(This(path.to_owned()))
-                } else {
-                    warn!(
-                        "The specified directory does not exist or is not a directory: {}",
-                        path.display()
-                    );
-                    Ok(That(ArchiveInfo::None))
-                }
-            }
-        }
-    }
-
-    pub(super) async fn update_size(&mut self) -> Result<()> {
-        let path = match self.try_resolve()? {
-            This(path) => path,
-            That(_) => {
-                warn!("ArchiveInfo is not resolved, cannot update size.");
-                return Ok(());
-            }
-        };
-
-        let size = path.calculate_size_async().await;
-        match self {
-            ArchiveInfo::ArchiveFile { size: s, .. } => *s = size,
-            ArchiveInfo::CommonFile { size: s, .. } => *s = size,
-            ArchiveInfo::Directory { size: s, .. } => *s = size,
-            ArchiveInfo::None => unreachable!(),
-        }
-        info!("Updated archive info size to: {}", size);
-        Ok(())
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
-#[serde(tag = "type", content = "data")]
-#[ts(export, export_to = "../../src/api/types.ts")]
-pub enum DeployInfo {
-    #[default]
-    None,
-    File {
-        path: PathBuf,
-    },
-    Directory {
-        path: PathBuf,
-    },
-}
-
-impl DeployInfo {
-    fn new_file(path: PathBuf) -> Self {
-        DeployInfo::File { path }
-    }
-
-    fn new_dir(path: PathBuf) -> Self {
-        DeployInfo::Directory { path }
-    }
-
-    fn try_resolve(&self) -> Whether<PathBuf, DeployInfo> {
-        match self {
-            DeployInfo::None => {
-                warn!("DeployInfo is unset, cannot resolve path.");
-                That(DeployInfo::None)
-            }
-            DeployInfo::File { path } => {
-                if path.exists() {
-                    This(path.clone())
-                } else {
-                    warn!("The specified file path does not exist: {}", path.display());
-                    That(DeployInfo::None)
-                }
-            }
-            DeployInfo::Directory { path } => {
-                if path.exists() {
-                    This(path.clone())
-                } else {
-                    warn!(
-                        "The specified directory path does not exist: {}",
-                        path.display()
-                    );
-                    That(DeployInfo::None)
-                }
-            }
-        }
-    }
-}
+pub use archive_info::*;
+pub use content_info::*;
+pub use deploy_info::*;
 
 /// Basic metadata structure for data item
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS)]
@@ -323,10 +67,6 @@ pub struct Metadata {
 
 fn default_id() -> Uuid {
     Uuid::new_v4()
-}
-
-fn default_version() -> String {
-    String::from("1.0.0")
 }
 
 #[allow(dead_code)]
@@ -642,6 +382,7 @@ impl Metadata {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::path::PathBuf;
 
     #[test]
     fn test_content_info() {
@@ -655,9 +396,9 @@ mod test {
             developer: Some("Dev".to_string()),
             publisher: Some("Pub".to_string()),
             sys_platform: vec![GameSysPlatform::Windows],
-            distribution: GameDistribution::Steam {
-                app_id: "fff".to_string(),
-            },
+            distribution: GameDistribution::Steam(SteamDistributionData {
+                app_id: "123456".to_string(),
+            }),
             game_type: GameType::RPG,
         });
         let c2_rel = c2.path_rel();

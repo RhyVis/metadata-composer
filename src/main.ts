@@ -6,15 +6,15 @@ import { Dialog, Loading, Notify, Quasar } from 'quasar';
 import quasarLang from 'quasar/lang/zh-CN';
 import { createApp } from 'vue';
 import { initKeyBlocker, initLogger } from '@/api/hook.ts';
-import { Tray } from '@/api/tray.ts';
 import App from '@/App.vue';
+import { initTrayIcon } from '@/composables/useTray.ts';
 import router from '@/router';
 import pinia from '@/stores';
 
 initLogger();
 initKeyBlocker();
+initTrayIcon();
 
-console.info(`Init tray icon: ${Tray ? 'success' : 'failed'}`);
 console.info('Creating frontend application...');
 
 const app = createApp(App);

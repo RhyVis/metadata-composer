@@ -216,6 +216,56 @@ export const useContentInfo = (edit: UseEdit) => {
       }
     },
   });
+  const gInputOtherName = computed({
+    get: () =>
+      contentInfo.value.type === 'Game' && contentInfo.value.data.distribution.type === 'Other'
+        ? contentInfo.value.data.distribution.data.name
+        : '',
+    set: (val: string) => {
+      if (
+        contentInfo.value.type === 'Game' &&
+        contentInfo.value.data.distribution.type === 'Other'
+      ) {
+        updateField('content_info', {
+          type: 'Game',
+          data: {
+            ...contentInfo.value.data,
+            distribution: {
+              type: 'Other',
+              data: { ...contentInfo.value.data.distribution.data, name: val?.trim() },
+            },
+          },
+        });
+      } else {
+        console.warn('Attempted to set Other name on non-Game or non-Other content type');
+      }
+    },
+  });
+  const gInputOtherId = computed({
+    get: () =>
+      contentInfo.value.type === 'Game' && contentInfo.value.data.distribution.type === 'Other'
+        ? contentInfo.value.data.distribution.data.id
+        : '',
+    set: (val: string) => {
+      if (
+        contentInfo.value.type === 'Game' &&
+        contentInfo.value.data.distribution.type === 'Other'
+      ) {
+        updateField('content_info', {
+          type: 'Game',
+          data: {
+            ...contentInfo.value.data,
+            distribution: {
+              type: 'Other',
+              data: { ...contentInfo.value.data.distribution.data, id: val?.trim() },
+            },
+          },
+        });
+      } else {
+        console.warn('Attempted to set Other ID on non-Game or non-Other content type');
+      }
+    },
+  });
   const gInputDistributionType = computed({
     get: () =>
       contentInfo.value.type === 'Game' ? contentInfo.value.data.distribution.type : 'Unknown',
@@ -250,6 +300,22 @@ export const useContentInfo = (edit: UseEdit) => {
                 distribution: {
                   type: val,
                   data: { id: '', content_type: DLContentTypeEnum.Doujin },
+                },
+              },
+            });
+            break;
+          }
+          case 'Other': {
+            updateField('content_info', {
+              type: 'Game',
+              data: {
+                ...contentInfo.value.data,
+                distribution: {
+                  type: val,
+                  data: {
+                    name: '',
+                    id: '',
+                  },
                 },
               },
             });
@@ -408,6 +474,8 @@ export const useContentInfo = (edit: UseEdit) => {
     gInputSteamAppId,
     gInputDLSiteId,
     gInputDLSiteContentType,
+    gInputOtherName,
+    gInputOtherId,
     gViewDLSiteIdPrefix,
     gViewDLSiteUrlSeg,
     gFetchDLSiteInfo,

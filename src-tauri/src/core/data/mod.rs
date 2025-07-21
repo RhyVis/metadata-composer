@@ -38,7 +38,7 @@ fn init_library() -> Result<()> {
 
     fn create_db(config: &InternalConfig) -> Result<Database> {
         let db_path = config.root_data().join(LIB_FILE_NAME);
-        Ok(Database::create(db_path)?)
+        Ok(Database::create(db_path).map_err(|e| anyhow!("Error creating the database: {}", e))?)
     }
 
     fn configure_db(db: Database) -> Result<Database> {

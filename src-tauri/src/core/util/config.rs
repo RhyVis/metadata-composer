@@ -50,7 +50,9 @@ pub fn init_config() -> Result<()> {
     }
     .into();
 
-    config.check()?;
+    config
+        .check()
+        .map_err(|e| anyhow!("Config check failed: {}", e))?;
 
     CONFIG
         .set(RwLock::new(config))

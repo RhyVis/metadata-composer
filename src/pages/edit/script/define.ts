@@ -61,12 +61,14 @@ export const enum GameDistributionEnum {
   Unknown = 'Unknown',
   Steam = 'Steam',
   DLSite = 'DLSite',
+  Other = 'Other',
 }
 
 export const GameDistributionOptions: QSelectOption[] = [
   { label: '未知', value: GameDistributionEnum.Unknown },
   { label: 'Steam', value: GameDistributionEnum.Steam },
   { label: 'DLSite', value: GameDistributionEnum.DLSite },
+  { label: '其他', value: GameDistributionEnum.Other },
 ];
 
 export const enum DLContentTypeEnum {
