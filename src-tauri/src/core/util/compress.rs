@@ -1,25 +1,21 @@
-use crate::core::util::create_hidden_command;
+use crate::core::get_handle;
 use anyhow::{Result, anyhow};
 use encoding_rs::GBK;
 use log::{error, info};
+use std::fs;
 use std::path::Path;
-use std::process::Command;
+use tauri_plugin_shell::ShellExt;
 
-fn exist_7z_exe() -> bool {
-    match Command::new("7z").arg("--help").output() {
-        Ok(out) => out.status.success(),
-        Err(_) => false,
-    }
-}
-
-pub fn compress(
+pub async fn compress(
     input_dir: impl AsRef<Path>,
     output_file: impl AsRef<Path>,
     password: Option<&str>,
 ) -> Result<()> {
-    if !exist_7z_exe() {
-        return Err(anyhow!("7z not found in path"));
-    }
+    let handle = get_handle();
+    let shell = handle.shell();
+    let command = shell
+        .sidecar("7z")
+        .map_err(|e| anyhow!("Failed to get 7z sidecar: {e}"))?;
 
     info!(
         "Compressing with 7z: input_dir: {}, output_file: {}, password: {:?}",
@@ -32,9 +28,13 @@ pub fn compress(
     let output_path = output_file.as_ref().to_owned();
     let password = password.map(|s| s.to_owned());
 
-    let mut command = create_hidden_command("7z");
+    if output_path.exists() {
+        fs::remove_file(&output_path)
+            .map_err(|e| anyhow!("Failed to remove existing output file: {e}"))?;
+        info!("Removed existing output file: {}", output_path.display());
+    }
 
-    command
+    let mut command = command
         .arg("a")
         .arg(output_path)
         .arg(input_path.join("*"))
@@ -44,13 +44,13 @@ pub fn compress(
         .arg("-md64m")
         .arg("-mmt")
         .arg("-r");
-
     if let Some(pwd) = password {
-        command.arg(format!("-p{pwd}")).arg("-mhe");
+        command = command.arg(format!("-p{pwd}")).arg("-mhe");
     }
 
     command
         .output()
+        .await
         .map_err(|err| anyhow!("Compression command exec failed, {err}"))
         .and_then(|out| {
             if out.status.success() {
@@ -64,14 +64,16 @@ pub fn compress(
         })
 }
 
-pub fn decompress(
+pub async fn decompress(
     input_file: impl AsRef<Path>,
     output_dir: impl AsRef<Path>,
     password: Option<&str>,
 ) -> Result<()> {
-    if !exist_7z_exe() {
-        return Err(anyhow!("7z not found in path"));
-    }
+    let handle = get_handle();
+    let shell = handle.shell();
+    let command = shell
+        .sidecar("7z")
+        .map_err(|e| anyhow!("Failed to get 7z sidecar: {e}"))?;
 
     info!(
         "Decompressing with 7z: input_file: {}, output_dir: {}, password: {:?}",
@@ -84,9 +86,7 @@ pub fn decompress(
     let output_path = output_dir.as_ref().to_owned();
     let password = password.map(|s| s.to_owned());
 
-    let mut command = create_hidden_command("7z");
-
-    command
+    let mut command = command
         .arg("x")
         .arg(input_path)
         .arg(format!("-o{}", output_path.display()))
@@ -94,11 +94,12 @@ pub fn decompress(
         .arg("-y");
 
     if let Some(pwd) = password {
-        command.arg(format!("-p{pwd}"));
+        command = command.arg(format!("-p{pwd}"));
     }
 
     command
         .output()
+        .await
         .map_err(|e| anyhow!("Decompression command failed: {e}"))
         .and_then(|out| {
             if out.status.success() {
@@ -123,18 +124,4 @@ fn decode_out(out: &[u8]) -> String {
     let out = String::from_utf8_lossy(out);
 
     out
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_find_7z() {
-        if exist_7z_exe() {
-            println!("7z found in path");
-        } else {
-            println!("7z not found in path");
-        }
-    }
 }

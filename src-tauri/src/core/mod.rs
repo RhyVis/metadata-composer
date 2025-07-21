@@ -9,6 +9,7 @@ pub mod util;
 
 static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
 
+/// Initializes the core components of the application.
 pub fn init_core(app_handle: &AppHandle) -> anyhow::Result<()> {
     info!("Core initialization started");
 
@@ -21,6 +22,13 @@ pub fn init_core(app_handle: &AppHandle) -> anyhow::Result<()> {
 
     info!("Core initialized successfully");
     Ok(())
+}
+
+pub fn get_handle() -> AppHandle {
+    APP_HANDLE
+        .get()
+        .cloned()
+        .expect("Core not initialized, call init_core first")
 }
 
 pub trait StringResult<T, E>

@@ -231,10 +231,17 @@ impl SelectorExt for Result<Selector, SelectorErrorKind<'_>> {
 #[cfg(test)]
 mod test {
     use crate::api::dl_site::{DLContentFetch, DLContentType};
+    use crate::api::init_client;
     use crate::core::Language;
+
+    fn init() {
+        init_client().expect("Failed to initialize HTTP client for tests");
+    }
 
     #[tokio::test]
     async fn test_fetch() {
+        init();
+
         let id1 = "01239331"; // クルセイダー・プリンセス～闇に堕ちるココロとカラダ～
         let result1 = DLContentType::DoujinR18
             .fetch_info(id1, &Language::JaJp)

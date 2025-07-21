@@ -8,6 +8,8 @@ import {
   GameDistributionEnum,
   GameDistributionOptions,
   GameSysPlatformOptions,
+  GameTypeEnum,
+  GameTypeOptions,
 } from '@/pages/edit/script/define.ts';
 import { storeToRefs } from 'pinia';
 import { useGlobalStore } from '@/stores/global.ts';
@@ -21,6 +23,7 @@ const { edit } = defineProps<{
 const {
   contentType,
   gInputVersion,
+  gInputGameType,
   gInputDeveloper,
   gInputPublisher,
   gInputSysPlatform,
@@ -42,11 +45,13 @@ const {
   </q-card>
   <q-select
     v-model="contentType"
+    :clearable="contentType != ContentTypeEnum.Undefined"
     :options="ContentTypeOptions"
     emit-value
     label="内容类型"
     map-options
     stack-label
+    @clear="contentType = ContentTypeEnum.Undefined"
   />
 
   <!-- Type Game Data -->
@@ -57,6 +62,18 @@ const {
       hint="游戏本体的版本号，默认为1.0.0"
       label="版本"
       stack-label
+      @clear="gInputVersion = '1.0.0'"
+    />
+    <q-select
+      v-model="gInputGameType"
+      :options="GameTypeOptions"
+      clearable
+      emit-value
+      hint="游戏内容类型"
+      label="类型"
+      map-options
+      stack-label
+      @clear="gInputGameType = GameTypeEnum.Unspecified"
     />
     <q-input
       v-model="gInputDeveloper"

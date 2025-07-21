@@ -3,8 +3,10 @@ import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { storeToRefs } from 'pinia';
 import { useGlobalStore } from '@/stores/global.ts';
 import { useImg } from '@/pages/edit/script/useImg.ts';
+import { useDarkStyle } from '@/composables/useDarkStyle.ts';
 
 const { isDevMode } = storeToRefs(useGlobalStore());
+const { textClass } = useDarkStyle();
 
 const { edit } = defineProps<{
   edit: UseEdit;
@@ -21,7 +23,7 @@ const { imageSrc, showImage, setShowImage, pasteImg, clearImage } = useImg(edit)
     </q-card-section>
   </q-card>
   <q-field hint="此处存储的为图片哈希值" label="图片" stack-label>
-    <div>{{ editData.image ?? '拖拽文件到窗口以上传图片' }}</div>
+    <div :class="textClass">{{ editData.image ?? '拖拽文件到窗口以上传图片' }}</div>
     <template #after>
       <q-btn v-if="imageSrc" flat icon="image" size="md" square @click="setShowImage(true)" />
       <q-btn v-else flat icon="add_photo_alternate" size="md" square @click="pasteImg" />

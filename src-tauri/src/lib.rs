@@ -1,17 +1,18 @@
-use crate::api::init_client;
-use crate::command::*;
+use crate::api::init_api;
+use crate::cmd::*;
 use crate::core::init_core;
 use crate::core::util::APP_LOG_DIR;
 use std::path::PathBuf;
 use tauri::{generate_context, generate_handler};
 
 mod api;
-mod command;
+mod cmd;
 mod core;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_window_state::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
@@ -44,7 +45,7 @@ pub fn run() {
             }
 
             init_core(handle)?;
-            init_client()?;
+            init_api()?;
 
             Ok(())
         })
@@ -65,6 +66,7 @@ pub fn run() {
             util_dl_fetch_info,
             util_dark_state,
             path_resolve_img,
+            path_resolve_archive,
             config_get,
             config_update
         ])

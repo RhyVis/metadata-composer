@@ -102,7 +102,8 @@ onMounted(() => {
             hint="标题内容"
             label="标题"
             stack-label
-            @update:model-value="updateField('title', ($event as string).trim())"
+            @clear="updateField('title', '')"
+            @update:model-value="updateField('title', ($event as string)?.trim())"
           />
           <!-- Alias Input -->
           <EditAlias :edit="edit" />
@@ -117,7 +118,8 @@ onMounted(() => {
             new-value-mode="add-unique"
             stack-label
             use-input
-            @update:model-value="updateField('collection', ($event as string).trim())"
+            @clear="updateField('collection', '')"
+            @update:model-value="updateField('collection', ($event as string)?.trim())"
           />
           <q-input
             :model-value="editData.description"

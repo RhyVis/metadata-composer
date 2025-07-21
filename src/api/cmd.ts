@@ -69,6 +69,10 @@ export class Command {
     return await invoke('path_resolve_img', { hash });
   }
 
+  static async pathResolveArchive(path: string): Promise<string> {
+    return await invoke('path_resolve_archive', { path });
+  }
+
   static async configGet(): Promise<InternalConfig> {
     return await invoke('config_get');
   }

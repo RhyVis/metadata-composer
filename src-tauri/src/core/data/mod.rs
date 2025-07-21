@@ -1,4 +1,4 @@
-use crate::command::append::DeployArg;
+use crate::cmd::append::DeployArg;
 use crate::core::data::metadata::{Metadata, MetadataOption};
 use crate::core::util::config::{InternalConfig, get_config, get_config_copy};
 use anyhow::{Result, anyhow};
@@ -8,7 +8,9 @@ use redb::{Database, ReadableTable, ReadableTableMetadata, TableDefinition};
 use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
-use std::sync::{OnceLock, RwLock};
+use std::sync::{Arc, OnceLock, RwLock};
+use tauri::async_runtime;
+use tokio::fs as tfs;
 
 pub mod metadata;
 
@@ -27,7 +29,7 @@ const DIR_BACKUP: &str = "backup";
 
 const TABLE_METADATA: TableDefinition<&str, Vec<u8>> = TableDefinition::new("metadata");
 
-static DB: OnceLock<Database> = OnceLock::new();
+static DB: OnceLock<Arc<Database>> = OnceLock::new();
 
 static COLLECTION_TEMP: OnceLock<RwLock<HashSet<String>>> = OnceLock::new();
 
@@ -102,7 +104,7 @@ fn init_library() -> Result<()> {
 
     backup_db(&config)?;
 
-    DB.set(configure_db(create_db(&config)?)?)
+    DB.set(Arc::new(configure_db(create_db(&config)?)?))
         .expect("Library database already initialized");
     COLLECTION_TEMP
         .set(RwLock::new(HashSet::new()))
@@ -113,35 +115,55 @@ fn init_library() -> Result<()> {
     Ok(())
 }
 
-pub fn export_library() -> Result<()> {
+pub async fn export_library() -> Result<()> {
     let path = get_config()?.root_data().join(LIB_FILE_EXPORT_NAME);
-    let all = metadata_get_all()?;
+    let all = metadata_get_all().await?;
     let json = serde_json::to_string(&all)
         .map_err(|e| anyhow!("Failed to serialize metadata to JSON: {}", e))?;
 
-    fs::write(&path, json)?;
+    tfs::write(&path, json).await?;
 
     info!("Library exported to {}", path.display());
 
     Ok(())
 }
 
-pub fn import_library() -> Result<()> {
+pub async fn import_library() -> Result<()> {
     let path = get_config()?.root_data().join(LIB_FILE_EXPORT_NAME);
     if !path.exists() {
         return Err(anyhow!("Library export file not found: {}", path.display()));
     }
 
-    let json = fs::read_to_string(&path)
+    let json = tfs::read_to_string(&path)
+        .await
         .map_err(|e| anyhow!("Failed to read library export file: {}", e))?;
 
     let entries: Vec<Metadata> =
         serde_json::from_str(&json).map_err(|e| anyhow!("Failed to deserialize JSON: {}", e))?;
 
-    for entry in entries {
-        sync_collection(&entry)?;
-        metadata_set_internal(&entry.id.to_string(), entry)?;
+    if entries.is_empty() {
+        warn!(
+            "No entries found in the library export file: {}",
+            path.display()
+        );
+        return Ok(());
     }
+
+    let db = get_db_copy()?;
+    async_runtime::spawn_blocking(move || {
+        let write = db.begin_write()?;
+        {
+            let mut table = write.open_table(TABLE_METADATA)?;
+            for entry in &entries {
+                let raw =
+                    bson::to_vec(entry).map_err(|e| anyhow!("Failed to serialize entry: {}", e))?;
+                table.insert(&*entry.id.to_string(), raw)?;
+            }
+        }
+        write.commit()?;
+        Ok::<(), anyhow::Error>(())
+    })
+    .await??;
 
     info!("Library imported from {}", path.display());
 
@@ -151,42 +173,60 @@ pub fn import_library() -> Result<()> {
 fn get_db() -> Result<&'static Database> {
     DB.get()
         .ok_or_else(|| anyhow!("Library database not initialized"))
+        .map(|db| db.as_ref())
 }
 
-fn metadata_get_internal(key: &str) -> Result<Option<Metadata>> {
-    let db = get_db()?;
-    let read = db.begin_read()?;
-    let table = read.open_table(TABLE_METADATA)?;
+fn get_db_copy() -> Result<Arc<Database>> {
+    DB.get()
+        .cloned()
+        .ok_or_else(|| anyhow!("Library database not initialized"))
+}
 
-    match table.get(key)? {
-        Some(value) => match bson::from_slice(value.value().as_slice()) {
-            Ok(value) => Ok(Some(value)),
-            Err(e) => Err(anyhow!(
-                "Failed to deserialize value for key '{}': {}",
-                key,
-                e
-            )),
-        },
-        None => {
-            warn!("Key '{}' not found in library", key);
-            Ok(None)
+async fn metadata_get_internal(key: &str) -> Result<Option<Metadata>> {
+    let db = get_db_copy()?;
+    let key = key.to_string();
+
+    async_runtime::spawn_blocking(move || {
+        let read = db.begin_read()?;
+        let table = read.open_table(TABLE_METADATA)?;
+
+        match table.get(&*key)? {
+            Some(value) => match bson::from_slice(value.value().as_slice()) {
+                Ok(value) => Ok(Some(value)),
+                Err(e) => Err(anyhow!(
+                    "Failed to deserialize value for key '{}': {}",
+                    key,
+                    e
+                )),
+            },
+            None => {
+                warn!("Key '{}' not found in library", key);
+                Ok(None)
+            }
         }
-    }
+    })
+    .await?
 }
 
-fn metadata_set_internal(key: &str, value: Metadata) -> Result<()> {
-    let write = get_db()?.begin_write()?;
-    {
-        let mut table = write.open_table(TABLE_METADATA)?;
-        let raw = bson::to_vec(&value)?;
-        table.insert(key, raw)?;
-    }
-    write.commit()?;
-    Ok(())
+async fn metadata_set_internal(key: &str, value: Metadata) -> Result<()> {
+    let db = get_db_copy()?;
+    let key = key.to_string();
+
+    async_runtime::spawn_blocking(move || {
+        let write = db.begin_write()?;
+        {
+            let mut table = write.open_table(TABLE_METADATA)?;
+            let raw = bson::to_vec(&value)?;
+            table.insert(&*key, raw)?;
+        }
+        write.commit()?;
+        Ok(())
+    })
+    .await?
 }
 
-fn metadata_create_internal(opt: MetadataOption) -> Result<String> {
-    let new = Metadata::create(opt)?;
+async fn metadata_create_internal(opt: MetadataOption) -> Result<String> {
+    let new = Metadata::create(opt).await?;
     let new_id = new.id.clone().to_string();
     sync_collection(&new)?;
     let db = get_db()?;
@@ -202,11 +242,11 @@ fn metadata_create_internal(opt: MetadataOption) -> Result<String> {
     Ok(new_id)
 }
 
-fn metadata_patch_internal(key: String, opt: MetadataOption) -> Result<()> {
+async fn metadata_patch_internal(key: String, opt: MetadataOption) -> Result<()> {
     let db = get_db()?;
-    if let Some(mut exist) = metadata_get_internal(key.as_str())? {
+    if let Some(mut exist) = metadata_get_internal(key.as_str()).await? {
         let exist_archive_info = exist.archive_info.clone();
-        exist.patch(opt);
+        exist.patch(opt).await?;
 
         if exist_archive_info.eq(&exist.archive_info) {
             debug!("No changes detected in archive info for key '{}'", key);
@@ -215,7 +255,7 @@ fn metadata_patch_internal(key: String, opt: MetadataOption) -> Result<()> {
                 "Archive info changed for key '{}': {:?}",
                 key, exist.archive_info
             );
-            exist.archive_info.update_size()?;
+            exist.archive_info.update_size().await?;
         }
 
         sync_collection(&exist)?;
@@ -234,19 +274,26 @@ fn metadata_patch_internal(key: String, opt: MetadataOption) -> Result<()> {
     }
 }
 
-fn metadata_delete_internal(key: &str) -> Result<()> {
-    let db = get_db()?;
-    let write = db.begin_write()?;
-    {
-        let mut table = write.open_table(TABLE_METADATA)?;
-        if table.remove(key)?.is_none() {
-            warn!("Key '{}' not found in library", key);
-        } else {
-            info!("Deleted library entry with id '{}'", key);
+async fn metadata_delete_internal(key: &str) -> Result<()> {
+    let db = get_db_copy()?;
+    let key = key.to_string();
+
+    async_runtime::spawn_blocking(move || {
+        let write = db.begin_write()?;
+        {
+            let mut table = write.open_table(TABLE_METADATA)?;
+            if table.remove(&*key)?.is_none() {
+                warn!("Key '{}' not found in library", key);
+            } else {
+                info!("Deleted library entry with id '{}'", key);
+            }
         }
-    }
-    write.commit()?;
-    Ok(())
+        write.commit()?;
+        sync_collection_all()?;
+
+        Ok::<(), anyhow::Error>(())
+    })
+    .await?
 }
 
 fn metadata_collection_list_internal() -> Result<Vec<String>> {
@@ -287,47 +334,53 @@ fn sync_collection_all() -> Result<()> {
     Ok(())
 }
 
-pub fn metadata_update(opt: MetadataOption) -> Result<Option<String>> {
+pub async fn metadata_update(opt: MetadataOption) -> Result<Option<String>> {
     if let Some(id) = &opt.id {
-        metadata_patch_internal((*id).to_string(), opt).map(|_| None)
+        metadata_patch_internal((*id).to_string(), opt)
+            .await
+            .map(|_| None)
     } else {
-        metadata_create_internal(opt).map(Some)
+        metadata_create_internal(opt).await.map(Some)
     }
 }
 
-pub fn metadata_get_all() -> Result<Vec<Metadata>> {
-    let db = get_db()?;
-    let read = db.begin_read()?;
-    let table = read.open_table(TABLE_METADATA)?;
+pub async fn metadata_get_all() -> Result<Vec<Metadata>> {
+    let db = get_db_copy()?;
+    async_runtime::spawn_blocking(move || {
+        let read = db.begin_read()?;
+        let table = read.open_table(TABLE_METADATA)?;
 
-    info!(
-        "Retrieving all metadata entries from library: {}",
-        table.len()?
-    );
-    table
-        .iter()?
-        .filter_map(Result::ok)
-        .map(|(k, v)| {
-            bson::from_slice(v.value().as_slice())
-                .map_err(|e| anyhow!("Failed to deserialize value for key '{}': {}", k.value(), e))
-        })
-        .collect::<Result<Vec<Metadata>>>()
+        info!(
+            "Retrieving all metadata entries from library: {}",
+            table.len()?
+        );
+        table
+            .iter()?
+            .filter_map(Result::ok)
+            .map(|(k, v)| {
+                bson::from_slice(v.value().as_slice()).map_err(|e| {
+                    anyhow!("Failed to deserialize value for key '{}': {}", k.value(), e)
+                })
+            })
+            .collect::<Result<Vec<Metadata>>>()
+    })
+    .await?
 }
 
-pub fn metadata_get(key: &str) -> Result<Option<Metadata>> {
-    metadata_get_internal(key)
+pub async fn metadata_get(key: &str) -> Result<Option<Metadata>> {
+    metadata_get_internal(key).await
 }
 
-pub fn metadata_delete(key: &str) -> Result<()> {
-    metadata_delete_internal(key)
+pub async fn metadata_delete(key: &str) -> Result<()> {
+    metadata_delete_internal(key).await
 }
 
 pub fn metadata_collection_list() -> Result<Vec<String>> {
     metadata_collection_list_internal()
 }
 
-pub fn metadata_deploy(key: &str, arg: DeployArg) -> Result<()> {
-    let data = metadata_get_internal(key)?;
+pub async fn metadata_deploy(key: &str, arg: DeployArg) -> Result<()> {
+    let data = metadata_get_internal(key).await?;
     if let Some(mut data) = data {
         let deploy_dir = get_config()?.root_deploy().cloned();
         if arg.use_config_dir {
@@ -337,9 +390,9 @@ pub fn metadata_deploy(key: &str, arg: DeployArg) -> Result<()> {
             deploy_dir.push(&data.title);
             fs::create_dir_all(&deploy_dir)?;
             let id = data.id.to_string();
-            if data.deploy(deploy_dir)? {
+            if data.deploy(deploy_dir).await? {
                 info!("Successfully deployed metadata with id '{id}'");
-                metadata_set_internal(&id, data)?;
+                metadata_set_internal(&id, data).await?;
                 Ok(())
             } else {
                 Err(anyhow!("Failed to deploy metadata with id '{id}'"))
@@ -353,9 +406,9 @@ pub fn metadata_deploy(key: &str, arg: DeployArg) -> Result<()> {
                 fs::create_dir_all(target_dir)?;
             }
             let id = data.id.to_string();
-            if data.deploy(target_dir)? {
+            if data.deploy(target_dir).await? {
                 info!("Successfully deployed metadata with id '{id}'");
-                metadata_set_internal(&id, data)?;
+                metadata_set_internal(&id, data).await?;
 
                 Ok(())
             } else {
@@ -370,12 +423,12 @@ pub fn metadata_deploy(key: &str, arg: DeployArg) -> Result<()> {
     }
 }
 
-pub fn metadata_deploy_off(key: &str) -> Result<()> {
-    let data = metadata_get_internal(key)?;
+pub async fn metadata_deploy_off(key: &str) -> Result<()> {
+    let data = metadata_get_internal(key).await?;
     if let Some(mut data) = data {
-        if data.deploy_off()? {
+        if data.deploy_off().await? {
             info!("Successfully deployed metadata with key '{key}'");
-            metadata_set_internal(key, data)?;
+            metadata_set_internal(key, data).await?;
             Ok(())
         } else {
             Err(anyhow!("Failed to deploy metadata with key '{key}'"))
@@ -385,8 +438,9 @@ pub fn metadata_deploy_off(key: &str) -> Result<()> {
     }
 }
 
-pub fn clear_unused_images() -> Result<u32> {
-    let all_used_images = metadata_get_all()?
+pub async fn clear_unused_images() -> Result<u32> {
+    let all_used_images = metadata_get_all()
+        .await?
         .iter()
         .map(|data| data.image.clone())
         .flatten()
@@ -399,11 +453,10 @@ pub fn clear_unused_images() -> Result<u32> {
         ));
     }
 
-    let entries = fs::read_dir(&dir_image)?;
+    let mut entries = tfs::read_dir(&dir_image).await?;
     let mut removed_count = 0u32;
 
-    for entry in entries {
-        let entry = entry?;
+    while let Some(entry) = entries.next_entry().await? {
         let path = entry.path();
 
         if path.is_file() && path.extension().map_or(false, |ext| ext == "png") {
@@ -412,7 +465,7 @@ pub fn clear_unused_images() -> Result<u32> {
                 .and_then(|s| Some(s.to_string_lossy().to_string()))
             {
                 if !all_used_images.contains(&file_name) {
-                    fs::remove_file(&path)?;
+                    tfs::remove_file(&path).await?;
                     debug!("Removed unused image: {}", path.display());
                     removed_count += 1;
                 }

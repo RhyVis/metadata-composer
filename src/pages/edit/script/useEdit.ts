@@ -84,9 +84,10 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
           type: 'Game',
           data: {
             version: '1.0.0',
+            game_type: 'RPG',
             developer: null,
             publisher: null,
-            sys_platform: [],
+            sys_platform: ['Windows'],
             distribution: {
               type: 'DLSite',
               data: {

@@ -15,6 +15,7 @@ const defaultContentInfo = (): ContentInfo => ({
 
 const defaultGameData = (): GameData => ({
   version: '1.0.0',
+  game_type: 'Unspecified',
   developer: null,
   publisher: null,
   sys_platform: [],
@@ -53,11 +54,28 @@ export const useContentInfo = (edit: UseEdit) => {
           type: 'Game',
           data: {
             ...contentInfo.value.data,
-            version: val.trim(),
+            version: val?.trim() || '1.0.0',
           },
         });
       } else {
         console.warn('Attempted to set version on non-Game content type');
+      }
+    },
+  });
+  const gInputGameType = computed({
+    get: () =>
+      contentInfo.value.type === 'Game' ? contentInfo.value.data.game_type : 'Unspecified',
+    set: (val: GameData['game_type']) => {
+      if (contentInfo.value.type === 'Game') {
+        updateField('content_info', {
+          type: 'Game',
+          data: {
+            ...contentInfo.value.data,
+            game_type: val,
+          },
+        });
+      } else {
+        console.warn('Attempted to set game type on non-Game content type');
       }
     },
   });
@@ -382,6 +400,7 @@ export const useContentInfo = (edit: UseEdit) => {
   return {
     contentType,
     gInputVersion,
+    gInputGameType,
     gInputDeveloper,
     gInputPublisher,
     gInputSysPlatform,
