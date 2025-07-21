@@ -15,25 +15,26 @@ static APP_HANDLE: OnceLock<AppHandle> = OnceLock::new();
 fn init_core_internal(app: &AppHandle) -> Result<()> {
     info!("Core initialization started");
 
-    let root_path = if !check_init_flag() {
-        app.dialog()
-            .message(
-                "Seems that the application is running for the first time.\n\
+    let root_path =
+        if !check_init_flag(app).map_err(|e| anyhow!("Failed to check init flag: {}", e))? {
+            app.dialog()
+                .message(
+                    "Seems that the application is running for the first time.\n\
                 You'll need to specify the root directory to store data.",
-            )
-            .title("Initialization Required")
-            .blocking_show();
-        let path_chosen = app
-            .dialog()
-            .file()
-            .set_title("Root Directory Selection")
-            .blocking_pick_folder()
-            .and_then(|path| path.into_path().ok());
-        create_init_flag()?;
-        path_chosen
-    } else {
-        None
-    };
+                )
+                .title("Initialization Required")
+                .blocking_show();
+            let path_chosen = app
+                .dialog()
+                .file()
+                .set_title("Root Directory Selection")
+                .blocking_pick_folder()
+                .and_then(|path| path.into_path().ok());
+            create_init_flag(app)?;
+            path_chosen
+        } else {
+            None
+        };
 
     init_config(
         if cfg!(debug_assertions) {
@@ -108,15 +109,15 @@ pub enum Language {
 
 const INIT_FLAG_NAME: &str = "INIT";
 
-fn check_init_flag() -> bool {
-    let root = get_app_root_path();
-    let init_flag_path = root.join(INIT_FLAG_NAME);
-    init_flag_path.exists()
+fn check_init_flag(app: &AppHandle) -> Result<bool> {
+    let data_path = app.path().app_config_dir()?;
+    let init_flag_path = data_path.join(INIT_FLAG_NAME);
+    Ok(init_flag_path.exists())
 }
 
-fn create_init_flag() -> Result<()> {
-    let root = get_app_root_path();
-    let init_flag_path = root.join(INIT_FLAG_NAME);
+fn create_init_flag(app: &AppHandle) -> Result<()> {
+    let config_path = app.path().app_config_dir()?;
+    let init_flag_path = config_path.join(INIT_FLAG_NAME);
     std::fs::File::create(init_flag_path)
         .map_err(|e| anyhow!("Failed to create init flag: {}", e))?;
     Ok(())
