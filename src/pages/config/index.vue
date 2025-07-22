@@ -31,7 +31,9 @@ onMounted(() =>
           <q-item-label caption>{{ root_data || '`未设置`' }}</q-item-label>
         </q-item-section>
         <q-item-section side top>
-          <q-btn flat icon="folder" square @click="handleSelectDir('root_data')" />
+          <q-btn-group flat>
+            <q-btn flat icon="folder" round @click="handleSelectDir('root_data')" />
+          </q-btn-group>
         </q-item-section>
       </q-item>
 
@@ -46,56 +48,51 @@ onMounted(() =>
               v-if="root_deploy"
               flat
               icon="clear"
-              square
+              round
               @click="handleClearField('root_deploy')"
             />
-            <q-btn flat icon="folder" square @click="handleSelectDir('root_deploy')" />
+            <q-btn flat icon="folder" round @click="handleSelectDir('root_deploy')" />
           </q-btn-group>
         </q-item-section>
       </q-item>
 
-      <q-item v-ripple>
+      <q-item v-ripple clickable @click="handleClearImageCache">
         <q-item-section>
           <q-item-label>清除图片缓存</q-item-label>
           <q-item-label caption>清除未使用的图片缓存</q-item-label>
-        </q-item-section>
-        <q-item-section side top>
-          <q-btn flat icon="delete" square @click="handleClearImageCache" />
         </q-item-section>
       </q-item>
 
       <q-item-label header>数据库</q-item-label>
 
-      <q-item v-ripple>
+      <q-item v-ripple clickable @click="handleExport">
         <q-item-section>
           <q-item-label>导出元数据</q-item-label>
           <q-item-label caption>导出当前数据库的元数据到 'lib.json'</q-item-label>
         </q-item-section>
-        <q-item-section side top>
-          <q-btn flat icon="save" square @click="handleExport" />
-        </q-item-section>
       </q-item>
 
-      <q-item v-ripple>
+      <q-item v-ripple clickable @click="handleImport">
         <q-item-section>
           <q-item-label>导入元数据</q-item-label>
           <q-item-label caption>从 'lib.json' 导入元数据到当前数据库</q-item-label>
-        </q-item-section>
-        <q-item-section side top>
-          <q-btn flat icon="upload" square @click="handleImport" />
         </q-item-section>
       </q-item>
 
       <q-item-label header>目录</q-item-label>
 
       <q-item v-ripple clickable @click="Command.openConfigDir()">
-        <q-item-label>打开配置目录</q-item-label>
-        <q-item-label caption> 配置文件为 config.toml </q-item-label>
+        <q-item-section>
+          <q-item-label>打开配置目录</q-item-label>
+          <q-item-label caption> 配置文件为 config.toml </q-item-label>
+        </q-item-section>
       </q-item>
 
       <q-item v-ripple clickable @click="Command.openLogDir()">
-        <q-item-label>打开日志目录</q-item-label>
-        <q-item-label caption> 日志文件为 composer.log </q-item-label>
+        <q-item-section>
+          <q-item-label>打开日志目录</q-item-label>
+          <q-item-label caption> 日志文件为 composer.log </q-item-label>
+        </q-item-section>
       </q-item>
     </q-list>
   </q-page>

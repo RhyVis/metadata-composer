@@ -3,14 +3,18 @@ import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { ref } from 'vue';
 import { set } from '@vueuse/core';
 import type { QInput } from 'quasar';
+import { useNotify } from '@/composables/useNotify.ts';
+
+const { notifyWarning } = useNotify();
 
 const { edit } = defineProps<{
   edit: UseEdit;
 }>();
-const { editData } = edit;
+const { editData, updateField } = edit;
 
-const addCache = ref('');
 const inputRef = ref<QInput>();
+const addCache = ref('');
+const resetCache = () => set(addCache, '');
 
 if (!editData.value.alias) {
   console.info('Initializing alias as an empty array');
@@ -18,17 +22,19 @@ if (!editData.value.alias) {
 }
 
 const handleRemoveAlias = (index: number) => {
-  editData.value.alias?.splice(index, 1);
+  const newAlias = [...(editData.value.alias || [])];
+  newAlias.splice(index, 1);
+  updateField('alias', newAlias);
 };
 const handleAddAlias = () => {
-  inputRef.value?.validate();
   const trim = addCache.value.trim();
-  if (trim && !editData.value.alias?.includes(trim)) {
-    editData.value.alias = [...(editData.value.alias || []), trim];
-    set(addCache, '');
-  } else {
-    console.warn('Alias is empty or already exists');
+  if (!trim) return;
+  if (checkAliasDuplicate(trim)) {
+    notifyWarning(`代称 "${trim}" 已存在`);
+    return;
   }
+  updateField('alias', [...(editData.value.alias || []), trim]);
+  resetCache();
 };
 
 const checkAliasDuplicate = (alias: string): boolean => {
@@ -40,14 +46,13 @@ const checkAliasDuplicate = (alias: string): boolean => {
   <q-input
     v-model="addCache"
     :autofocus="false"
-    :rules="[(val) => !checkAliasDuplicate(val) || '此别称已存在']"
     clearable
+    hint="回车以添加新标签"
     label="代称"
     lazy-rules
-    placeholder="回车以添加新代称"
     ref="inputRef"
     stack-label
-    @clear="addCache = ''"
+    @clear="resetCache"
     @keyup.enter="handleAddAlias"
   />
   <div>

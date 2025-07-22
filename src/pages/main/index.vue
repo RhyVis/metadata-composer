@@ -121,6 +121,7 @@ onMounted(() =>
           </div>
         </template>
 
+        <!-- Item Template -->
         <template #item="{ cols, row }">
           <div class="q-pa-xs col-xs-12 col-sm-6 col-md-4 flex flex-col">
             <q-card class="full-height full-width column" bordered flat>
@@ -182,17 +183,13 @@ onMounted(() =>
               </q-list>
               <q-space />
               <q-separator inset />
+
+              <!-- Actions -->
               <q-card-actions class="q-mt-auto" align="right">
                 <q-btn-group flat>
                   <template v-if="isDeployable(row as Metadata)">
-                    <q-btn
-                      v-if="hasDeployRoot"
-                      color="primary"
-                      flat
-                      icon="create_new_folder"
-                      size="sm"
-                    >
-                      <q-tooltip>部署到指定目录</q-tooltip>
+                    <q-btn v-if="hasDeployRoot" color="primary" flat icon="create_new_folder">
+                      <q-tooltip>部署到设置目录或自定义目录</q-tooltip>
                       <q-popup-proxy>
                         <q-card>
                           <q-card-section>
@@ -228,19 +225,12 @@ onMounted(() =>
                       color="primary"
                       flat
                       icon="create_new_folder"
-                      size="sm"
                       @click="handleDeploy(row.id, false)"
                     >
                       <q-tooltip>部署到指定目录</q-tooltip>
                     </q-btn>
                   </template>
-                  <q-btn
-                    v-if="isDeployed(row as Metadata)"
-                    color="primary"
-                    flat
-                    icon="folder_off"
-                    size="sm"
-                  >
+                  <q-btn v-if="isDeployed(row as Metadata)" color="primary" flat icon="folder_off">
                     <q-tooltip>取消部署</q-tooltip>
                     <q-popup-proxy>
                       <q-card>
@@ -263,16 +253,16 @@ onMounted(() =>
                       </q-card>
                     </q-popup-proxy>
                   </q-btn>
-                  <q-btn flat icon="edit" size="sm" @click="handleEdit((row as Metadata).id)">
+                  <q-btn flat icon="edit" @click="handleEdit((row as Metadata).id)">
                     <q-tooltip> 编辑条目 </q-tooltip>
                   </q-btn>
-                  <q-btn color="negative" flat icon="delete" size="sm">
+                  <q-btn color="negative" flat icon="delete">
                     <q-tooltip> 删除条目 </q-tooltip>
                     <q-popup-proxy>
                       <q-card>
                         <q-card-section>
                           <div class="r-no-sel text-subtitle2">
-                            确定要删除'{{ (row as Metadata).title }}'吗
+                            确定要删除'{{ (row as Metadata).title || (row as Metadata).id }}'吗
                           </div>
                         </q-card-section>
                         <q-separator />

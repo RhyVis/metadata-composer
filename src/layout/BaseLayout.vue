@@ -27,7 +27,7 @@ const contentClass = computed(() =>
       <q-toolbar>
         <q-toolbar-title>
           <div class="row items-center r-no-sel">
-            <q-avatar @click="push('/')">
+            <q-avatar size="md" @click="push('/')">
               <img :src="Icon" alt="C" />
             </q-avatar>
             <span class="q-pl-sm text-bold">Composer</span>
@@ -41,44 +41,28 @@ const contentClass = computed(() =>
               v-if="dev"
               :icon="isDevMode ? 'code' : 'code_off'"
               flat
-              push
               round
               @click="isDevMode = !isDevMode"
             />
             <q-btn
               :icon="dark.isActive ? 'dark_mode' : 'light_mode'"
               flat
-              push
               round
               @click="isDarkMode = !isDarkMode"
             />
             <q-btn flat icon="settings" push round @click="push('config')" />
           </q-btn-group>
-          <q-separator class="q-mx-xs" inset vertical />
-          <q-btn-group flat push>
-            <q-btn
-              flat
-              icon="fa-solid fa-window-minimize"
-              push
-              size="sm"
-              @click="window.minimize()"
-            />
+          <q-separator class="q-mx-sm" inset vertical />
+          <q-btn-group flat>
+            <q-btn flat icon="fa-solid fa-window-minimize" size="sm" @click="window.minimize()" />
             <q-btn
               color="primary"
               flat
               icon="fa-solid fa-window-maximize"
-              push
               size="sm"
               @click="window.toggleMaximize()"
             />
-            <q-btn
-              color="red"
-              flat
-              icon="fa-solid fa-xmark"
-              push
-              size="sm"
-              @click="window.close()"
-            />
+            <q-btn color="red" flat icon="fa-solid fa-xmark" size="sm" @click="window.close()" />
           </q-btn-group>
         </div>
       </q-toolbar>

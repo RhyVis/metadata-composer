@@ -5,15 +5,16 @@ import { set } from '@vueuse/core';
 import type { QInput } from 'quasar';
 import { useNotify } from '@/composables/useNotify.ts';
 
+const { notifyWarning } = useNotify();
+
 const { edit } = defineProps<{
   edit: UseEdit;
 }>();
-const { editData } = edit;
+const { editData, updateField } = edit;
 
-const { notifyWarning } = useNotify();
-
-const addCache = ref('');
 const inputRef = ref<QInput>();
+const addCache = ref('');
+const resetCache = () => set(addCache, '');
 
 if (!editData.value.tags) {
   console.info('Initializing tags as an empty array');
@@ -21,19 +22,17 @@ if (!editData.value.tags) {
 }
 
 const handleRemoveTag = (index: number) => {
-  editData.value.tags?.splice(index, 1);
+  const newTags = [...(editData.value.tags || [])];
+  newTags.splice(index, 1);
+  updateField('tags', newTags);
 };
 const handleAddTag = (alias: string) => {
-  inputRef.value?.validate();
+  const trim = alias.trim();
+  if (!trim) return;
 
-  const trimInput = alias.trim();
-  if (!trimInput) {
-    notifyWarning('标签不能为空', undefined, 1000);
-    return;
-  }
-
-  const tags = trimInput.split(/[\s，,；;|]+/).filter(Boolean);
+  const tags = trim.split(/[\s，,；;|]+/).filter(Boolean);
   const duplicatedTags = [];
+  const toAddTags = [];
   console.info(`Adding tags: ${tags.join(', ')}`);
 
   let added = false;
@@ -41,16 +40,17 @@ const handleAddTag = (alias: string) => {
     if (checkTagDuplicate(tag)) {
       duplicatedTags.push(tag);
     } else {
-      editData.value.tags?.push(tag);
+      toAddTags.push(tag);
       added = true;
     }
   }
 
   if (added) {
-    set(addCache, '');
+    updateField('tags', [...(editData.value.tags || []), ...toAddTags]);
+    resetCache();
   }
   if (duplicatedTags.length > 0) {
-    notifyWarning(`标签 ${duplicatedTags.join(', ')} 已存在`, undefined, 1000);
+    notifyWarning(`标签 ${duplicatedTags.join(', ')} 已存在`);
   }
 };
 
@@ -63,14 +63,13 @@ const checkTagDuplicate = (alias: string): boolean => {
   <q-input
     v-model="addCache"
     :autofocus="false"
-    :rules="[(val) => !checkTagDuplicate(val) || '此标签已存在']"
     clearable
+    hint="回车以添加新标签"
     label="标签"
     lazy-rules
-    placeholder="回车以添加新标签"
     ref="inputRef"
     stack-label
-    @clear="addCache = ''"
+    @clear="resetCache"
     @keyup.enter="handleAddTag(addCache)"
   />
   <div>

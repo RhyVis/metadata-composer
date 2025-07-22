@@ -1,56 +1,45 @@
 <script lang="ts" setup>
 import { useRouteParams } from '@vueuse/router';
-import { onMounted, ref } from 'vue';
-import { set } from '@vueuse/core';
+import { ref } from 'vue';
 import { onBeforeRouteLeave, useRouter } from 'vue-router';
-import { useLibraryStore } from '@/stores/library.ts';
-import { type MaybeMetadata, useEdit } from '@/pages/edit/script/useEdit.ts';
+import { useEdit } from '@/pages/edit/script/useEdit.ts';
 import EditAlias from '@/pages/edit/comp/EditAlias.vue';
 import EditTag from '@/pages/edit/comp/EditTag.vue';
 import EditArchiveInfo from '@/pages/edit/comp/EditArchiveInfo.vue';
 import EditContentInfo from '@/pages/edit/comp/EditContentInfo.vue';
-import { Command } from '@/api/cmd.ts';
 import EditImage from '@/pages/edit/comp/EditImage.vue';
 import { useGlobalStore } from '@/stores/global.ts';
 import { storeToRefs } from 'pinia';
-import { useQuasar } from 'quasar';
+import { type QForm, useQuasar } from 'quasar';
+import EditTitle from '@/pages/edit/comp/EditTitle.vue';
+import EditCollection from '@/pages/edit/comp/EditCollection.vue';
+import EditDescription from '@/pages/edit/comp/EditDescription.vue';
 
 const { push } = useRouter();
 const { dialog } = useQuasar();
 const { isDevMode } = storeToRefs(useGlobalStore());
-const { get: getById } = useLibraryStore();
 
-const initData = (): MaybeMetadata => {
+const extractID = (): string => {
   const param = useRouteParams('id');
   if (!param.value) {
-    console.info('No ID provided, switching to NEW mode');
-    return;
+    console.warn('No ID provided, cannot extract ID');
+    return 'NEW';
   } else if (typeof param.value !== 'string') {
     console.error(`Invalid ID type, expected a string, but got [${param.value.join(',')}]`);
-    push('/');
-    return;
+    return 'NEW';
   }
-  console.info(`Using ID: ${param.value}`);
-  return getById(param.value);
+  return param.value;
 };
 
-const id = ref('');
-const data = ref<MaybeMetadata>(initData());
-const edit = useEdit(data);
-const { editData, isEditMode, pageLock, everEdited, updateField, updateData, applyPreset } = edit;
+const formRef = ref<QForm>(null!);
 
-const collectionList = ref<string[]>([]);
+const id = ref(extractID());
+const edit = useEdit(id, formRef);
+const { editData, isEditMode, pageLock, everEdited, updateData, applyPreset, validate } = edit;
 
 const handleUpdate = async () => {
   if (await updateData()) await push('/');
 };
-
-onMounted(() => {
-  Command.metadataCollectionList().then(
-    (list) => set(collectionList, list),
-    (err) => console.error('Failed to fetch collection list:', err),
-  );
-});
 
 onBeforeRouteLeave((_to, _from, next) => {
   if (pageLock.value) {
@@ -85,12 +74,12 @@ onBeforeRouteLeave((_to, _from, next) => {
           <div class="text-subtitle2">Develop Info</div>
           <q-separator />
           <div class="text-caption">ID: {{ id }}</div>
-          <div class="text-caption">Data: {{ data ?? '`undefined`' }}</div>
-          <div class="text-caption">EditMode: {{ isEditMode }}</div>
           <div class="text-caption">
             EditData:
             <pre>{{ editData }}</pre>
           </div>
+          <div class="text-caption">FormRef: {{ formRef }}</div>
+          <q-btn label="Test Validation" @click="validate" />
         </q-card-section>
         <q-separator inset />
       </template>
@@ -120,43 +109,17 @@ onBeforeRouteLeave((_to, _from, next) => {
       <q-separator inset />
 
       <q-card-section>
-        <q-form @submit.prevent>
+        <q-form ref="formRef" @submit.prevent>
           <!-- Title Input -->
-          <q-input
-            :model-value="editData.title"
-            clearable
-            hint="标题内容"
-            label="标题"
-            stack-label
-            @clear="updateField('title', '')"
-            @update:model-value="updateField('title', ($event as string)?.trim())"
-          />
+          <EditTitle :edit="edit" />
           <!-- Alias Input -->
           <EditAlias :edit="edit" />
           <!-- Tags Input -->
           <EditTag :edit="edit" />
           <!-- Collection Select -->
-          <q-select
-            :model-value="editData.collection"
-            :options="collectionList"
-            clearable
-            label="所属合集"
-            new-value-mode="add-unique"
-            stack-label
-            use-input
-            @clear="updateField('collection', '')"
-            @update:model-value="updateField('collection', ($event as string)?.trim())"
-          />
-          <q-input
-            :model-value="editData.description"
-            autogrow
-            clearable
-            hint="内容描述"
-            label="描述"
-            stack-label
-            type="textarea"
-            @update:model-value="updateField('description', $event as string)"
-          />
+          <EditCollection :edit="edit" />
+          <!-- Description Input -->
+          <EditDescription :edit="edit" />
           <!-- Image Input -->
           <EditImage :edit="edit" />
           <!-- Content Info -->

@@ -1,3 +1,4 @@
+import type { QForm } from 'quasar';
 import type { Ref } from 'vue';
 import type { Metadata, MetadataOption } from '@/api/types.ts';
 import type { EditPreset } from '@/pages/edit/script/define.ts';
@@ -19,15 +20,16 @@ export type MaybeMetadata = Metadata | undefined;
 
 type EditableField = Exclude<keyof MetadataOption, 'id'>;
 
-type Validator = () => Promise<boolean | string>;
-
 const window = getCurrentWindow();
 
-export const useEdit = (initialData: Ref<MaybeMetadata>) => {
-  const { update } = useLibraryStore();
+export const useEdit = (id: Ref<string>, formRef: Ref<QForm>) => {
+  const { update, index } = useLibraryStore();
   const { loading } = useQuasar();
-  const { notifySuccess, notifyError } = useNotify();
+  const { notifySuccess, notifyError, notifyWarning } = useNotify();
   const { tooltip } = useTray();
+
+  const initData = () => index(get(id));
+  const initialData = ref<MaybeMetadata>(initData());
 
   const isEditMode = computed(() => !!initialData.value?.id);
   const [everEdited, setEverEdited] = useToggle(false);
@@ -67,6 +69,7 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
 
   const updateData = async (): Promise<boolean> => {
     if (!(await validate())) {
+      notifyWarning('表单验证失败，请检查填写内容');
       return false;
     }
 
@@ -139,32 +142,14 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
     }
   };
 
-  const validators = ref<Validator[]>([]);
-  const addValidator = (validator: Validator) => {
-    validators.value.push(validator);
-  };
-  const removeValidator = (validator: Validator) => {
-    const index = validators.value.indexOf(validator);
-    if (index !== -1) {
-      validators.value.splice(index, 1);
-    }
-  };
-
   const validate = async () => {
-    if (validators.value.length === 0) return true;
-
-    for (const validator of validators.value) {
-      const result = await validator();
-      if (typeof result === 'string') {
-        notifyError('验证失败', result);
-        return false;
-      } else if (!result) {
-        notifyError('验证失败', '某些字段不符合要求');
-        return false;
-      }
+    try {
+      return await formRef.value.validate();
+    } catch (e) {
+      console.error(e);
+      notifyError('表单验证失败', e);
+      return false;
     }
-
-    return true;
   };
 
   return {
@@ -176,7 +161,6 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
     clearField,
     updateData,
     applyPreset,
-    addValidator,
-    removeValidator,
+    validate,
   };
 };
