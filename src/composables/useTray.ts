@@ -4,6 +4,7 @@ import { defaultWindowIcon } from '@tauri-apps/api/app';
 import { Menu } from '@tauri-apps/api/menu/menu';
 import { TrayIcon } from '@tauri-apps/api/tray';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { exit } from '@tauri-apps/plugin-process';
 
 const window = getCurrentWindow();
 
@@ -15,7 +16,7 @@ async function init(): Promise<TrayIcon> {
       {
         id: 'quit',
         text: '退出',
-        action: () => window.close().catch(console.error),
+        action: () => exit().catch(console.error),
       },
     ],
   });
@@ -26,8 +27,8 @@ async function init(): Promise<TrayIcon> {
     showMenuOnLeftClick: false,
     action(event) {
       switch (event.type) {
-        case 'DoubleClick': {
-          console.info('Tray icon double-clicked');
+        case 'Click': {
+          console.debug('Tray icon clicked');
           switch (event.button) {
             case 'Left': {
               window.isVisible().then(
@@ -54,7 +55,7 @@ async function init(): Promise<TrayIcon> {
 
 async function tooltip(text: string | null = null): Promise<void> {
   if (!tray) {
-    console.warn('Tray icon is not initialized.');
+    console.error('Tray icon is not initialized.');
     return;
   }
   try {

@@ -29,4 +29,5 @@ coverage
 
 *.tsbuildinfo
 
-build.ps1
+/build.ps1
+/app*.js

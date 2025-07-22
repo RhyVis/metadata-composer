@@ -67,6 +67,7 @@ pub async fn compress(
         match event {
             CommandEvent::Stdout(out) => {
                 let out_str = decode_out(&out);
+                let out_str = out_str.trim();
                 if !out_str.is_empty() {
                     progress_regex
                         .captures(&out_str)
@@ -90,6 +91,7 @@ pub async fn compress(
             }
             CommandEvent::Stderr(err) => {
                 let err_str = decode_out(&err);
+                let err_str = err_str.trim();
                 if !err_str.is_empty() {
                     error!("Compression stderr|{err_str}");
                 }
@@ -165,6 +167,7 @@ pub async fn decompress(
         match event {
             CommandEvent::Stdout(out) => {
                 let out_str = decode_out(&out);
+                let out_str = out_str.trim();
                 if !out_str.is_empty() {
                     progress_regex
                         .captures(&out_str)
@@ -188,6 +191,7 @@ pub async fn decompress(
             }
             CommandEvent::Stderr(err) => {
                 let err_str = decode_out(&err);
+                let err_str = err_str.trim();
                 if !err_str.is_empty() {
                     error!("Decompress stderr|{err_str}");
                 }

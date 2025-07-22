@@ -19,6 +19,8 @@ export type MaybeMetadata = Metadata | undefined;
 
 type EditableField = Exclude<keyof MetadataOption, 'id'>;
 
+type Validator = () => Promise<boolean | string>;
+
 const window = getCurrentWindow();
 
 export const useEdit = (initialData: Ref<MaybeMetadata>) => {
@@ -64,6 +66,10 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
   );
 
   const updateData = async (): Promise<boolean> => {
+    if (!(await validate())) {
+      return false;
+    }
+
     let eventHandle: UnlistenFn | undefined;
     try {
       const msg = get(updatingMsg);
@@ -133,6 +139,34 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
     }
   };
 
+  const validators = ref<Validator[]>([]);
+  const addValidator = (validator: Validator) => {
+    validators.value.push(validator);
+  };
+  const removeValidator = (validator: Validator) => {
+    const index = validators.value.indexOf(validator);
+    if (index !== -1) {
+      validators.value.splice(index, 1);
+    }
+  };
+
+  const validate = async () => {
+    if (validators.value.length === 0) return true;
+
+    for (const validator of validators.value) {
+      const result = await validator();
+      if (typeof result === 'string') {
+        notifyError('验证失败', result);
+        return false;
+      } else if (!result) {
+        notifyError('验证失败', '某些字段不符合要求');
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   return {
     isEditMode,
     everEdited,
@@ -142,5 +176,7 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
     clearField,
     updateData,
     applyPreset,
+    addValidator,
+    removeValidator,
   };
 };
