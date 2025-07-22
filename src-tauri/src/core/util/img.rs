@@ -37,9 +37,13 @@ pub async fn process_image_file(source: impl AsRef<Path>) -> Result<String> {
 
 pub async fn process_image_bytes(data: (Vec<u8>, u32, u32)) -> Result<String> {
     let (data, width, height) = data;
-    let img = RgbaImage::from_raw(width, height, data)
-        .ok_or_else(|| anyhow!("Failed to create image from raw data"))?;
-    let img = DynamicImage::ImageRgba8(img);
+    let img = DynamicImage::ImageRgba8(
+        async_runtime::spawn_blocking(move || {
+            RgbaImage::from_raw(width, height, data)
+                .ok_or_else(|| anyhow!("Failed to create image from raw data"))
+        })
+        .await??,
+    );
 
     process_image_internal(img).await
 }
@@ -80,12 +84,17 @@ async fn process_image_internal(img: DynamicImage) -> Result<String> {
     info!("Saving processed image to: {}", target.display());
 
     if !tfs::try_exists(&target).await? {
+        let target_inner = target.clone();
         async_runtime::spawn_blocking(move || {
-            img.save_with_format(&target, ImageFormat::Png)
+            img.save_with_format(target_inner, ImageFormat::Png)
                 .map_err(|e| anyhow!("Failed to save image: {}", e))
         })
         .await??;
-        info!("Image saved successfully: {}", hash_str);
+        info!(
+            "Image saved successfully {} to {}",
+            hash_str,
+            target.display()
+        );
     } else {
         info!("Image already exists, skipping save: {}", hash_str);
     }

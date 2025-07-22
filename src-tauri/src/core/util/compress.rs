@@ -56,8 +56,8 @@ pub async fn compress(
         command = command.arg(format!("-p{pwd}")).arg("-mhe");
     }
 
-    let progress_regex = Regex::new(r"^\s*(\d+)%")?;
-    let mut last_progress = 0u32;
+    let regex = Regex::new(r"^\s*(\d+)%\s+(\d+)\s+\+\s+(.+)$")
+        .map_err(|e| anyhow!("Failed to compile regex for 7z output: {e}"))?;
 
     let mut exit_code = None;
     let (mut rx, _child) = command
@@ -69,24 +69,21 @@ pub async fn compress(
                 let out_str = decode_out(&out);
                 let out_str = out_str.trim();
                 if !out_str.is_empty() {
-                    progress_regex
-                        .captures(&out_str)
-                        .and_then(|captures| captures.get(1))
-                        .and_then(|matching| matching.as_str().parse::<u32>().ok())
-                        .map(|progress| {
-                            if progress != last_progress {
-                                last_progress = progress;
-                                info!("Compression progress: {progress:#?}%");
-                                let _ = handle
-                                    .emit(EVENT_COMPRESSION_PROGRESS, progress)
-                                    .inspect_err(|e| {
-                                        error!("Failed to send compression progress: {}", e)
-                                    });
-                            }
-                        })
-                        .unwrap_or_else(|| {
-                            debug!("Compression stdout|{out_str}");
-                        })
+                    if let Some((progress, file_count, file_path)) =
+                        parse_7z_output(out_str, &regex)
+                    {
+                        info!(
+                            "Compression progress: {progress:#?}% - {file_count} files - {file_path}"
+                        );
+                        let _ = handle
+                            .emit(
+                                EVENT_COMPRESSION_PROGRESS,
+                                (progress, file_count, file_path),
+                            )
+                            .inspect_err(|e| error!("Failed to send compression progress: {}", e));
+                    } else {
+                        debug!("Compression stdout|{out_str}");
+                    }
                 }
             }
             CommandEvent::Stderr(err) => {
@@ -156,8 +153,8 @@ pub async fn decompress(
         command = command.arg(format!("-p{pwd}"));
     }
 
-    let progress_regex = Regex::new(r"^\s*(\d+)%")?;
-    let mut last_progress = 0u32;
+    let regex = Regex::new(r"^\s*(\d+)%\s+(\d+)\s+-\s+(.+)$")
+        .map_err(|e| anyhow!("Failed to compile regex for 7z output: {e}"))?;
 
     let mut exit_code = None;
     let (mut rx, _child) = command
@@ -169,24 +166,23 @@ pub async fn decompress(
                 let out_str = decode_out(&out);
                 let out_str = out_str.trim();
                 if !out_str.is_empty() {
-                    progress_regex
-                        .captures(&out_str)
-                        .and_then(|captures| captures.get(1))
-                        .and_then(|matching| matching.as_str().parse::<u32>().ok())
-                        .map(|progress| {
-                            if progress != last_progress {
-                                last_progress = progress;
-                                info!("Decompression progress: {progress:#?}%");
-                                let _ = handle
-                                    .emit(EVENT_DECOMPRESSION_PROGRESS, progress)
-                                    .inspect_err(|e| {
-                                        error!("Failed to send decompression progress: {}", e)
-                                    });
-                            }
-                        })
-                        .unwrap_or_else(|| {
-                            debug!("Decompression stdout|{out_str}");
-                        })
+                    if let Some((progress, file_count, file_path)) =
+                        parse_7z_output(out_str, &regex)
+                    {
+                        info!(
+                            "Decompression progress: {progress:#?}% - {file_count} files - {file_path}"
+                        );
+                        let _ = handle
+                            .emit(
+                                EVENT_DECOMPRESSION_PROGRESS,
+                                (progress, file_count, file_path),
+                            )
+                            .inspect_err(|e| {
+                                error!("Failed to send decompression progress: {}", e)
+                            });
+                    } else {
+                        debug!("Decompression stdout|{out_str}");
+                    }
                 }
             }
             CommandEvent::Stderr(err) => {
@@ -234,4 +230,16 @@ fn decode_out(out: &[u8]) -> String {
     let out = String::from_utf8_lossy(out);
 
     out
+}
+
+fn parse_7z_output<'a>(out: &'a str, regex: &Regex) -> Option<(u32, u32, &'a str)> {
+    if let Some(captures) = regex.captures(out) {
+        let progress = captures.get(1)?.as_str().parse::<u32>().ok()?;
+        let file_count = captures.get(2)?.as_str().parse::<u32>().ok()?;
+        let file_name = captures.get(3)?.as_str();
+
+        Some((progress, file_count, file_name))
+    } else {
+        None
+    }
 }

@@ -4,6 +4,8 @@ import { Command } from '@/api/cmd.ts';
 import { selectDirectory } from '@/api/dialog.ts';
 import { useNotify } from '@/composables/useNotify.ts';
 import { useConfigStore } from '@/stores/config.ts';
+import { message } from '@tauri-apps/plugin-dialog';
+import { relaunch } from '@tauri-apps/plugin-process';
 
 export const useConfig = () => {
   const { sync } = useConfigStore();
@@ -25,7 +27,8 @@ export const useConfig = () => {
         }
         case 'root_deploy': {
           await Command.configUpdate('root_deploy', path);
-          await sync();
+          await message('更新存储根后，需要重启应用才能生效。');
+          await relaunch();
           break;
         }
       }

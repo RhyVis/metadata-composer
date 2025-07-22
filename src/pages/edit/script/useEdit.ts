@@ -1,11 +1,13 @@
 import type { QForm } from 'quasar';
 import type { Ref } from 'vue';
+import type { CompressionInfoPayload } from '@/api/event.ts';
 import type { Metadata, MetadataOption } from '@/api/types.ts';
 import type { EditPreset } from '@/pages/edit/script/define.ts';
 import type { UnlistenFn } from '@tauri-apps/api/event';
 import { cloneDeep } from 'lodash-es';
 import { useQuasar } from 'quasar';
 import { computed, ref } from 'vue';
+import { truncateString } from '@/api/util.ts';
 import { useNotify } from '@/composables/useNotify.ts';
 import { useTray } from '@/composables/useTray.ts';
 import { useLibraryStore } from '@/stores/library.ts';
@@ -81,12 +83,17 @@ export const useEdit = (id: Ref<string>, formRef: Ref<QForm>) => {
       });
       await tooltip(msg);
 
-      listen<number>('compression_progress', (event) => {
+      listen<CompressionInfoPayload>('compression_progress', (event) => {
+        const progress = event.payload[0];
+        const fileCount = event.payload[1];
+        const currentFile = truncateString(event.payload[2], 25);
         loading.show({
-          message: `${msg}<br>压缩进度: ${event.payload}%`,
+          message: `${msg}<br>压缩进度：${progress}%<br>文件数量：${fileCount}<br>当前文件：${currentFile}`,
           html: true,
         });
-        tooltip(`${msg}\n压缩进度: ${event.payload}%`).catch(console.error);
+        tooltip(
+          `${msg}\n压缩进度：${progress}%\n文件数量：${fileCount}\n当前文件：${currentFile}`,
+        ).catch(console.error);
       }).then(
         (handle) => (eventHandle = handle),
         (error) => console.error(`Failed to listen to compression_progress: ${error}`),

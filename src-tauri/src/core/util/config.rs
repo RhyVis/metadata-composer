@@ -171,8 +171,13 @@ impl InternalConfig {
     fn check(&self) -> Result<()> {
         let root_data = &self.root_data;
         if !root_data.exists() {
-            fs::create_dir_all(root_data)
-                .map_err(|e| anyhow!("Failed to create root data directory: {}", e))?;
+            fs::create_dir_all(root_data).map_err(|e| {
+                anyhow!(
+                    "Root data directory '{}' may not write: {}",
+                    root_data.display(),
+                    e
+                )
+            })?;
         }
         if let Some(root_deploy) = &self.root_deploy {
             if !root_deploy.exists() {

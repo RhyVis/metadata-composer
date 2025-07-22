@@ -78,7 +78,6 @@ onBeforeRouteLeave((_to, _from, next) => {
             EditData:
             <pre>{{ editData }}</pre>
           </div>
-          <div class="text-caption">FormRef: {{ formRef }}</div>
           <q-btn label="Test Validation" @click="validate" />
         </q-card-section>
         <q-separator inset />

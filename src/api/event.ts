@@ -5,3 +5,7 @@ export interface DragDropPayload {
     y: number;
   };
 }
+
+export type CompressionInfoPayload = [number, number, string];
+
+export type DecompressionInfoPayload = [number, number, string];

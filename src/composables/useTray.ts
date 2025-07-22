@@ -37,6 +37,7 @@ async function init(): Promise<TrayIcon> {
                     window.hide().catch(console.error);
                   } else {
                     window.show().catch(console.error);
+                    window.setFocus().catch(console.error);
                   }
                 },
                 (err) => console.error(`Failed to toggle window visibility: ${err}`),

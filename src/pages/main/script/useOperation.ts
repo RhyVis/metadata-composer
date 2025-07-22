@@ -1,7 +1,9 @@
+import type { DecompressionInfoPayload } from '@/api/event.ts';
 import type { UnlistenFn } from '@tauri-apps/api/event';
 import { useQuasar } from 'quasar';
 import { Command } from '@/api/cmd.ts';
 import { selectDirectory } from '@/api/dialog.ts';
+import { truncateString } from '@/api/util.ts';
 import { useNotify } from '@/composables/useNotify.ts';
 import { useTray } from '@/composables/useTray.ts';
 import { useLibraryStore } from '@/stores/library.ts';
@@ -54,12 +56,17 @@ export const useOperation = () => {
         });
         await tooltip(msg);
 
-        listen<number>('decompression_progress', (event) => {
+        listen<DecompressionInfoPayload>('decompression_progress', (event) => {
+          const progress = event.payload[0];
+          const fileCount = event.payload[1];
+          const currentFile = truncateString(event.payload[2], 25);
           loading.show({
-            message: `${msg}<br>解压进度: ${event.payload}%`,
+            message: `${msg}<br>解压进度：${progress}%<br>文件数量：${fileCount}<br>当前文件：${currentFile}`,
             html: true,
           });
-          tooltip(`${msg}\n解压进度: ${event.payload}%`).catch(console.error);
+          tooltip(
+            `${msg}\n解压进度：${progress}%\n文件数量：${fileCount}\n当前文件：${currentFile}`,
+          ).catch(console.error);
         }).then(
           (handle) => (eventHandle = handle),
           (error) => console.error(`Failed to listen for decompression progress: ${error}`),
