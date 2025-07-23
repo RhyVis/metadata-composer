@@ -1,14 +1,14 @@
-import type { InternalConfig } from '@/api/types.ts';
+import type { AppConfig } from '@/api/types.ts';
 import { defineStore } from 'pinia';
 import { Command } from '@/api/cmd.ts';
 
 export const useConfigStore = defineStore('config', {
-  state: (): InternalConfig => ({
-    root_data: '',
-    root_deploy: null,
+  state: (): AppConfig => ({
+    path_data: '',
+    path_deploy: null,
   }),
   getters: {
-    hasDeployRoot: (state) => !!state.root_deploy,
+    hasDeployPath: (state) => !!state.path_deploy,
   },
   actions: {
     async sync() {

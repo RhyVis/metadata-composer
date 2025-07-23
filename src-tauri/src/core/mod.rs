@@ -2,11 +2,15 @@ use std::{fs::File, sync::OnceLock};
 
 use anyhow::{Result, anyhow};
 use log::info;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, State};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
-use crate::core::{data::init_data, util::config::init_config};
+use crate::core::{
+    config::{ConfigState, init_config},
+    data::{init_data, state::DataState},
+};
 
+pub mod config;
 pub mod data;
 pub mod util;
 
@@ -19,54 +23,32 @@ pub fn get_handle() -> AppHandle {
         .expect("Core not initialized, call init_core first")
 }
 
+pub fn get_handle_ref() -> &'static AppHandle {
+    APP_HANDLE
+        .get()
+        .expect("Core not initialized, call init_core first")
+}
+
 /// Initializes the core components of the application.
-pub fn init_core(app_handle: &AppHandle) {
-    if let Err(err) = init_core_internal(app_handle) {
-        app_handle
-            .dialog()
+pub fn init_core(app: &AppHandle) {
+    APP_HANDLE
+        .set(app.clone())
+        .expect("Failed to set APP_HANDLE");
+    if let Err(err) = init_core_internal(app) {
+        app.dialog()
             .message(err.to_string().replace(':', ":\n"))
             .title("Core Initialization Error")
             .kind(MessageDialogKind::Error)
             .blocking_show();
-        app_handle.exit(666);
+        app.exit(1);
     }
 }
 
 fn init_core_internal(app: &AppHandle) -> Result<()> {
     info!("Core initialization started");
 
-    let alt_root_path =
-        if !check_init_flag(app).map_err(|e| anyhow!("Failed to check init flag: {}", e))? {
-            app.dialog()
-                .message(
-                    "Seems that the application is running for the first time.\n\
-                You'll need to specify the root directory to store data.",
-                )
-                .title("Initialization Required")
-                .blocking_show();
-            let path_chosen = app
-                .dialog()
-                .file()
-                .set_title("Root Directory Selection")
-                .blocking_pick_folder()
-                .and_then(|path| path.into_path().ok());
-            create_init_flag(app)?;
-            path_chosen
-        } else {
-            None
-        };
-
-    init_config(
-        app.path()
-            .app_config_dir()
-            .map_err(|e| anyhow!("Failed to get app config directory: {}", e))?,
-        alt_root_path,
-    )?;
-    init_data()?;
-
-    APP_HANDLE
-        .set(app.clone())
-        .map_err(|_| anyhow::anyhow!("Core already initialized"))?;
+    init_config(app)?;
+    init_data(app)?;
 
     info!("Core initialized successfully");
 
@@ -74,13 +56,15 @@ fn init_core_internal(app: &AppHandle) -> Result<()> {
 }
 
 pub trait StringResult<T, E>
-where E: std::fmt::Display
+where
+    E: std::fmt::Display,
 {
     fn string_result(self) -> Result<T, String>;
 }
 
 impl<T, E> StringResult<T, E> for Result<T, E>
-where E: std::fmt::Display
+where
+    E: std::fmt::Display,
 {
     fn string_result(self) -> Result<T, String> {
         self.map_err(|e| e.to_string())
@@ -118,4 +102,20 @@ fn create_init_flag(app: &AppHandle) -> Result<()> {
     path.push(INIT_FLAG_NAME);
     File::create(path).map_err(|e| anyhow!("Failed to create init flag: {}", e))?;
     Ok(())
+}
+
+pub trait AppStateExt {
+    fn state_config(&self) -> State<'_, ConfigState>;
+
+    fn state_data(&self) -> State<'_, DataState>;
+}
+
+impl AppStateExt for AppHandle {
+    fn state_config(&self) -> State<'_, ConfigState> {
+        self.state::<ConfigState>()
+    }
+
+    fn state_data(&self) -> State<'_, DataState> {
+        self.state::<DataState>()
+    }
 }

@@ -5,16 +5,18 @@ use chrono::{DateTime, Utc};
 use fs_extra::{dir, dir::CopyOptions};
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
-use tauri::async_runtime;
+use tauri::{Manager, async_runtime};
 use tokio::fs as tfs;
 use ts_rs::TS;
 use uuid::Uuid;
 
+pub use self::{archive_info::*, content_info::*, deploy_info::*};
 use crate::core::{
     Whether::{That, This},
+    config::ConfigState,
+    get_handle,
     util::{
         compress::{compress, decompress},
-        config::get_config_copy,
         path_ext::PathExt,
     },
 };
@@ -22,10 +24,6 @@ use crate::core::{
 mod archive_info;
 mod content_info;
 mod deploy_info;
-
-pub use archive_info::*;
-pub use content_info::*;
-pub use deploy_info::*;
 
 /// Basic metadata structure for data item
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS)]
@@ -68,10 +66,6 @@ pub struct Metadata {
     pub update_time: DateTime<Utc>,
 }
 
-fn default_id() -> Uuid {
-    Uuid::new_v4()
-}
-
 #[allow(dead_code)]
 fn is_none_or_empty<T: AsRef<str>>(s: &Option<T>) -> bool {
     match s {
@@ -109,7 +103,7 @@ pub struct MetadataOption {
 
 impl Metadata {
     pub async fn create(opt: MetadataOption) -> Result<Self> {
-        let id = default_id();
+        let id = Uuid::new_v4();
         let time = Utc::now();
         info!("Creating metadata: {} at {}", id, time);
         let mut created = Self {
@@ -219,7 +213,7 @@ impl Metadata {
             ));
         }
 
-        let dir_base = get_config_copy()?.dir_archive();
+        let dir_base = get_handle().state::<ConfigState>().get().dir_archive();
         let dir_rel = self.content_info.path_rel();
 
         let file_name = format!("{}.a", self.content_info.file_name());

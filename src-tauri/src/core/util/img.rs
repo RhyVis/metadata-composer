@@ -4,12 +4,12 @@ use anyhow::{Result, anyhow};
 use image::{DynamicImage, ImageFormat, RgbaImage};
 use image_hasher::HasherConfig;
 use log::info;
-use tauri::async_runtime;
+use tauri::{AppHandle, async_runtime};
 use tokio::fs as tfs;
 
-use crate::{api::http::fetch_url, core::util::config::get_config};
+use crate::{api::http::fetch_url, core::AppStateExt};
 
-pub async fn process_image_web(url: &str) -> Result<String> {
+pub async fn process_image_web(url: &str, app: AppHandle) -> Result<String> {
     let response = fetch_url(url).await?;
 
     if !response.status().is_success() {
@@ -23,20 +23,20 @@ pub async fn process_image_web(url: &str) -> Result<String> {
     let image_bytes = response.bytes().await?;
     let img = image::load_from_memory(&image_bytes)?;
 
-    process_image_internal(img).await
+    process_image_internal(img, app).await
 }
 
-pub async fn process_image_file(source: impl AsRef<Path>) -> Result<String> {
+pub async fn process_image_file(source: impl AsRef<Path>, app: AppHandle) -> Result<String> {
     let source = source.as_ref().to_owned();
     if !tfs::try_exists(&source).await? {
         return Err(anyhow!("Source image does not exist: {}", source.display()));
     }
     let img = async_runtime::spawn_blocking(move || image::open(source)).await??;
 
-    process_image_internal(img).await
+    process_image_internal(img, app).await
 }
 
-pub async fn process_image_bytes(data: (Vec<u8>, u32, u32)) -> Result<String> {
+pub async fn process_image_bytes(data: (Vec<u8>, u32, u32), app: AppHandle) -> Result<String> {
     let (data, width, height) = data;
     let img = DynamicImage::ImageRgba8(
         async_runtime::spawn_blocking(move || {
@@ -46,10 +46,10 @@ pub async fn process_image_bytes(data: (Vec<u8>, u32, u32)) -> Result<String> {
         .await??,
     );
 
-    process_image_internal(img).await
+    process_image_internal(img, app).await
 }
 
-async fn process_image_internal(img: DynamicImage) -> Result<String> {
+async fn process_image_internal(img: DynamicImage, app: AppHandle) -> Result<String> {
     let width = img.width();
     let height = img.height();
     let max_size = 1000;
@@ -79,7 +79,7 @@ async fn process_image_internal(img: DynamicImage) -> Result<String> {
     .await?;
     let (hash_str, img) = hash_str;
 
-    let mut target = get_config()?.dir_image();
+    let mut target = app.state_config().get().dir_image();
     target.push(format!("{hash_str}.png"));
 
     info!("Saving processed image to: {}", target.display());

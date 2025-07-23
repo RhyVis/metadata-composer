@@ -55,6 +55,17 @@
       ]
     },
     "process:default",
-    "notification:default"
+    "notification:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "http:*"
+        },
+        {
+          "url": "https:*"
+        }
+      ]
+    }
   ]
 }

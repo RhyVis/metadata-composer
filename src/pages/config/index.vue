@@ -7,7 +7,7 @@ import { Command } from '@/api/cmd.ts';
 import { useConfig } from '@/pages/config/script/useConfig.ts';
 
 const config = useConfigStore();
-const { root_data, root_deploy } = storeToRefs(config);
+const { path_data, path_deploy } = storeToRefs(config);
 const { notifyError } = useNotify();
 const { handleSelectDir, handleClearField, handleClearImageCache, handleExport, handleImport } =
   useConfig();
@@ -28,11 +28,11 @@ onMounted(() =>
       <q-item v-ripple>
         <q-item-section>
           <q-item-label>存储根</q-item-label>
-          <q-item-label caption>{{ root_data || '`未设置`' }}</q-item-label>
+          <q-item-label caption>{{ path_data || '未设置' }}</q-item-label>
         </q-item-section>
         <q-item-section side top>
           <q-btn-group flat>
-            <q-btn flat icon="folder" round @click="handleSelectDir('root_data')" />
+            <q-btn flat icon="folder" round @click="handleSelectDir('path_data')" />
           </q-btn-group>
         </q-item-section>
       </q-item>
@@ -40,18 +40,18 @@ onMounted(() =>
       <q-item v-ripple>
         <q-item-section>
           <q-item-label>部署根</q-item-label>
-          <q-item-label caption>{{ root_deploy || '`未设置`' }}</q-item-label>
+          <q-item-label caption>{{ path_deploy || '未设置' }}</q-item-label>
         </q-item-section>
         <q-item-section side top>
           <q-btn-group flat>
             <q-btn
-              v-if="root_deploy"
+              v-if="path_deploy"
               flat
               icon="clear"
               round
-              @click="handleClearField('root_deploy')"
+              @click="handleClearField('path_deploy')"
             />
-            <q-btn flat icon="folder" round @click="handleSelectDir('root_deploy')" />
+            <q-btn flat icon="folder" round @click="handleSelectDir('path_deploy')" />
           </q-btn-group>
         </q-item-section>
       </q-item>
@@ -84,14 +84,14 @@ onMounted(() =>
       <q-item v-ripple clickable @click="Command.openConfigDir()">
         <q-item-section>
           <q-item-label>打开配置目录</q-item-label>
-          <q-item-label caption> 配置文件为 config.toml </q-item-label>
+          <q-item-label caption> 配置文件为 Config.toml </q-item-label>
         </q-item-section>
       </q-item>
 
       <q-item v-ripple clickable @click="Command.openLogDir()">
         <q-item-section>
           <q-item-label>打开日志目录</q-item-label>
-          <q-item-label caption> 日志文件为 composer.log </q-item-label>
+          <q-item-label caption> 日志文件为 Composer.log </q-item-label>
         </q-item-section>
       </q-item>
     </q-list>

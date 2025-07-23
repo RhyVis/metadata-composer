@@ -10,10 +10,11 @@ import { computed, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useLibraryStore } from '@/stores/library.ts';
 import { useNotify } from '@/composables/useNotify.ts';
-import { isDeployable, isDeployed } from '@/pages/main/script/function.ts';
+import { getDeployPath, isDeployable, isDeployed } from '@/pages/main/script/function.ts';
 import { useConfigStore } from '@/stores/config.ts';
 import { formatBytes } from '@/api/util.ts';
 import { useOperation } from '@/pages/main/script/useOperation.ts';
+import { openPath } from '@tauri-apps/plugin-opener';
 
 const { push } = useRouter();
 const { notifyError } = useNotify();
@@ -23,7 +24,7 @@ const { searchTag, searchByRegex, rows } = useTable();
 const tableStore = useTableStore();
 const { pagination, visibleColumns } = storeToRefs(tableStore);
 const { totalFileSize, size } = storeToRefs(useLibraryStore());
-const { root_deploy, hasDeployRoot } = storeToRefs(useConfigStore());
+const { path_deploy, hasDeployPath } = storeToRefs(useConfigStore());
 
 const { handleReload, handleRemove, handleDeploy, handleDeployOff } = useOperation();
 
@@ -187,15 +188,16 @@ onMounted(() =>
               <!-- Actions -->
               <q-card-actions class="q-mt-auto" align="right">
                 <q-btn-group flat>
+                  <!-- Action Deploy -->
                   <template v-if="isDeployable(row as Metadata)">
-                    <q-btn v-if="hasDeployRoot" color="primary" flat icon="create_new_folder">
+                    <q-btn v-if="hasDeployPath" flat icon="create_new_folder">
                       <q-tooltip>部署到设置目录或自定义目录</q-tooltip>
                       <q-popup-proxy>
                         <q-card>
                           <q-card-section>
                             <div class="r-no-sel text-subtitle2">
                               <div>部署到设置目录或自定义目录 -></div>
-                              <div>当前设置目录: {{ root_deploy }}</div>
+                              <div>当前设置目录: '{{ path_deploy }}'</div>
                             </div>
                           </q-card-section>
                           <q-separator />
@@ -222,7 +224,6 @@ onMounted(() =>
                     </q-btn>
                     <q-btn
                       v-else
-                      color="primary"
                       flat
                       icon="create_new_folder"
                       @click="handleDeploy(row.id, false)"
@@ -230,32 +231,46 @@ onMounted(() =>
                       <q-tooltip>部署到指定目录</q-tooltip>
                     </q-btn>
                   </template>
-                  <q-btn v-if="isDeployed(row as Metadata)" color="primary" flat icon="folder_off">
-                    <q-tooltip>取消部署</q-tooltip>
-                    <q-popup-proxy>
-                      <q-card>
-                        <q-card-section>
-                          <div class="r-no-sel text-subtitle2">确定要取消部署吗</div>
-                        </q-card-section>
-                        <q-separator />
-                        <q-card-actions align="right">
-                          <q-btn-group flat>
-                            <q-btn v-close-popup flat icon="close" size="sm" />
-                            <q-btn
-                              v-close-popup
-                              flat
-                              icon="check"
-                              size="sm"
-                              @click="handleDeployOff(row.id)"
-                            />
-                          </q-btn-group>
-                        </q-card-actions>
-                      </q-card>
-                    </q-popup-proxy>
-                  </q-btn>
+                  <template v-if="isDeployed(row as Metadata)">
+                    <q-btn
+                      v-if="getDeployPath(row as Metadata)"
+                      flat
+                      icon="folder"
+                      @click="openPath(getDeployPath(row as Metadata))"
+                    >
+                      <q-tooltip>打开部署文件夹</q-tooltip>
+                    </q-btn>
+                    <q-btn flat icon="folder_off">
+                      <q-tooltip>取消部署</q-tooltip>
+                      <q-popup-proxy>
+                        <q-card>
+                          <q-card-section>
+                            <div class="r-no-sel text-subtitle2">确定要取消部署吗</div>
+                          </q-card-section>
+                          <q-separator />
+                          <q-card-actions align="right">
+                            <q-btn-group flat>
+                              <q-btn v-close-popup flat icon="close" size="sm" />
+                              <q-btn
+                                v-close-popup
+                                flat
+                                icon="check"
+                                size="sm"
+                                @click="handleDeployOff(row.id)"
+                              />
+                            </q-btn-group>
+                          </q-card-actions>
+                        </q-card>
+                      </q-popup-proxy>
+                    </q-btn>
+                  </template>
+
+                  <!-- Action Edit -->
                   <q-btn flat icon="edit" @click="handleEdit((row as Metadata).id)">
                     <q-tooltip> 编辑条目 </q-tooltip>
                   </q-btn>
+
+                  <!-- Action Delete -->
                   <q-btn color="negative" flat icon="delete">
                     <q-tooltip> 删除条目 </q-tooltip>
                     <q-popup-proxy>

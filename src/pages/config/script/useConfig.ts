@@ -1,18 +1,18 @@
-import type { InternalConfig } from '@/api/types.ts';
+import type { AppConfig } from '@/api/types.ts';
 import { useQuasar } from 'quasar';
 import { Command } from '@/api/cmd.ts';
 import { selectDirectory } from '@/api/dialog.ts';
 import { useNotify } from '@/composables/useNotify.ts';
 import { useConfigStore } from '@/stores/config.ts';
 import { message } from '@tauri-apps/plugin-dialog';
-import { relaunch } from '@tauri-apps/plugin-process';
+import { exit } from '@tauri-apps/plugin-process';
 
 export const useConfig = () => {
   const { sync } = useConfigStore();
   const { loading } = useQuasar();
   const { notifyError, notifyWarning, notifySuccess } = useNotify();
 
-  const handleSelectDir = async (name: keyof InternalConfig) => {
+  const handleSelectDir = async (name: keyof AppConfig) => {
     try {
       const path = await selectDirectory();
       if (!path) {
@@ -20,15 +20,18 @@ export const useConfig = () => {
         return;
       }
       switch (name) {
-        case 'root_data': {
-          await Command.configUpdate('root_data', path);
+        case 'path_data': {
+          await Command.configUpdate('path_data', path);
+          await message('更新存储根后，需要重启应用才能生效。', {
+            title: '提示',
+          });
           await sync();
+          await exit();
           break;
         }
-        case 'root_deploy': {
-          await Command.configUpdate('root_deploy', path);
-          await message('更新存储根后，需要重启应用才能生效。');
-          await relaunch();
+        case 'path_deploy': {
+          await Command.configUpdate('path_deploy', path);
+          await sync();
           break;
         }
       }
@@ -38,9 +41,9 @@ export const useConfig = () => {
     }
   };
 
-  const handleClearField = async (name: keyof InternalConfig) => {
+  const handleClearField = async (name: keyof AppConfig) => {
     try {
-      await Command.configUpdate(name, undefined);
+      await Command.configUpdate(name, null);
       await sync();
     } catch (e) {
       console.error(e);

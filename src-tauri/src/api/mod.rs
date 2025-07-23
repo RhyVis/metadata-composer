@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::{sync::OnceLock, time::Duration};
 
 use anyhow::{Result, anyhow};

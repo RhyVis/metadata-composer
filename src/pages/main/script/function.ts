@@ -25,3 +25,7 @@ export function isDeployable(data: Metadata): boolean {
 export function isDeployed(data: Metadata): boolean {
   return data.deploy_info.type !== 'None';
 }
+
+export function getDeployPath(data: Metadata): string {
+  return data.deploy_info.type === 'Directory' ? data.deploy_info.data.path : '';
+}
