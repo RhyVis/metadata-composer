@@ -1,5 +1,6 @@
-use crate::cmd::*;
 use tauri::{Builder, Wry, generate_handler};
+
+use crate::cmd::*;
 
 pub fn register_invoke_handler(builder: Builder<Wry>) -> Builder<Wry> {
     builder.invoke_handler(generate_handler![

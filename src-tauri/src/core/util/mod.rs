@@ -1,5 +1,6 @@
-use const_format::formatc;
 use std::path::Path;
+
+use const_format::formatc;
 
 pub mod compress;
 pub mod config;

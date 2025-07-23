@@ -1,14 +1,21 @@
 pub mod append;
 
-use crate::api::dl_site::{DLContentFetch, DLFetchInfo};
-use crate::cmd::append::{DLFetchArg, DeployArg};
-use crate::core::data::metadata::{Metadata, MetadataOption};
-use crate::core::util::config::{InternalConfig, get_config, get_config_copy, update_config_field};
-use crate::core::{Language, StringResult, data, util};
 use std::path::{Path, PathBuf};
+
 use tauri::{AppHandle, Manager, command};
 use tauri_plugin_opener::open_path;
 use tauri_plugin_pinia::ManagerExt;
+
+use crate::{
+    api::dl_site::{DLContentFetch, DLFetchInfo},
+    cmd::append::{DLFetchArg, DeployArg},
+    core::{
+        Language, StringResult, data,
+        data::metadata::{Metadata, MetadataOption},
+        util,
+        util::config::{InternalConfig, get_config, get_config_copy, update_config_field},
+    },
+};
 
 type CommandResult<T> = Result<T, String>;
 

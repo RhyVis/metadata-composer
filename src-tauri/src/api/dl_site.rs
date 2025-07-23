@@ -1,11 +1,10 @@
-use crate::api::get_client;
-use crate::core::Language;
 use anyhow::{Result, anyhow};
 use log::{info, warn};
-use scraper::error::SelectorErrorKind;
-use scraper::{Html, Selector};
+use scraper::{Html, Selector, error::SelectorErrorKind};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
+
+use crate::{api::get_client, core::Language};
 
 /// Types of content available on the DLSite.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -14,8 +13,8 @@ pub enum DLContentType {
     /// All Ages; Games, Voice / ASMR, Manga / CG;
     /// 同人
     Doujin,
-    /// All Ages; Shonen/Seinen Comics, Shojo/Josei Comics, Webtoon, Voiced Comics, Light Novels, Novels, Generals;
-    /// コミック（comipo）
+    /// All Ages; Shonen/Seinen Comics, Shojo/Josei Comics, Webtoon, Voiced
+    /// Comics, Light Novels, Novels, Generals; コミック（comipo）
     Comics,
     /// All Ages; Games, Voice Dramas / ASMR, Music;
     /// PCソフト
@@ -55,7 +54,7 @@ impl DLContentType {
         match self {
             Self::Doujin | Self::DoujinR18 | Self::SmartphoneGames | Self::SmartphoneGamesR18 => {
                 "RJ"
-            }
+            },
             Self::Comics | Self::ComicsR18 => "BJ",
             Self::PcGames | Self::HGames => "VJ",
         }
@@ -80,6 +79,7 @@ impl DLSiteLang for Language {
             Self::JaJp => "ja_JP",
         }
     }
+
     fn dl_tag_scenario(&self) -> &'static str {
         match self {
             Self::EnUs => "Scenario",
@@ -87,6 +87,7 @@ impl DLSiteLang for Language {
             Self::JaJp => "シナリオ",
         }
     }
+
     fn dl_tag_illustration(&self) -> &'static str {
         match self {
             Self::EnUs => "Illustration",
@@ -243,9 +244,13 @@ impl SelectorExt for Result<Selector, SelectorErrorKind<'_>> {
 
 #[cfg(test)]
 mod test {
-    use crate::api::dl_site::{DLContentFetch, DLContentType};
-    use crate::api::init_client;
-    use crate::core::Language;
+    use crate::{
+        api::{
+            dl_site::{DLContentFetch, DLContentType},
+            init_client,
+        },
+        core::Language,
+    };
 
     fn init() {
         init_client().expect("Failed to initialize HTTP client for tests");

@@ -1,9 +1,12 @@
-use crate::api::init_api;
-use crate::core::init_core;
-use crate::core::util::APP_LOG_DIR;
-use crate::init::BuilderExt;
 use std::path::PathBuf;
+
 use tauri::{Manager, generate_context};
+
+use crate::{
+    api::init_api,
+    core::{init_core, util::APP_LOG_DIR},
+    init::BuilderExt,
+};
 
 pub mod api;
 pub mod cmd;

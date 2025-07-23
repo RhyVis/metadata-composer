@@ -1,11 +1,14 @@
-use crate::core::Whether;
-use crate::core::Whether::{That, This};
-use crate::core::util::config::get_config_copy;
-use crate::core::util::path_ext::PathExt;
+use std::path::{Path, PathBuf};
+
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
 use ts_rs::TS;
+
+use crate::core::{
+    Whether,
+    Whether::{That, This},
+    util::{config::get_config_copy, path_ext::PathExt},
+};
 
 /// Represents archive information for a data item, such as size and path
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
@@ -38,7 +41,7 @@ impl ArchiveInfo {
             ArchiveInfo::None => {
                 warn!("Trying to resolve None archive info, returning self");
                 Ok(That(ArchiveInfo::None))
-            }
+            },
             ArchiveInfo::ArchiveFile { path, .. } => {
                 let path_seg = Path::new(path);
                 let mut path_base = get_config_copy()?.dir_archive();
@@ -52,7 +55,7 @@ impl ArchiveInfo {
                     );
                     Ok(That(ArchiveInfo::None))
                 }
-            }
+            },
             ArchiveInfo::CommonFile { path, .. } => {
                 let path = Path::new(path);
                 if path.exists() {
@@ -64,7 +67,7 @@ impl ArchiveInfo {
                     );
                     Ok(That(ArchiveInfo::None))
                 }
-            }
+            },
             ArchiveInfo::Directory { path, .. } => {
                 let path = Path::new(path);
                 if path.exists() && path.is_dir() {
@@ -76,7 +79,7 @@ impl ArchiveInfo {
                     );
                     Ok(That(ArchiveInfo::None))
                 }
-            }
+            },
         }
     }
 
@@ -86,7 +89,7 @@ impl ArchiveInfo {
             That(_) => {
                 warn!("ArchiveInfo is not resolved, cannot update size.");
                 return Ok(());
-            }
+            },
         };
 
         let size = path.calculate_size_async().await;

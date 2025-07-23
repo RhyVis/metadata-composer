@@ -1,8 +1,10 @@
-use crate::api::dl_site::DLContentType;
+use std::path::PathBuf;
+
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use ts_rs::TS;
+
+use crate::api::dl_site::DLContentType;
 
 /// Represents the type of content for a data item, with detailed information
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
@@ -23,7 +25,8 @@ impl ContentInfo {
         }
     }
 
-    /// Returns the relative path starting from `.`, but it **should** start from `config.dir_archive()`
+    /// Returns the relative path starting from `.`, but it **should** start
+    /// from `config.dir_archive()`
     ///
     /// This is used to store in metadata
     pub(super) fn path_rel(&self) -> PathBuf {
@@ -42,7 +45,8 @@ impl ContentInfo {
     }
 }
 
-/// Represents game data, including version, developer, publisher, and platform information
+/// Represents game data, including version, developer, publisher, and platform
+/// information
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/api/types.ts")]
 pub struct GameData {

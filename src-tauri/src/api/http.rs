@@ -1,6 +1,7 @@
-use crate::api::get_client;
 use anyhow::Result;
 use reqwest::Response;
+
+use crate::api::get_client;
 
 /// Using [reqwest] to fetch a URL.
 pub async fn fetch_url(url: &str) -> Result<Response> {

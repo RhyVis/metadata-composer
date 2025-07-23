@@ -1,12 +1,13 @@
-use crate::api::http::fetch_url;
-use crate::core::util::config::get_config;
+use std::path::Path;
+
 use anyhow::{Result, anyhow};
 use image::{DynamicImage, ImageFormat, RgbaImage};
 use image_hasher::HasherConfig;
 use log::info;
-use std::path::Path;
 use tauri::async_runtime;
 use tokio::fs as tfs;
+
+use crate::{api::http::fetch_url, core::util::config::get_config};
 
 pub async fn process_image_web(url: &str) -> Result<String> {
     let response = fetch_url(url).await?;

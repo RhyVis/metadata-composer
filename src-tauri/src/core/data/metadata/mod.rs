@@ -1,20 +1,23 @@
-use crate::core::Whether::{That, This};
-use crate::core::util::compress::{compress, decompress};
-use crate::core::util::config::get_config_copy;
-use crate::core::util::path_ext::PathExt;
+use std::{ffi::OsStr, fs, path::Path};
+
 use anyhow::{Result, anyhow};
 use chrono::{DateTime, Utc};
-use fs_extra::dir;
-use fs_extra::dir::CopyOptions;
+use fs_extra::{dir, dir::CopyOptions};
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
-use std::ffi::OsStr;
-use std::fs;
-use std::path::Path;
 use tauri::async_runtime;
 use tokio::fs as tfs;
 use ts_rs::TS;
 use uuid::Uuid;
+
+use crate::core::{
+    Whether::{That, This},
+    util::{
+        compress::{compress, decompress},
+        config::get_config_copy,
+        path_ext::PathExt,
+    },
+};
 
 mod archive_info;
 mod content_info;
@@ -289,7 +292,7 @@ impl Metadata {
                     info!("Deployed common file to: {}", target_file.display());
 
                     Ok(true)
-                }
+                },
                 ArchiveInfo::ArchiveFile { password, .. } => {
                     if !target_path.is_dir_empty() {
                         error!("Target directory is not empty: {}", target_path.display());
@@ -313,7 +316,7 @@ impl Metadata {
                     info!("Deployed archive to: {}", target_path.display());
 
                     Ok(true)
-                }
+                },
                 ArchiveInfo::Directory { .. } => {
                     if !target_path.is_dir_empty() {
                         error!("Target directory is not empty: {}", target_path.display());
@@ -345,14 +348,14 @@ impl Metadata {
                     info!("Deployed directory to: {}", target_path.display());
 
                     Ok(true)
-                }
+                },
                 _ => unreachable!(),
             },
             That(archive_info) => {
                 warn!("Archive info is not resolved, cannot deploy",);
                 self.archive_info = archive_info;
                 Ok(false)
-            }
+            },
         }
     }
 
@@ -363,13 +366,13 @@ impl Metadata {
                 error!("Deploy info is invalid or missing");
                 self.deploy_info = update;
                 return Ok(false);
-            }
+            },
         };
         match self.deploy_info {
             DeployInfo::None => {
                 warn!("Deploy info not exists, cannot deploy off.");
                 Ok(false)
-            }
+            },
             DeployInfo::File { .. } => {
                 info!("Removing deployed file at: {}", path.display());
                 tfs::remove_file(&path).await?;
@@ -377,7 +380,7 @@ impl Metadata {
                 self.mark_update();
                 info!("File deployed off successfully.");
                 Ok(true)
-            }
+            },
             DeployInfo::Directory { .. } => {
                 info!("Removing deployed directory at: {}", path.display());
                 path.clear_dir()?;
@@ -385,15 +388,16 @@ impl Metadata {
                 self.mark_update();
                 info!("Directory deployed off successfully.");
                 Ok(true)
-            }
+            },
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use std::path::PathBuf;
+
+    use super::*;
 
     #[test]
     fn test_content_info() {

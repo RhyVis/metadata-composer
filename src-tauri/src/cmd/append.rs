@@ -1,6 +1,7 @@
-use crate::api::dl_site::DLContentType;
 use serde::Deserialize;
 use ts_rs::TS;
+
+use crate::api::dl_site::DLContentType;
 
 #[derive(Debug, Deserialize, TS)]
 #[ts(export, export_to = "../../src/api/types.ts")]

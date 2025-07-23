@@ -1,18 +1,25 @@
-use crate::core::util::APP_ROOT;
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    sync::{OnceLock, RwLock, RwLockReadGuard},
+};
+
 use anyhow::{Result, anyhow};
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::sync::{OnceLock, RwLock, RwLockReadGuard};
 use ts_rs::TS;
 
-const CONFIG_FILE_NAME: &str = "config.toml";
+use crate::core::util::APP_ROOT;
 
-static CONFIG_PATH: OnceLock<PathBuf> = OnceLock::new();
+#[cfg(debug_assertions)]
+const CONFIG_FILE_NAME: &str = "Config.dev.toml";
+#[cfg(not(debug_assertions))]
+const CONFIG_FILE_NAME: &str = "Config.toml";
 
-pub fn config_path() -> &'static Path {
-    CONFIG_PATH
+static CONFIG_FILE_PATH: OnceLock<PathBuf> = OnceLock::new();
+
+fn config_file_path() -> &'static Path {
+    CONFIG_FILE_PATH
         .get()
         .expect("Config file not initialized")
         .as_ref()
@@ -23,9 +30,9 @@ const DIR_NAME_IMAGE: &str = "image";
 
 static CONFIG: OnceLock<RwLock<InternalConfig>> = OnceLock::new();
 
-pub fn init_config(config_dir: PathBuf, root_path: Option<PathBuf>) -> Result<()> {
+pub fn init_config(config_dir: PathBuf, alt_root_path: Option<PathBuf>) -> Result<()> {
     let config_path = config_dir.join(CONFIG_FILE_NAME);
-    CONFIG_PATH
+    CONFIG_FILE_PATH
         .set(config_path.to_owned())
         .map_err(|_| anyhow!("Config path already initialized"))?;
 
@@ -38,7 +45,7 @@ pub fn init_config(config_dir: PathBuf, root_path: Option<PathBuf>) -> Result<()
                 fs::create_dir_all(parent_path)?;
             }
         }
-        if let Some(initial_root_path) = root_path {
+        if let Some(initial_root_path) = alt_root_path {
             info!(
                 "Providing initial root path: {}",
                 initial_root_path.display()
@@ -114,7 +121,7 @@ pub fn update_config_field(name: String, value: Option<String>) -> Result<()> {
                 config.root_data = value.unwrap().into();
             })?;
             Ok(())
-        }
+        },
         "root_deploy" => update_config(|config| {
             config.root_deploy = if let Some(value) = value {
                 if !value.is_empty() {
@@ -132,7 +139,7 @@ pub fn update_config_field(name: String, value: Option<String>) -> Result<()> {
                 value.unwrap_or("None".to_string())
             );
             Err(anyhow!("Unknown field name {}", name))
-        }
+        },
     }
 }
 
@@ -198,7 +205,7 @@ impl InternalConfig {
     }
 
     fn save(&self) -> Result<()> {
-        let config_path = config_path();
+        let config_path = config_file_path();
         fs::write(
             config_path,
             format!(

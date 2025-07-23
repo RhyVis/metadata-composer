@@ -1,16 +1,24 @@
-use crate::cmd::append::DeployArg;
-use crate::core::data::metadata::{Metadata, MetadataOption};
-use crate::core::util::config::{InternalConfig, get_config, get_config_copy};
+use std::{
+    collections::HashSet,
+    fs,
+    path::Path,
+    sync::{Arc, OnceLock, RwLock},
+};
+
 use anyhow::{Result, anyhow};
 use const_format::formatc;
 use log::{debug, error, info, warn};
 use redb::{Database, ReadableTable, ReadableTableMetadata, TableDefinition};
-use std::collections::HashSet;
-use std::fs;
-use std::path::Path;
-use std::sync::{Arc, OnceLock, RwLock};
 use tauri::async_runtime;
 use tokio::fs as tfs;
+
+use crate::{
+    cmd::append::DeployArg,
+    core::{
+        data::metadata::{Metadata, MetadataOption},
+        util::config::{InternalConfig, get_config, get_config_copy},
+    },
+};
 
 pub mod metadata;
 
@@ -202,7 +210,7 @@ async fn metadata_get_internal(key: &str) -> Result<Option<Metadata>> {
             None => {
                 warn!("Key '{}' not found in library", key);
                 Ok(None)
-            }
+            },
         }
     })
     .await?

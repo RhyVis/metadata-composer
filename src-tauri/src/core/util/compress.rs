@@ -1,13 +1,14 @@
-use crate::core::get_handle;
+use std::path::Path;
+
 use anyhow::{Result, anyhow};
 use encoding_rs::GBK;
 use log::{debug, error, info};
 use regex::Regex;
-use std::path::Path;
 use tauri::Emitter;
-use tauri_plugin_shell::ShellExt;
-use tauri_plugin_shell::process::CommandEvent;
+use tauri_plugin_shell::{ShellExt, process::CommandEvent};
 use tokio::fs as tfs;
+
+use crate::core::get_handle;
 
 const EVENT_COMPRESSION_PROGRESS: &str = "compression_progress";
 const EVENT_DECOMPRESSION_PROGRESS: &str = "decompression_progress";
@@ -85,25 +86,25 @@ pub async fn compress(
                         debug!("Compression stdout|{out_str}");
                     }
                 }
-            }
+            },
             CommandEvent::Stderr(err) => {
                 let err_str = decode_out(&err);
                 let err_str = err_str.trim();
                 if !err_str.is_empty() {
                     error!("Compression stderr|{err_str}");
                 }
-            }
+            },
             CommandEvent::Error(err) => {
                 error!("Compression command error: {err}");
                 return Err(anyhow!("Compression command error: {err}"));
-            }
+            },
             CommandEvent::Terminated(termination) => {
                 info!("Compression command terminated: {:?}", termination.code);
                 exit_code = termination.code;
-            }
+            },
             _ => {
                 info!("Compression command event: {:?}", event);
-            }
+            },
         }
     }
 
@@ -184,25 +185,25 @@ pub async fn decompress(
                         debug!("Decompression stdout|{out_str}");
                     }
                 }
-            }
+            },
             CommandEvent::Stderr(err) => {
                 let err_str = decode_out(&err);
                 let err_str = err_str.trim();
                 if !err_str.is_empty() {
                     error!("Decompress stderr|{err_str}");
                 }
-            }
+            },
             CommandEvent::Error(err) => {
                 error!("Decompression command error: {err}");
                 return Err(anyhow!("Decompression command error: {err}"));
-            }
+            },
             CommandEvent::Terminated(termination) => {
                 info!("Decompression command terminated: {:?}", termination.code);
                 exit_code = termination.code;
-            }
+            },
             _ => {
                 info!("Decompression command event: {:?}", event);
-            }
+            },
         }
     }
 
@@ -222,7 +223,7 @@ pub async fn decompress(
 fn decode_out(out: &[u8]) -> String {
     #[cfg(target_os = "windows")]
     let out = {
-        let (cow, _, _) = GBK.decode(out);
+        let (cow, ..) = GBK.decode(out);
         cow.to_string()
     };
 
