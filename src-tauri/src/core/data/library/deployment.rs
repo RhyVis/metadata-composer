@@ -51,3 +51,13 @@ pub(super) fn deployment_cache_remove(
         c.remove(&metadata.id.to_string());
     })
 }
+
+pub fn deployment_cache_get(data: State<'_, DataState>) -> Result<Vec<String>> {
+    Ok(data
+        .deployment_cache()
+        .lock()
+        .map_err(|e| anyhow!("Failed to lock deployment temp set: {}", e))?
+        .iter()
+        .cloned()
+        .collect())
+}

@@ -7,10 +7,12 @@ import { truncateString } from '@/api/util.ts';
 import { useNotify } from '@/composables/useNotify.ts';
 import { useTray } from '@/composables/useTray.ts';
 import { useLibraryStore } from '@/stores/library.ts';
+import { useTableStore } from '@/stores/table.ts';
 import { listen } from '@tauri-apps/api/event';
 
 export const useOperation = () => {
   const { fetch } = useLibraryStore();
+  const { syncDeploymentCache } = useTableStore();
   const { loading } = useQuasar();
   const { notifySuccess, notifyError } = useNotify();
   const { tooltip } = useTray();
@@ -77,6 +79,7 @@ export const useOperation = () => {
           target_dir: null,
         });
         await fetch();
+        syncDeploymentCache();
 
         notifySuccess(`已成功部署 '${id}' 到设置目录`);
       } catch (e) {
@@ -115,6 +118,8 @@ export const useOperation = () => {
               target_dir: path,
             });
             await fetch();
+            syncDeploymentCache();
+
             notifySuccess(`已成功部署 '${id}' 到 ${path}`);
           } catch (e) {
             console.error(e);
@@ -142,6 +147,8 @@ export const useOperation = () => {
     try {
       await Command.metadataDeployOff(id);
       await fetch();
+      syncDeploymentCache();
+
       notifySuccess(`已成功取消部署 '${id}'`);
     } catch (e) {
       console.error(e);

@@ -51,11 +51,6 @@ pub async fn metadata_delete(key: String, data: State<'_, DataState>) -> Command
 }
 
 #[command]
-pub fn metadata_collection_list(data: State<'_, DataState>) -> CommandResult<Vec<String>> {
-    library::metadata_collection_list(data).string_result()
-}
-
-#[command]
 pub async fn metadata_deploy(key: String, arg: DeployArg, app: AppHandle) -> CommandResult<()> {
     library::metadata_deploy(key, arg, app)
         .await
@@ -67,6 +62,16 @@ pub async fn metadata_deploy_off(key: String, data: State<'_, DataState>) -> Com
     library::metadata_deploy_off(key, data)
         .await
         .string_result()
+}
+
+#[command]
+pub fn metadata_collection_cache(data: State<'_, DataState>) -> CommandResult<Vec<String>> {
+    library::collection_cache_get(data).string_result()
+}
+
+#[command]
+pub fn metadata_deployment_cache(data: State<'_, DataState>) -> CommandResult<Vec<String>> {
+    library::deployment_cache_get(data).string_result()
 }
 
 #[command]

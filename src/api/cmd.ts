@@ -25,12 +25,20 @@ export class Command {
     await invoke('metadata_delete', { key });
   }
 
-  static async metadataCollectionList(): Promise<string[]> {
-    return await invoke('metadata_collection_list');
-  }
-
   static async metadataDeploy(key: string, arg: DeployArg): Promise<void> {
     return await invoke('metadata_deploy', { key, arg });
+  }
+
+  static async metadataDeployOff(key: string): Promise<void> {
+    return await invoke('metadata_deploy_off', { key });
+  }
+
+  static async metadataCollectionCache(): Promise<string[]> {
+    return await invoke('metadata_collection_cache');
+  }
+
+  static async metadataDeploymentCache(): Promise<string[]> {
+    return await invoke('metadata_deployment_cache');
   }
 
   static async metadataExport(): Promise<void> {
@@ -39,10 +47,6 @@ export class Command {
 
   static async metadataImport(): Promise<void> {
     return await invoke('metadata_import');
-  }
-
-  static async metadataDeployOff(key: string): Promise<void> {
-    return await invoke('metadata_deploy_off', { key });
   }
 
   static async utilProcessImgFile(source: string): Promise<string> {

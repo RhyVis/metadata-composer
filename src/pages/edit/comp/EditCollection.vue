@@ -16,7 +16,7 @@ const collection = computed({
 });
 
 onMounted(() => {
-  Command.metadataCollectionList().then(
+  Command.metadataCollectionCache().then(
     (list) => set(collectionList, list),
     (err) => console.error(`Failed to fetch collection list: ${err}`),
   );

@@ -1,6 +1,11 @@
 <script lang="ts" setup>
 import { useRouter } from 'vue-router';
-import { MainColDef, PaginationOptions, RowPageSizes } from '@/pages/main/script/define.ts';
+import {
+  FilterOptions,
+  MainColDef,
+  PaginationOptions,
+  RowPageSizes,
+} from '@/pages/main/script/define.ts';
 import { useTable } from '@/pages/main/script/useTable.ts';
 import { storeToRefs } from 'pinia';
 import { useTableStore } from '@/stores/table.ts';
@@ -19,13 +24,13 @@ import { openPath } from '@tauri-apps/plugin-opener';
 const { push } = useRouter();
 const { notifyError } = useNotify();
 const { dark } = useQuasar();
-const { searchTag, searchByRegex, rows } = useTable();
 
 const tableStore = useTableStore();
 const { pagination, visibleColumns } = storeToRefs(tableStore);
 const { totalFileSize, size } = storeToRefs(useLibraryStore());
 const { path_deploy, hasDeployPath } = storeToRefs(useConfigStore());
 
+const { filterType, searchTag, searchByRegex, rows } = useTable();
 const { handleReload, handleRemove, handleDeploy, handleDeployOff } = useOperation();
 
 const innerTextClazz = computed(() => (dark.isActive ? 'text-grey-5' : 'text-grey-9'));
@@ -36,10 +41,13 @@ const handleEdit = (id: string) => {
 };
 
 onMounted(() =>
-  tableStore.$tauri.start().catch((e) => {
-    console.error(`Failed to start table store: ${e}`);
-    notifyError('表格加载失败', e);
-  }),
+  tableStore.$tauri.start().then(
+    () => tableStore.syncDeploymentCache(),
+    (e) => {
+      console.error(`Failed to start table store: ${e}`);
+      notifyError('表格加载失败', e);
+    },
+  ),
 );
 </script>
 
@@ -58,12 +66,29 @@ onMounted(() =>
       >
         <template #top-left>
           <q-btn-group outline>
-            <q-btn outline @click="handleReload">
-              <div class="row items-center text-subtitle2">
-                {{ formatBytes(totalFileSize) }} | {{ size }}
-              </div>
+            <q-btn outline>
+              <div class="row items-center text-subtitle2">{{ formatBytes(totalFileSize) }}</div>
+              <q-menu anchor="top middle" self="top middle">
+                <q-list separator>
+                  <q-item v-close-popup clickable @click="handleReload">
+                    <q-item-section avatar>
+                      <q-icon name="refresh" />
+                    </q-item-section>
+                    <q-item-section>刷新</q-item-section>
+                  </q-item>
+                  <q-item v-close-popup clickable @click="handleEdit('new')">
+                    <q-item-section avatar>
+                      <q-icon name="add" />
+                    </q-item-section>
+                    <q-item-section>新建</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
             </q-btn>
-            <q-btn icon="add" label="新建" outline square @click="handleEdit('new')" />
+            <q-separator vertical />
+            <q-btn class="text-subtitle2 r-no-sel" outline>
+              {{ size === (rows as []).length ? `${size}` : `${(rows as []).length} / ${size}` }}
+            </q-btn>
           </q-btn-group>
         </template>
         <template #top-right>
@@ -107,6 +132,16 @@ onMounted(() =>
                 </div>
               </template>
             </q-select>
+            <q-select
+              v-model="filterType"
+              :options="FilterOptions"
+              dense
+              display-value="过滤"
+              emit-value
+              map-options
+              options-dense
+              outlined
+            />
             <q-select
               v-model="visibleColumns"
               :options="MainColDef.filter((col) => col.name != 'title')"

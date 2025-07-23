@@ -12,7 +12,9 @@ use redb::{Database, ReadableTable, TableDefinition};
 use tauri::{AppHandle, Manager, async_runtime};
 use tokio::fs as tfs;
 
-pub use self::{delegate::*, deployment::*, util::clear_unused_images};
+pub use self::{
+    collection::collection_cache_get, delegate::*, deployment::*, util::clear_unused_images,
+};
 use crate::core::{
     AppStateExt,
     data::{library::collection::collection_cache_sync_all, metadata::Metadata, state::DataState},
@@ -102,7 +104,9 @@ pub(super) fn init_library(app: &AppHandle) -> Result<()> {
 
     backup_db(path_data)?;
     app.manage(DataState::new(configure_db(create_db(path_data)?)?));
+
     collection_cache_sync_all(app.state_data())?;
+    deployment_cache_sync_all(app.state_data())?;
 
     Ok(())
 }
@@ -164,6 +168,9 @@ pub async fn import_library(app: AppHandle) -> Result<()> {
         Ok::<(), anyhow::Error>(())
     })
     .await??;
+
+    collection_cache_sync_all(app.state_data())?;
+    deployment_cache_sync_all(app.state_data())?;
 
     info!("Library imported from {}", path.display());
 

@@ -77,3 +77,15 @@ export const RowPageSizes = [6, 12, 18, 24, 30, 0];
 export const PaginationOptions: QSelectOption[] = MainColDef.filter((col) => col.sortable).map(
   (col) => ({ value: col.name, label: col.label }),
 );
+
+export type FilterType = 'None' | 'Deployment';
+
+export const enum FilterTypeEnum {
+  None = 'None',
+  Deployment = 'Deployment',
+}
+
+export const FilterOptions: QSelectOption[] = [
+  { value: FilterTypeEnum.None, label: '无' },
+  { value: FilterTypeEnum.Deployment, label: '部署' },
+];

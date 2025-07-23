@@ -48,3 +48,13 @@ pub(super) fn collection_cache_remove(
     }
     Ok(())
 }
+
+pub fn collection_cache_get(data: State<'_, DataState>) -> Result<Vec<String>> {
+    Ok(data
+        .collection_cache()
+        .lock()
+        .map_err(|e| anyhow!("Failed to lock collection temp set: {}", e))?
+        .iter()
+        .cloned()
+        .collect())
+}

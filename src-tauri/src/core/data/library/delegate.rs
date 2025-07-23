@@ -1,7 +1,4 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::Path;
 
 use anyhow::{Result, anyhow};
 use log::{debug, error, info, warn};
@@ -17,7 +14,7 @@ use crate::{
             library::{
                 TABLE_METADATA,
                 collection::{collection_cache_remove, collection_cache_sync},
-                deployment::deployment_cache_sync,
+                deployment::{deployment_cache_remove, deployment_cache_sync},
             },
             metadata::{Metadata, MetadataOption},
             state::DataState,
@@ -83,6 +80,7 @@ async fn metadata_create_internal(
     let new_id_clone = new_id.clone();
 
     collection_cache_sync(&new, data.clone())?;
+    deployment_cache_sync(&new, data.clone())?;
 
     let db = data.database();
     async_runtime::spawn_blocking(move || {
@@ -122,7 +120,9 @@ async fn metadata_patch_internal(
             metadata.archive_info.update_size().await?;
         }
 
-        collection_cache_sync(&metadata, data)?;
+        collection_cache_sync(&metadata, data.clone())?;
+        deployment_cache_sync(&metadata, data)?;
+
         let write = db.begin_write()?;
         {
             let mut table = write.open_table(TABLE_METADATA)?;
@@ -159,6 +159,8 @@ async fn metadata_delete_internal(key: String, data: State<'_, DataState>) -> Re
         if let Some(removed) = removed {
             let _ = collection_cache_remove(&removed, get_handle_ref().state_data())
                 .inspect_err(|e| error!("Failed to remove collection from cache: {}", e));
+            let _ = deployment_cache_remove(&removed, get_handle_ref().state_data())
+                .inspect_err(|e| error!("Failed to remove deployment from cache: {}", e));
         }
 
         Ok::<(), anyhow::Error>(())
@@ -229,7 +231,7 @@ pub async fn metadata_deploy(key: String, arg: DeployArg, app: AppHandle) -> Res
     let config = app.state_config();
 
     let existing_data = metadata_get_internal(key.clone(), data.clone()).await?;
-    if let Some(mut metadata) = existing_data {
+    if let Some(metadata) = existing_data {
         async fn deploy_process(
             mut metadata: Metadata,
             deploy_path: impl AsRef<Path>,
@@ -287,8 +289,14 @@ pub async fn metadata_deploy_off(key: String, data: State<'_, DataState>) -> Res
     let existing_data = metadata_get_internal(key.clone(), data.clone()).await?;
     if let Some(mut metadata) = existing_data {
         if metadata.deploy_off().await? {
+            metadata_set_internal(key.clone(), metadata.clone(), data.clone()).await?;
+            let _ = deployment_cache_remove(&metadata, data).inspect_err(|e| {
+                error!(
+                    "Failed to remove deployment cache for '{}': {}",
+                    metadata.id, e
+                )
+            });
             info!("Successfully deployed metadata with key '{key}'");
-            metadata_set_internal(key, metadata, data).await?;
             Ok(())
         } else {
             Err(anyhow!("Failed to deploy metadata with key '{key}'"))
