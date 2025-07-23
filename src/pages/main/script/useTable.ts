@@ -1,13 +1,19 @@
 import type { Metadata } from '@/api/types.ts';
+import type { FilterType } from '@/pages/main/script/define.ts';
 import { storeToRefs } from 'pinia';
 import { computed, ref } from 'vue';
+import { FilterTypeEnum } from '@/pages/main/script/define.ts';
 import { useLibraryStore } from '@/stores/library.ts';
+import { useTableStore } from '@/stores/table.ts';
 
 export const useTable = () => {
   const { items } = storeToRefs(useLibraryStore());
+  const { deploymentCache } = storeToRefs(useTableStore());
 
   const searchTag = ref('');
   const searchByRegex = ref(false);
+
+  const filterType = ref<FilterType>('None');
 
   const searchFunc = computed(() =>
     searchByRegex.value
@@ -24,7 +30,18 @@ export const useTable = () => {
       ),
   );
 
-  const rows = computed(() => filterFunc.value(items.value));
+  const rows = computed(() => {
+    switch (filterType.value) {
+      case FilterTypeEnum.Deployment: {
+        return filterFunc
+          .value(items.value)
+          .filter((item) => deploymentCache.value.includes(item.id));
+      }
+      default: {
+        return filterFunc.value(items.value);
+      }
+    }
+  });
 
-  return { searchTag, searchByRegex, rows };
+  return { filterType, searchTag, searchByRegex, rows };
 };

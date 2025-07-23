@@ -1,5 +1,6 @@
-use crate::cmd::*;
 use tauri::{Builder, Wry, generate_handler};
+
+use crate::cmd::*;
 
 pub fn register_invoke_handler(builder: Builder<Wry>) -> Builder<Wry> {
     builder.invoke_handler(generate_handler![
@@ -7,9 +8,10 @@ pub fn register_invoke_handler(builder: Builder<Wry>) -> Builder<Wry> {
         metadata_get_all,
         metadata_get,
         metadata_delete,
-        metadata_collection_list,
         metadata_deploy,
         metadata_deploy_off,
+        metadata_collection_cache,
+        metadata_deployment_cache,
         metadata_export,
         metadata_import,
         util_process_img_file,

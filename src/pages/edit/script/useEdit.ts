@@ -1,10 +1,13 @@
+import type { QForm } from 'quasar';
 import type { Ref } from 'vue';
+import type { CompressionInfoPayload } from '@/api/event.ts';
 import type { Metadata, MetadataOption } from '@/api/types.ts';
 import type { EditPreset } from '@/pages/edit/script/define.ts';
 import type { UnlistenFn } from '@tauri-apps/api/event';
 import { cloneDeep } from 'lodash-es';
 import { useQuasar } from 'quasar';
 import { computed, ref } from 'vue';
+import { truncateString } from '@/api/util.ts';
 import { useNotify } from '@/composables/useNotify.ts';
 import { useTray } from '@/composables/useTray.ts';
 import { useLibraryStore } from '@/stores/library.ts';
@@ -21,11 +24,14 @@ type EditableField = Exclude<keyof MetadataOption, 'id'>;
 
 const window = getCurrentWindow();
 
-export const useEdit = (initialData: Ref<MaybeMetadata>) => {
-  const { update } = useLibraryStore();
+export const useEdit = (id: Ref<string>, formRef: Ref<QForm>) => {
+  const { update, index } = useLibraryStore();
   const { loading } = useQuasar();
-  const { notifySuccess, notifyError } = useNotify();
+  const { notifySuccess, notifyError, notifyWarning } = useNotify();
   const { tooltip } = useTray();
+
+  const initData = () => index(get(id));
+  const initialData = ref<MaybeMetadata>(initData());
 
   const isEditMode = computed(() => !!initialData.value?.id);
   const [everEdited, setEverEdited] = useToggle(false);
@@ -64,6 +70,11 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
   );
 
   const updateData = async (): Promise<boolean> => {
+    if (!(await validate())) {
+      notifyWarning('表单验证失败，请检查填写内容');
+      return false;
+    }
+
     let eventHandle: UnlistenFn | undefined;
     try {
       const msg = get(updatingMsg);
@@ -72,12 +83,17 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
       });
       await tooltip(msg);
 
-      listen<number>('compression_progress', (event) => {
+      listen<CompressionInfoPayload>('compression_progress', (event) => {
+        const progress = event.payload[0];
+        const fileCount = event.payload[1];
+        const currentFile = truncateString(event.payload[2], 25);
         loading.show({
-          message: `${msg}<br>压缩进度: ${event.payload}%`,
+          message: `${msg}<br>压缩进度：${progress}%<br>文件数量：${fileCount}<br>当前文件：${currentFile}`,
           html: true,
         });
-        tooltip(`${msg}\n压缩进度: ${event.payload}%`).catch(console.error);
+        tooltip(
+          `${msg}\n压缩进度：${progress}%\n文件数量：${fileCount}\n当前文件：${currentFile}`,
+        ).catch(console.error);
       }).then(
         (handle) => (eventHandle = handle),
         (error) => console.error(`Failed to listen to compression_progress: ${error}`),
@@ -133,6 +149,16 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
     }
   };
 
+  const validate = async () => {
+    try {
+      return await formRef.value.validate();
+    } catch (e) {
+      console.error(e);
+      notifyError('表单验证失败', e);
+      return false;
+    }
+  };
+
   return {
     isEditMode,
     everEdited,
@@ -142,5 +168,6 @@ export const useEdit = (initialData: Ref<MaybeMetadata>) => {
     clearField,
     updateData,
     applyPreset,
+    validate,
   };
 };

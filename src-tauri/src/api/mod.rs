@@ -1,9 +1,7 @@
-#![allow(dead_code)]
+use std::{sync::OnceLock, time::Duration};
 
 use anyhow::{Result, anyhow};
 use reqwest::Client;
-use std::sync::OnceLock;
-use std::time::Duration;
 
 pub mod dl_site;
 pub mod http;

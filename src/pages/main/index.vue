@@ -1,6 +1,11 @@
 <script lang="ts" setup>
 import { useRouter } from 'vue-router';
-import { MainColDef, PaginationOptions, RowPageSizes } from '@/pages/main/script/define.ts';
+import {
+  FilterOptions,
+  MainColDef,
+  PaginationOptions,
+  RowPageSizes,
+} from '@/pages/main/script/define.ts';
 import { useTable } from '@/pages/main/script/useTable.ts';
 import { storeToRefs } from 'pinia';
 import { useTableStore } from '@/stores/table.ts';
@@ -10,21 +15,22 @@ import { computed, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useLibraryStore } from '@/stores/library.ts';
 import { useNotify } from '@/composables/useNotify.ts';
-import { isDeployable, isDeployed } from '@/pages/main/script/function.ts';
+import { getDeployPath, isDeployable, isDeployed } from '@/pages/main/script/function.ts';
 import { useConfigStore } from '@/stores/config.ts';
 import { formatBytes } from '@/api/util.ts';
 import { useOperation } from '@/pages/main/script/useOperation.ts';
+import { openPath } from '@tauri-apps/plugin-opener';
 
 const { push } = useRouter();
 const { notifyError } = useNotify();
 const { dark } = useQuasar();
-const { searchTag, searchByRegex, rows } = useTable();
 
 const tableStore = useTableStore();
 const { pagination, visibleColumns } = storeToRefs(tableStore);
 const { totalFileSize, size } = storeToRefs(useLibraryStore());
-const { root_deploy, hasDeployRoot } = storeToRefs(useConfigStore());
+const { path_deploy, hasDeployPath } = storeToRefs(useConfigStore());
 
+const { filterType, searchTag, searchByRegex, rows } = useTable();
 const { handleReload, handleRemove, handleDeploy, handleDeployOff } = useOperation();
 
 const innerTextClazz = computed(() => (dark.isActive ? 'text-grey-5' : 'text-grey-9'));
@@ -35,10 +41,13 @@ const handleEdit = (id: string) => {
 };
 
 onMounted(() =>
-  tableStore.$tauri.start().catch((e) => {
-    console.error(`Failed to start table store: ${e}`);
-    notifyError('表格加载失败', e);
-  }),
+  tableStore.$tauri.start().then(
+    () => tableStore.syncDeploymentCache(),
+    (e) => {
+      console.error(`Failed to start table store: ${e}`);
+      notifyError('表格加载失败', e);
+    },
+  ),
 );
 </script>
 
@@ -57,12 +66,29 @@ onMounted(() =>
       >
         <template #top-left>
           <q-btn-group outline>
-            <q-btn outline @click="handleReload">
-              <div class="row items-center text-subtitle2">
-                {{ formatBytes(totalFileSize) }} | {{ size }}
-              </div>
+            <q-btn outline>
+              <div class="row items-center text-subtitle2">{{ formatBytes(totalFileSize) }}</div>
+              <q-menu anchor="top middle" self="top middle">
+                <q-list separator>
+                  <q-item v-close-popup clickable @click="handleReload">
+                    <q-item-section avatar>
+                      <q-icon name="refresh" />
+                    </q-item-section>
+                    <q-item-section>刷新</q-item-section>
+                  </q-item>
+                  <q-item v-close-popup clickable @click="handleEdit('new')">
+                    <q-item-section avatar>
+                      <q-icon name="add" />
+                    </q-item-section>
+                    <q-item-section>新建</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
             </q-btn>
-            <q-btn icon="add" label="新建" outline square @click="handleEdit('new')" />
+            <q-separator vertical />
+            <q-btn class="text-subtitle2 r-no-sel" outline>
+              {{ size === (rows as []).length ? `${size}` : `${(rows as []).length} / ${size}` }}
+            </q-btn>
           </q-btn-group>
         </template>
         <template #top-right>
@@ -107,6 +133,16 @@ onMounted(() =>
               </template>
             </q-select>
             <q-select
+              v-model="filterType"
+              :options="FilterOptions"
+              dense
+              display-value="过滤"
+              emit-value
+              map-options
+              options-dense
+              outlined
+            />
+            <q-select
               v-model="visibleColumns"
               :options="MainColDef.filter((col) => col.name != 'title')"
               dense
@@ -121,6 +157,7 @@ onMounted(() =>
           </div>
         </template>
 
+        <!-- Item Template -->
         <template #item="{ cols, row }">
           <div class="q-pa-xs col-xs-12 col-sm-6 col-md-4 flex flex-col">
             <q-card class="full-height full-width column" bordered flat>
@@ -182,23 +219,20 @@ onMounted(() =>
               </q-list>
               <q-space />
               <q-separator inset />
+
+              <!-- Actions -->
               <q-card-actions class="q-mt-auto" align="right">
                 <q-btn-group flat>
+                  <!-- Action Deploy -->
                   <template v-if="isDeployable(row as Metadata)">
-                    <q-btn
-                      v-if="hasDeployRoot"
-                      color="primary"
-                      flat
-                      icon="create_new_folder"
-                      size="sm"
-                    >
-                      <q-tooltip>部署到指定目录</q-tooltip>
+                    <q-btn v-if="hasDeployPath" flat icon="create_new_folder">
+                      <q-tooltip>部署到设置目录或自定义目录</q-tooltip>
                       <q-popup-proxy>
                         <q-card>
                           <q-card-section>
                             <div class="r-no-sel text-subtitle2">
                               <div>部署到设置目录或自定义目录 -></div>
-                              <div>当前设置目录: {{ root_deploy }}</div>
+                              <div>当前设置目录: '{{ path_deploy }}'</div>
                             </div>
                           </q-card-section>
                           <q-separator />
@@ -225,54 +259,60 @@ onMounted(() =>
                     </q-btn>
                     <q-btn
                       v-else
-                      color="primary"
                       flat
                       icon="create_new_folder"
-                      size="sm"
                       @click="handleDeploy(row.id, false)"
                     >
                       <q-tooltip>部署到指定目录</q-tooltip>
                     </q-btn>
                   </template>
-                  <q-btn
-                    v-if="isDeployed(row as Metadata)"
-                    color="primary"
-                    flat
-                    icon="folder_off"
-                    size="sm"
-                  >
-                    <q-tooltip>取消部署</q-tooltip>
-                    <q-popup-proxy>
-                      <q-card>
-                        <q-card-section>
-                          <div class="r-no-sel text-subtitle2">确定要取消部署吗</div>
-                        </q-card-section>
-                        <q-separator />
-                        <q-card-actions align="right">
-                          <q-btn-group flat>
-                            <q-btn v-close-popup flat icon="close" size="sm" />
-                            <q-btn
-                              v-close-popup
-                              flat
-                              icon="check"
-                              size="sm"
-                              @click="handleDeployOff(row.id)"
-                            />
-                          </q-btn-group>
-                        </q-card-actions>
-                      </q-card>
-                    </q-popup-proxy>
-                  </q-btn>
-                  <q-btn flat icon="edit" size="sm" @click="handleEdit((row as Metadata).id)">
+                  <template v-if="isDeployed(row as Metadata)">
+                    <q-btn
+                      v-if="getDeployPath(row as Metadata)"
+                      flat
+                      icon="folder"
+                      @click="openPath(getDeployPath(row as Metadata))"
+                    >
+                      <q-tooltip>打开部署文件夹</q-tooltip>
+                    </q-btn>
+                    <q-btn flat icon="folder_off">
+                      <q-tooltip>取消部署</q-tooltip>
+                      <q-popup-proxy>
+                        <q-card>
+                          <q-card-section>
+                            <div class="r-no-sel text-subtitle2">确定要取消部署吗</div>
+                          </q-card-section>
+                          <q-separator />
+                          <q-card-actions align="right">
+                            <q-btn-group flat>
+                              <q-btn v-close-popup flat icon="close" size="sm" />
+                              <q-btn
+                                v-close-popup
+                                flat
+                                icon="check"
+                                size="sm"
+                                @click="handleDeployOff(row.id)"
+                              />
+                            </q-btn-group>
+                          </q-card-actions>
+                        </q-card>
+                      </q-popup-proxy>
+                    </q-btn>
+                  </template>
+
+                  <!-- Action Edit -->
+                  <q-btn flat icon="edit" @click="handleEdit((row as Metadata).id)">
                     <q-tooltip> 编辑条目 </q-tooltip>
                   </q-btn>
-                  <q-btn color="negative" flat icon="delete" size="sm">
+
+                  <!-- Action Delete -->
+                  <q-btn color="negative" flat icon="delete">
                     <q-tooltip> 删除条目 </q-tooltip>
                     <q-popup-proxy>
                       <q-card>
                         <q-card-section>
                           <div class="r-no-sel text-subtitle2">
-                            确定要删除'{{ (row as Metadata).title }}'吗
+                            确定要删除'{{ (row as Metadata).title || (row as Metadata).id }}'吗
                           </div>
                         </q-card-section>
                         <q-separator />

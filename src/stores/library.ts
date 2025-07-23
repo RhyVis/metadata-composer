@@ -38,7 +38,7 @@ export const useLibraryStore = defineStore('library', {
         throw e;
       }
     },
-    get(id: string): Metadata | undefined {
+    index(id: string): Metadata | undefined {
       return this.items.find((item) => item.id == id);
     },
   },

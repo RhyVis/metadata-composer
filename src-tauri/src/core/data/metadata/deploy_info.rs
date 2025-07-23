@@ -1,9 +1,13 @@
-use crate::core::Whether;
-use crate::core::Whether::{That, This};
+use std::path::PathBuf;
+
 use log::warn;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use ts_rs::TS;
+
+use crate::core::{
+    Whether,
+    Whether::{That, This},
+};
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
 #[serde(tag = "type", content = "data")]
@@ -33,7 +37,7 @@ impl DeployInfo {
             DeployInfo::None => {
                 warn!("DeployInfo is unset, cannot resolve path.");
                 That(DeployInfo::None)
-            }
+            },
             DeployInfo::File { path } => {
                 if path.exists() {
                     This(path.clone())
@@ -41,7 +45,7 @@ impl DeployInfo {
                     warn!("The specified file path does not exist: {}", path.display());
                     That(DeployInfo::None)
                 }
-            }
+            },
             DeployInfo::Directory { path } => {
                 if path.exists() {
                     This(path.clone())
@@ -52,7 +56,7 @@ impl DeployInfo {
                     );
                     That(DeployInfo::None)
                 }
-            }
+            },
         }
     }
 }

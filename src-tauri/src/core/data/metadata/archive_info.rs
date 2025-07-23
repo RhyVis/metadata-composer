@@ -1,11 +1,17 @@
-use crate::core::Whether;
-use crate::core::Whether::{That, This};
-use crate::core::util::config::get_config_copy;
-use crate::core::util::path_ext::PathExt;
+use std::path::{Path, PathBuf};
+
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
+use tauri::Manager;
 use ts_rs::TS;
+
+use crate::core::{
+    Whether,
+    Whether::{That, This},
+    config::ConfigState,
+    get_handle_ref,
+    util::path_ext::PathExt,
+};
 
 /// Represents archive information for a data item, such as size and path
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, TS, Default)]
@@ -35,13 +41,13 @@ pub enum ArchiveInfo {
 impl ArchiveInfo {
     pub(super) fn try_resolve(&self) -> anyhow::Result<Whether<PathBuf, Self>> {
         match self {
-            ArchiveInfo::None => {
+            Self::None => {
                 warn!("Trying to resolve None archive info, returning self");
-                Ok(That(ArchiveInfo::None))
-            }
-            ArchiveInfo::ArchiveFile { path, .. } => {
+                Ok(That(Self::None))
+            },
+            Self::ArchiveFile { path, .. } => {
                 let path_seg = Path::new(path);
-                let mut path_base = get_config_copy()?.dir_archive();
+                let mut path_base = get_handle_ref().state::<ConfigState>().get().dir_archive();
                 path_base.push(path_seg);
                 if path_base.exists() {
                     Ok(This(path_base))
@@ -50,10 +56,10 @@ impl ArchiveInfo {
                         "The specified archive file does not exist: {}",
                         path_base.display()
                     );
-                    Ok(That(ArchiveInfo::None))
+                    Ok(That(Self::None))
                 }
-            }
-            ArchiveInfo::CommonFile { path, .. } => {
+            },
+            Self::CommonFile { path, .. } => {
                 let path = Path::new(path);
                 if path.exists() {
                     Ok(This(path.to_owned()))
@@ -62,10 +68,10 @@ impl ArchiveInfo {
                         "The specified common file does not exist: {}",
                         path.display()
                     );
-                    Ok(That(ArchiveInfo::None))
+                    Ok(That(Self::None))
                 }
-            }
-            ArchiveInfo::Directory { path, .. } => {
+            },
+            Self::Directory { path, .. } => {
                 let path = Path::new(path);
                 if path.exists() && path.is_dir() {
                     Ok(This(path.to_owned()))
@@ -74,9 +80,9 @@ impl ArchiveInfo {
                         "The specified directory does not exist or is not a directory: {}",
                         path.display()
                     );
-                    Ok(That(ArchiveInfo::None))
+                    Ok(That(Self::None))
                 }
-            }
+            },
         }
     }
 
@@ -86,15 +92,15 @@ impl ArchiveInfo {
             That(_) => {
                 warn!("ArchiveInfo is not resolved, cannot update size.");
                 return Ok(());
-            }
+            },
         };
 
         let size = path.calculate_size_async().await;
         match self {
-            ArchiveInfo::ArchiveFile { size: s, .. } => *s = size,
-            ArchiveInfo::CommonFile { size: s, .. } => *s = size,
-            ArchiveInfo::Directory { size: s, .. } => *s = size,
-            ArchiveInfo::None => unreachable!(),
+            Self::ArchiveFile { size: s, .. } => *s = size,
+            Self::CommonFile { size: s, .. } => *s = size,
+            Self::Directory { size: s, .. } => *s = size,
+            Self::None => unreachable!(),
         }
         info!("Updated archive info size to: {}", size);
         Ok(())

@@ -1,13 +1,13 @@
+use std::{fs, path::Path};
+
 use log::warn;
-use std::fs;
-use std::path::Path;
 use tokio::fs as tfs;
 use tokio_stream::StreamExt;
 
 #[allow(dead_code)]
 pub trait PathExt {
-    /// It does not check if the path exists, it just returns 0 if the path does not exist,
-    /// or encountered an error.
+    /// It does not check if the path exists, it just returns 0 if the path does
+    /// not exist, or encountered an error.
     fn calculate_size(&self) -> u64;
 
     fn calculate_size_async(&self) -> impl Future<Output = u64> + Send;
@@ -40,7 +40,7 @@ impl PathExt for Path {
                 Err(e) => {
                     warn!("Failed to get metadata for file {}: {}", self.display(), e);
                     0
-                }
+                },
             }
         } else if self.is_dir() {
             let walker = walkdir::WalkDir::new(self);
@@ -56,7 +56,7 @@ impl PathExt for Path {
                                 entry.path().display(),
                                 e
                             );
-                        }
+                        },
                     }
                 }
             }
@@ -75,7 +75,7 @@ impl PathExt for Path {
                 Err(e) => {
                     warn!("Failed to get metadata for file {}: {}", self.display(), e);
                     0
-                }
+                },
             }
         } else if self.is_dir() {
             let mut total_size = 0;
@@ -94,7 +94,7 @@ impl PathExt for Path {
                                 entry.path().display(),
                                 e
                             );
-                        }
+                        },
                     }
                 }
             }
@@ -117,7 +117,7 @@ impl PathExt for Path {
             Err(e) => {
                 warn!("Failed to read directory {}: {}", self.display(), e);
                 false
-            }
+            },
         }
     }
 
@@ -132,7 +132,7 @@ impl PathExt for Path {
             Err(e) => {
                 warn!("Failed to read directory {}: {}", self.display(), e);
                 false
-            }
+            },
         }
     }
 

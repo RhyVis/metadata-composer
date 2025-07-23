@@ -1,8 +1,8 @@
 import type {
+  AppConfig,
   DeployArg,
   DLFetchArg,
   DLFetchInfo,
-  InternalConfig,
   Metadata,
   MetadataOption,
 } from '@/api/types.ts';
@@ -25,12 +25,20 @@ export class Command {
     await invoke('metadata_delete', { key });
   }
 
-  static async metadataCollectionList(): Promise<string[]> {
-    return await invoke('metadata_collection_list');
-  }
-
   static async metadataDeploy(key: string, arg: DeployArg): Promise<void> {
     return await invoke('metadata_deploy', { key, arg });
+  }
+
+  static async metadataDeployOff(key: string): Promise<void> {
+    return await invoke('metadata_deploy_off', { key });
+  }
+
+  static async metadataCollectionCache(): Promise<string[]> {
+    return await invoke('metadata_collection_cache');
+  }
+
+  static async metadataDeploymentCache(): Promise<string[]> {
+    return await invoke('metadata_deployment_cache');
   }
 
   static async metadataExport(): Promise<void> {
@@ -39,10 +47,6 @@ export class Command {
 
   static async metadataImport(): Promise<void> {
     return await invoke('metadata_import');
-  }
-
-  static async metadataDeployOff(key: string): Promise<void> {
-    return await invoke('metadata_deploy_off', { key });
   }
 
   static async utilProcessImgFile(source: string): Promise<string> {
@@ -81,11 +85,11 @@ export class Command {
     return await invoke('path_resolve_archive', { path });
   }
 
-  static async configGet(): Promise<InternalConfig> {
+  static async configGet(): Promise<AppConfig> {
     return await invoke('config_get');
   }
 
-  static async configUpdate(name: keyof InternalConfig, value: unknown): Promise<void> {
+  static async configUpdate(name: keyof AppConfig, value: unknown): Promise<void> {
     return await invoke('config_update', { name, value });
   }
 }

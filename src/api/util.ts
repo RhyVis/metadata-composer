@@ -41,28 +41,33 @@ export function truncateString(str: string, maxLength: number = 40): string {
   return str.slice(0, maxLength - 3) + '...';
 }
 
+/**
+ * Used to validate a string for use as a file or directory name in the file system.
+ *
+ * @return true if valid, or a string describing the validation error.
+ */
 export function isValidFileSystemString(str: string): true | string {
-  // Windows/Unix 系统中的保留字符
   // oxlint-disable-next-line no-control-regex
   const invalidChars = /[<>:"/\\|?*\x00-\x1F]/;
   if (invalidChars.test(str)) {
-    return '文件名不能包含以下字符: < > : " / \\ | ? *';
+    return '不能包含以下字符: < > : " / \\ | ? *';
   }
 
-  // Windows 系统的保留文件名
   const reservedNames = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i;
   if (reservedNames.test(str) || reservedNames.test(str.split('.')[0])) {
     return `"${str}" 是系统保留名称`;
   }
 
-  // 检查文件名开头或结尾的空格和点号
   if (str.startsWith(' ') || str.endsWith(' ') || str.endsWith('.')) {
-    return '文件名不能以空格开头或结尾，也不能以点号结尾';
+    return '不能以空格开头或结尾';
   }
 
-  // 检查文件名长度（一般 Windows 限制为 255 个字符）
+  if (str.endsWith('.')) {
+    return '不能以点号结尾';
+  }
+
   if (str.length > 255) {
-    return '文件名长度不能超过 255 个字符';
+    return '长度不能超过 255 个字符';
   }
 
   return true;

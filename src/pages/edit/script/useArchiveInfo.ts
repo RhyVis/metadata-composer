@@ -5,9 +5,43 @@ import { selectDirectory, selectFile } from '@/api/dialog.ts';
 import { useNotify } from '@/composables/useNotify.ts';
 import { set } from '@vueuse/core';
 
-const defaultArchiveInfo = (): ArchiveInfo => ({
-  type: 'None',
-});
+const defaultArchiveInfo = (type: ArchiveInfo['type'] = 'None'): ArchiveInfo => {
+  switch (type) {
+    case 'None': {
+      return {
+        type: 'None',
+      };
+    }
+    case 'ArchiveFile': {
+      return {
+        type: 'ArchiveFile',
+        data: {
+          size: 0,
+          path: '',
+          password: null,
+        },
+      };
+    }
+    case 'CommonFile': {
+      return {
+        type: 'CommonFile',
+        data: {
+          size: 0,
+          path: '',
+        },
+      };
+    }
+    case 'Directory': {
+      return {
+        type: 'Directory',
+        data: {
+          size: 0,
+          path: '',
+        },
+      };
+    }
+  }
+};
 
 export const defaultPassword = 'COMPOSER';
 
@@ -31,7 +65,7 @@ export const useArchiveInfo = (edit: UseEdit) => {
           type: archiveInfo.value.type,
           data: {
             ...archiveInfo.value.data,
-            path: val,
+            path: val ?? '',
           },
         } as ArchiveInfo);
       }
@@ -39,7 +73,7 @@ export const useArchiveInfo = (edit: UseEdit) => {
   });
   const inputPassword = computed({
     get: () => (archiveInfo.value.type === 'ArchiveFile' ? archiveInfo.value.data.password : ''),
-    set: (val: string) => {
+    set: (val: string | null) => {
       if (archiveInfo.value.type !== 'ArchiveFile') {
         console.warn('Attempted to set password on non-archive type');
       } else {
@@ -47,7 +81,7 @@ export const useArchiveInfo = (edit: UseEdit) => {
           type: 'ArchiveFile',
           data: {
             ...archiveInfo.value.data,
-            password: val ? val.trim() : null,
+            password: val?.trim() || null,
           },
         });
       }
@@ -56,44 +90,7 @@ export const useArchiveInfo = (edit: UseEdit) => {
 
   const archiveType = computed({
     get: () => archiveInfo.value.type,
-    set: (val: ArchiveInfo['type']) => {
-      switch (val) {
-        case 'ArchiveFile': {
-          updateField('archive_info', {
-            type: 'ArchiveFile',
-            data: {
-              size: 0,
-              path: '',
-              password: null,
-            },
-          });
-          break;
-        }
-        case 'CommonFile': {
-          updateField('archive_info', {
-            type: 'CommonFile',
-            data: {
-              size: 0,
-              path: '',
-            },
-          });
-          break;
-        }
-        case 'Directory': {
-          updateField('archive_info', {
-            type: 'Directory',
-            data: {
-              size: 0,
-              path: '',
-            },
-          });
-          break;
-        }
-        default: {
-          updateField('archive_info', defaultArchiveInfo());
-        }
-      }
-    },
+    set: (val: ArchiveInfo['type']) => updateField('archive_info', defaultArchiveInfo(val)),
   });
 
   const doSelect = async (dir: boolean) => {
@@ -112,8 +109,8 @@ export const useArchiveInfo = (edit: UseEdit) => {
         set(inputPassword, defaultPassword);
       }
 
-      const obj = { ...archiveInfo.value };
-      (obj as never)['data']['path'] = path as never;
+      const obj = { ...archiveInfo.value } as Exclude<ArchiveInfo, { type: 'None' }>;
+      obj.data.path = path;
       updateField('archive_info', obj);
     } catch (e) {
       console.error(e);

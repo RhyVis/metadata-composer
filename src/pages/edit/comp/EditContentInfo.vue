@@ -69,8 +69,8 @@ const {
     />
     <q-select
       v-model="gInputGameType"
+      :clearable="gInputGameType != GameTypeEnum.Unspecified"
       :options="GameTypeOptions"
-      clearable
       emit-value
       hint="游戏内容类型"
       label="类型"
@@ -102,6 +102,7 @@ const {
       map-options
       multiple
       stack-label
+      @clear="gInputSysPlatform = []"
     />
     <q-select
       v-model="gInputDistributionType"
@@ -118,7 +119,7 @@ const {
         :rules="[
           (val) => !!val || 'Steam App ID不能为空',
           (val) => isNumericOnly(val) || 'Steam App ID必须是数字',
-          (val) => val.length <= 32 || 'Steam App ID长度不能超过16个字符',
+          (val) => val.length <= 16 || 'Steam App ID长度不能超过16个字符',
         ]"
         hint="Steam商店的ID"
         label="Steam App ID"
@@ -133,7 +134,7 @@ const {
         :rules="[
           (val) => !!val || 'DLSite商店ID不能为空',
           (val) => isNumericOnly(val) || 'DLSite商店ID必须是数字',
-          (val) => val.length <= 32 || 'DLSite商店ID长度不能超过16个字符',
+          (val) => val.length <= 16 || 'DLSite商店ID长度不能超过16个字符',
         ]"
         hint="DLSite的ID"
         label="DLSite商店ID"
@@ -141,10 +142,10 @@ const {
       >
         <template v-if="gInputDLSiteId" #after>
           <q-btn-group flat>
-            <q-btn flat icon="web" size="md" square @click="gOpenDLSitePage">
+            <q-btn flat icon="web" round size="md" square @click="gOpenDLSitePage">
               <q-tooltip>打开网址</q-tooltip>
             </q-btn>
-            <q-btn flat icon="cloud_download" size="md" square @click="gFetchDLSiteInfo">
+            <q-btn flat icon="cloud_download" round size="md" square @click="gFetchDLSiteInfo">
               <q-tooltip>根据ID从DLSite官网获取信息</q-tooltip>
             </q-btn>
           </q-btn-group>
