@@ -13,12 +13,12 @@ const { handleSelectDir, handleClearField, handleClearImageCache, handleExport, 
 <template>
   <q-page padding>
     <q-list bordered padding>
-      <q-item-label header>存储</q-item-label>
+      <q-item-label header>{{ $t('page.config.storage.header') }}</q-item-label>
 
       <q-item v-ripple>
         <q-item-section>
-          <q-item-label>存储根</q-item-label>
-          <q-item-label caption>{{ pathData || '未设置' }}</q-item-label>
+          <q-item-label>{{ $t('page.config.storage.path-data') }}</q-item-label>
+          <q-item-label caption>{{ pathData || $t('general.unset') }}</q-item-label>
         </q-item-section>
         <q-item-section side top>
           <q-btn-group flat>
@@ -29,8 +29,8 @@ const { handleSelectDir, handleClearField, handleClearImageCache, handleExport, 
 
       <q-item v-ripple>
         <q-item-section>
-          <q-item-label>部署根</q-item-label>
-          <q-item-label caption>{{ pathDeploy || '未设置' }}</q-item-label>
+          <q-item-label>{{ $t('page.config.storage.path-deploy') }}</q-item-label>
+          <q-item-label caption>{{ pathDeploy || $t('general.unset') }}</q-item-label>
         </q-item-section>
         <q-item-section side top>
           <q-btn-group flat>
@@ -48,40 +48,42 @@ const { handleSelectDir, handleClearField, handleClearImageCache, handleExport, 
 
       <q-item v-ripple clickable @click="handleClearImageCache">
         <q-item-section>
-          <q-item-label>清除图片缓存</q-item-label>
-          <q-item-label caption>清除未使用的图片缓存</q-item-label>
+          <q-item-label>{{ $t('page.config.storage.clear-image-cache') }}</q-item-label>
+          <q-item-label caption>
+            {{ $t('page.config.storage.clear-image-cache-desc') }}
+          </q-item-label>
         </q-item-section>
       </q-item>
 
-      <q-item-label header>数据库</q-item-label>
+      <q-item-label header>{{ $t('page.config.database.header') }}</q-item-label>
 
       <q-item v-ripple clickable @click="handleExport">
         <q-item-section>
-          <q-item-label>导出元数据</q-item-label>
-          <q-item-label caption>导出当前数据库的元数据到 'lib.json'</q-item-label>
+          <q-item-label>{{ $t('page.config.database.export.label') }}</q-item-label>
+          <q-item-label caption>{{ $t('page.config.database.export.desc') }}</q-item-label>
         </q-item-section>
       </q-item>
 
       <q-item v-ripple clickable @click="handleImport">
         <q-item-section>
-          <q-item-label>导入元数据</q-item-label>
-          <q-item-label caption>从 'lib.json' 导入元数据到当前数据库</q-item-label>
+          <q-item-label>{{ $t('page.config.database.import.label') }}</q-item-label>
+          <q-item-label caption>{{ $t('page.config.database.import.desc') }}</q-item-label>
         </q-item-section>
       </q-item>
 
-      <q-item-label header>目录</q-item-label>
+      <q-item-label header>{{ $t('page.config.directory.header') }}</q-item-label>
 
       <q-item v-ripple clickable @click="Command.openConfigDir()">
         <q-item-section>
-          <q-item-label>打开配置目录</q-item-label>
-          <q-item-label caption> 配置文件为 Config.toml </q-item-label>
+          <q-item-label>{{ $t('page.config.directory.dir-config.label') }}</q-item-label>
+          <q-item-label caption> {{ $t('page.config.directory.dir-config.desc') }} </q-item-label>
         </q-item-section>
       </q-item>
 
       <q-item v-ripple clickable @click="Command.openLogDir()">
         <q-item-section>
-          <q-item-label>打开日志目录</q-item-label>
-          <q-item-label caption> 日志文件为 Composer.log </q-item-label>
+          <q-item-label>{{ $t('page.config.directory.dir-log.label') }}</q-item-label>
+          <q-item-label caption> {{ $t('page.config.directory.dir-log.desc') }} </q-item-label>
         </q-item-section>
       </q-item>
     </q-list>
