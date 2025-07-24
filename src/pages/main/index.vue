@@ -8,27 +8,25 @@ import {
 } from '@/pages/main/script/define.ts';
 import { useTable } from '@/pages/main/script/useTable.ts';
 import { storeToRefs } from 'pinia';
-import { useTableStore } from '@/stores/table.ts';
 import type { Metadata } from '@/api/types.ts';
 import AsyncImage from '@/components/AsyncImage.vue';
-import { computed, onMounted } from 'vue';
+import { computed } from 'vue';
 import { useQuasar } from 'quasar';
-import { useLibraryStore } from '@/stores/library.ts';
-import { useNotify } from '@/hooks/useNotify';
 import { getDeployPath, isDeployable, isDeployed } from '@/pages/main/script/function.ts';
 import { useConfigStore } from '@/stores/config.ts';
 import { formatBytes } from '@/api/util.ts';
 import { useOperation } from '@/pages/main/script/useOperation.ts';
 import { openPath } from '@tauri-apps/plugin-opener';
+import { useTableStore } from './script/useTableStore';
+import { useDatabaseStore } from '@/stores/database';
 
 const { push } = useRouter();
-const { notifyError } = useNotify();
 const { dark } = useQuasar();
 
 const tableStore = useTableStore();
 const { pagination, visibleColumns } = storeToRefs(tableStore);
-const { totalFileSize, size } = storeToRefs(useLibraryStore());
-const { path_deploy, hasDeployPath } = storeToRefs(useConfigStore());
+const { totalFileSize, size } = storeToRefs(useDatabaseStore());
+const { pathDeploy } = storeToRefs(useConfigStore());
 
 const { filterType, searchTag, searchByRegex, rows } = useTable();
 const { handleReload, handleRemove, handleDeploy, handleDeployOff } = useOperation();
@@ -39,16 +37,6 @@ const handleEdit = (id: string) => {
   console.info(`Editing item with id: ${id}`);
   push(`/edit/${id}`);
 };
-
-onMounted(() =>
-  tableStore.$tauri.start().then(
-    () => tableStore.syncDeploymentCache(),
-    (e) => {
-      console.error(`Failed to start table store: ${e}`);
-      notifyError('表格加载失败', e);
-    },
-  ),
-);
 </script>
 
 <template>
@@ -225,14 +213,14 @@ onMounted(() =>
                 <q-btn-group flat>
                   <!-- Action Deploy -->
                   <template v-if="isDeployable(row as Metadata)">
-                    <q-btn v-if="hasDeployPath" flat icon="create_new_folder">
+                    <q-btn v-if="pathDeploy" flat icon="create_new_folder">
                       <q-tooltip>部署到设置目录或自定义目录</q-tooltip>
                       <q-popup-proxy>
                         <q-card>
                           <q-card-section>
                             <div class="r-no-sel text-subtitle2">
                               <div>部署到设置目录或自定义目录 -></div>
-                              <div>当前设置目录: '{{ path_deploy }}'</div>
+                              <div>当前设置目录: '{{ pathDeploy }}'</div>
                             </div>
                           </q-card-section>
                           <q-separator />

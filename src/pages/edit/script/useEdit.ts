@@ -10,7 +10,7 @@ import { computed, ref } from 'vue';
 import { truncateString } from '@/api/util.ts';
 import { useNotify } from '@/hooks/useNotify';
 import { useTray } from '@/hooks/useTray';
-import { useLibraryStore } from '@/stores/library.ts';
+import { useDatabaseStore } from '@/stores/database';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { sendNotification } from '@tauri-apps/plugin-notification';
@@ -25,12 +25,12 @@ type EditableField = Exclude<keyof MetadataOption, 'id'>;
 const window = getCurrentWindow();
 
 export const useEdit = (id: Ref<string>, formRef: Ref<QForm>) => {
-  const { update, index } = useLibraryStore();
+  const { update, find } = useDatabaseStore();
   const { loading } = useQuasar();
   const { notifySuccess, notifyError, notifyWarning } = useNotify();
   const { tooltip } = useTray();
 
-  const initData = () => index(get(id));
+  const initData = () => find(get(id));
   const initialData = ref<MaybeMetadata>(initData());
 
   const isEditMode = computed(() => !!initialData.value?.id);

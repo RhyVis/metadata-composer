@@ -1,16 +1,13 @@
-import type { QTableProps } from 'quasar';
 import { defineStore } from 'pinia';
 import { Command } from '@/api/cmd.ts';
 
-type PaginationW = QTableProps['pagination'] & {
-  sortBy: string;
-  descending: boolean;
-  rowsPerPage: number;
-};
-
 interface TableState {
   visibleColumns: string[];
-  pagination: PaginationW;
+  pagination: {
+    sortBy: string;
+    descending: boolean;
+    rowsPerPage: number;
+  };
   imageCache: Record<string, string>;
   deploymentCache: string[];
 }

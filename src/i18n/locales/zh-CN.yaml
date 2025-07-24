@@ -1,0 +1,15 @@
+general:
+  dark-mode: 深色模式
+  light-mode: 浅色模式
+layout:
+  drop-down:
+    dev-mode: 开发模式
+  context-menu:
+    home: 主页
+    settings: 设置
+    refresh: 刷新
+database:
+  refresh-success: 数据库刷新成功
+  refresh-fail: 数据库刷新失败
+notify:
+  sync-fail: 数据同步失败

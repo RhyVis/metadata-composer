@@ -6,12 +6,12 @@ import { selectDirectory } from '@/api/dialog.ts';
 import { truncateString } from '@/api/util.ts';
 import { useNotify } from '@/hooks/useNotify';
 import { useTray } from '@/hooks/useTray';
-import { useLibraryStore } from '@/stores/library.ts';
-import { useTableStore } from '@/stores/table.ts';
+import { useTableStore } from '@/pages/main/script/useTableStore';
+import { useDatabaseStore } from '@/stores/database';
 import { listen } from '@tauri-apps/api/event';
 
 export const useOperation = () => {
-  const { fetch } = useLibraryStore();
+  const { sync } = useDatabaseStore();
   const { syncDeploymentCache } = useTableStore();
   const { loading } = useQuasar();
   const { notifySuccess, notifyError } = useNotify();
@@ -21,7 +21,7 @@ export const useOperation = () => {
     console.info('Reloading table data...');
     loading.show();
     try {
-      await fetch();
+      await sync();
       notifySuccess('数据已刷新');
     } catch (e) {
       console.error(e);
@@ -36,7 +36,7 @@ export const useOperation = () => {
     loading.show();
     try {
       await Command.metadataDelete(id);
-      await fetch();
+      await sync();
       notifySuccess(`已成功删除 '${id}'`);
     } catch (e) {
       console.error(e);
@@ -78,7 +78,7 @@ export const useOperation = () => {
           use_config_dir: true,
           target_dir: null,
         });
-        await fetch();
+        await sync();
         syncDeploymentCache();
 
         notifySuccess(`已成功部署 '${id}' 到设置目录`);
@@ -117,7 +117,7 @@ export const useOperation = () => {
               use_config_dir: false,
               target_dir: path,
             });
-            await fetch();
+            await sync();
             syncDeploymentCache();
 
             notifySuccess(`已成功部署 '${id}' 到 ${path}`);
@@ -146,7 +146,7 @@ export const useOperation = () => {
     });
     try {
       await Command.metadataDeployOff(id);
-      await fetch();
+      await sync();
       syncDeploymentCache();
 
       notifySuccess(`已成功取消部署 '${id}'`);

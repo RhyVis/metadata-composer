@@ -8,6 +8,7 @@ import { createApp } from 'vue';
 import { initKeyBlocker, initLogger } from '@/api/hook.ts';
 import App from '@/App.vue';
 import { initTrayIcon } from '@/hooks/useTray';
+import i18n from '@/i18n';
 import router from '@/router';
 import pinia from '@/stores';
 
@@ -21,6 +22,7 @@ const app = createApp(App);
 
 app.use(pinia);
 app.use(router);
+app.use(i18n);
 
 app.use(Quasar, {
   plugins: {

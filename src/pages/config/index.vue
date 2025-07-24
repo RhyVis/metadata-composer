@@ -1,23 +1,13 @@
 <script lang="ts" setup>
 import { useConfigStore } from '@/stores/config.ts';
-import { onMounted } from 'vue';
-import { useNotify } from '@/hooks/useNotify';
 import { storeToRefs } from 'pinia';
 import { Command } from '@/api/cmd.ts';
 import { useConfig } from '@/pages/config/script/useConfig.ts';
 
 const config = useConfigStore();
-const { path_data, path_deploy } = storeToRefs(config);
-const { notifyError } = useNotify();
+const { pathData, pathDeploy } = storeToRefs(config);
 const { handleSelectDir, handleClearField, handleClearImageCache, handleExport, handleImport } =
   useConfig();
-
-onMounted(() =>
-  config.sync().then(
-    () => console.info('Successfully synced config file'),
-    (e) => notifyError('配置同步失败', e),
-  ),
-);
 </script>
 
 <template>
@@ -28,7 +18,7 @@ onMounted(() =>
       <q-item v-ripple>
         <q-item-section>
           <q-item-label>存储根</q-item-label>
-          <q-item-label caption>{{ path_data || '未设置' }}</q-item-label>
+          <q-item-label caption>{{ pathData || '未设置' }}</q-item-label>
         </q-item-section>
         <q-item-section side top>
           <q-btn-group flat>
@@ -40,12 +30,12 @@ onMounted(() =>
       <q-item v-ripple>
         <q-item-section>
           <q-item-label>部署根</q-item-label>
-          <q-item-label caption>{{ path_deploy || '未设置' }}</q-item-label>
+          <q-item-label caption>{{ pathDeploy || '未设置' }}</q-item-label>
         </q-item-section>
         <q-item-section side top>
           <q-btn-group flat>
             <q-btn
-              v-if="path_deploy"
+              v-if="pathDeploy"
               flat
               icon="clear"
               round

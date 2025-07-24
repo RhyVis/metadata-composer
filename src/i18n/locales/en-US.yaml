@@ -1,0 +1,6 @@
+general:
+  dark-mode: Dark Mode
+  light-mode: Light Mode
+layout:
+  drop-down:
+    dev-mode: Develop Mode

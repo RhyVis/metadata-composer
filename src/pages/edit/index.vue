@@ -8,16 +8,16 @@ import EditTag from '@/pages/edit/comp/EditTag.vue';
 import EditArchiveInfo from '@/pages/edit/comp/EditArchiveInfo.vue';
 import EditContentInfo from '@/pages/edit/comp/EditContentInfo.vue';
 import EditImage from '@/pages/edit/comp/EditImage.vue';
-import { useGlobalStore } from '@/stores/global.ts';
 import { storeToRefs } from 'pinia';
 import { type QForm, useQuasar } from 'quasar';
 import EditTitle from '@/pages/edit/comp/EditTitle.vue';
 import EditCollection from '@/pages/edit/comp/EditCollection.vue';
 import EditDescription from '@/pages/edit/comp/EditDescription.vue';
+import { useConfigStore } from '@/stores/config';
 
 const { push } = useRouter();
 const { dialog } = useQuasar();
-const { isDevMode } = storeToRefs(useGlobalStore());
+const { isDevMode } = storeToRefs(useConfigStore());
 
 const extractID = (): string => {
   const param = useRouteParams('id');

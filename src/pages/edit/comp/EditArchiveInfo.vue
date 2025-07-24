@@ -3,15 +3,15 @@ import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { defaultPassword, useArchiveInfo } from '@/pages/edit/script/useArchiveInfo.ts';
 import { ArchiveTypeEnum, ArchiveTypeOptions } from '@/pages/edit/script/define.ts';
 import { openPath } from '@tauri-apps/plugin-opener';
-import { useGlobalStore } from '@/stores/global.ts';
 import { storeToRefs } from 'pinia';
 import { useNotify } from '@/hooks/useNotify';
 import { set } from '@vueuse/core';
 import { generateRandomAsciiString } from '@/api/util.ts';
 import { Command } from '@/api/cmd.ts';
 import { useDarkStyle } from '@/hooks/useDarkStyle';
+import { useConfigStore } from '@/stores/config';
 
-const { isDevMode } = storeToRefs(useGlobalStore());
+const { isDevMode } = storeToRefs(useConfigStore());
 const { notifyWarning, notifyError } = useNotify();
 const { textClass } = useDarkStyle();
 

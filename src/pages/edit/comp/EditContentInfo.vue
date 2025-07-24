@@ -12,10 +12,10 @@ import {
   GameTypeOptions,
 } from '@/pages/edit/script/define.ts';
 import { storeToRefs } from 'pinia';
-import { useGlobalStore } from '@/stores/global.ts';
 import { isNumericOnly, isValidFileSystemString } from '@/api/util.ts';
+import { useConfigStore } from '@/stores/config';
 
-const { isDevMode } = storeToRefs(useGlobalStore());
+const { isDevMode } = storeToRefs(useConfigStore());
 
 const { edit } = defineProps<{
   edit: UseEdit;

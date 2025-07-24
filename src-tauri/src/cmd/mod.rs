@@ -2,11 +2,13 @@ pub mod append;
 
 use std::path::{Path, PathBuf};
 
+use log::warn;
 use serde_json::Value;
 use tauri::{AppHandle, Manager, State, command};
 use tauri_plugin_opener::open_path;
 use tauri_plugin_pinia::ManagerExt;
 
+use self::append::FrontendConfig;
 use crate::{
     api::dl_site::{DLContentFetch, DLFetchInfo},
     cmd::append::{DLFetchArg, DeployArg},
@@ -124,7 +126,13 @@ pub async fn util_dl_fetch_info(arg: DLFetchArg) -> CommandResult<DLFetchInfo> {
 #[command]
 pub fn util_dark_state(app: AppHandle) -> bool {
     app.pinia()
-        .try_get_or::<bool>("global", "isDarkMode", false)
+        .state("config")
+        .and_then(|state| state.try_get::<FrontendConfig>("frontend"))
+        .and_then(|frontend| Ok(frontend.dark_mode))
+        .unwrap_or_else(|e| {
+            warn!("Failed to get frontend state: {}", e);
+            false
+        })
 }
 
 #[command]

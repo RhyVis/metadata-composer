@@ -3,11 +3,11 @@ import type { FilterType } from '@/pages/main/script/define.ts';
 import { storeToRefs } from 'pinia';
 import { computed, ref } from 'vue';
 import { FilterTypeEnum } from '@/pages/main/script/define.ts';
-import { useLibraryStore } from '@/stores/library.ts';
-import { useTableStore } from '@/stores/table.ts';
+import { useTableStore } from '@/pages/main/script/useTableStore';
+import { useDatabaseStore } from '@/stores/database';
 
 export const useTable = () => {
-  const { items } = storeToRefs(useLibraryStore());
+  const { items } = storeToRefs(useDatabaseStore());
   const { deploymentCache } = storeToRefs(useTableStore());
 
   const searchTag = ref('');

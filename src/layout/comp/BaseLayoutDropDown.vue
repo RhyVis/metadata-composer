@@ -1,10 +1,15 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useGlobalStore } from '@/stores/global.ts';
+import { useI18n } from 'vue-i18n';
+import { useConfigStore } from '@/stores/config';
 
 const dev = computed(() => import.meta.env.DEV);
-const { isDevMode, isDarkMode } = storeToRefs(useGlobalStore());
+const { t } = useI18n();
+
+const configStore = useConfigStore();
+const { isDevMode, isDarkMode } = storeToRefs(configStore);
+const { toggleDevMode, toggleDarkMode } = configStore;
 </script>
 
 <template>
@@ -12,18 +17,18 @@ const { isDevMode, isDarkMode } = storeToRefs(useGlobalStore());
     <q-btn flat icon="settings" round>
       <q-menu anchor="center middle" self="top right">
         <q-list class="r-no-sel" bordered separator>
-          <q-item v-if="dev" clickable @click="isDevMode = !isDevMode">
+          <q-item v-if="dev" clickable @click="toggleDevMode">
             <q-item-section avatar>
               <q-icon :name="isDevMode ? 'code' : 'code_off'" />
             </q-item-section>
-            <q-item-section>调试模式</q-item-section>
+            <q-item-section>{{ t('layout.drop-down.dev-mode') }}</q-item-section>
           </q-item>
-          <q-item clickable @click="isDarkMode = !isDarkMode">
+          <q-item clickable @click="toggleDarkMode">
             <q-item-section avatar>
               <q-icon :name="isDarkMode ? 'dark_mode' : 'light_mode'" />
             </q-item-section>
             <q-item-section>
-              {{ isDarkMode ? '暗黑模式' : '亮色模式' }}
+              {{ isDarkMode ? t('general.dark-mode') : t('general.light-mode') }}
             </q-item-section>
           </q-item>
         </q-list>

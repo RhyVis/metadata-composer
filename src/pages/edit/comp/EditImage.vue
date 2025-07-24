@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { storeToRefs } from 'pinia';
-import { useGlobalStore } from '@/stores/global.ts';
 import { useImg } from '@/pages/edit/script/useImg.ts';
 import { useDarkStyle } from '@/hooks/useDarkStyle';
+import { useConfigStore } from '@/stores/config';
 
-const { isDevMode } = storeToRefs(useGlobalStore());
+const { isDevMode } = storeToRefs(useConfigStore());
 const { textClass } = useDarkStyle();
 
 const { edit } = defineProps<{

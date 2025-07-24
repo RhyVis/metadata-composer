@@ -2,8 +2,8 @@
 import { ref, watch } from 'vue';
 import { set } from '@vueuse/core';
 import { resolveImageAsset } from '@/api/util.ts';
-import { useTableStore } from '@/stores/table.ts';
 import { storeToRefs } from 'pinia';
+import { useTableStore } from '@/pages/main/script/useTableStore';
 
 const { hash } = defineProps<{
   hash: string | undefined;
