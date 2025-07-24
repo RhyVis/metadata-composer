@@ -6,6 +6,8 @@ import { FilterTypeEnum } from '@/pages/main/script/define.ts';
 import { useTableStore } from '@/pages/main/script/useTableStore';
 import { useDatabaseStore } from '@/stores/database';
 
+export type UseTable = ReturnType<typeof useTable>;
+
 export const useTable = () => {
   const { items } = storeToRefs(useDatabaseStore());
   const { deploymentCache } = storeToRefs(useTableStore());

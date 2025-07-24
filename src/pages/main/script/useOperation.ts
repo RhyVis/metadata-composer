@@ -1,6 +1,7 @@
 import type { DecompressionInfoPayload } from '@/api/event.ts';
 import type { UnlistenFn } from '@tauri-apps/api/event';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { Command } from '@/api/cmd.ts';
 import { selectDirectory } from '@/api/dialog.ts';
 import { truncateString } from '@/api/util.ts';
@@ -10,7 +11,10 @@ import { useTableStore } from '@/pages/main/script/useTableStore';
 import { useDatabaseStore } from '@/stores/database';
 import { listen } from '@tauri-apps/api/event';
 
+export type UseOperation = ReturnType<typeof useOperation>;
+
 export const useOperation = () => {
+  const { t } = useI18n();
   const { sync } = useDatabaseStore();
   const { syncDeploymentCache } = useTableStore();
   const { loading } = useQuasar();
@@ -22,10 +26,10 @@ export const useOperation = () => {
     loading.show();
     try {
       await sync();
-      notifySuccess('数据已刷新');
+      notifySuccess(t('page.main.notify.refresh.success'));
     } catch (e) {
       console.error(e);
-      notifyError('数据刷新失败', e);
+      notifyError(t('page.main.notify.refresh.fail'), e);
     } finally {
       loading.hide();
     }
@@ -37,10 +41,10 @@ export const useOperation = () => {
     try {
       await Command.metadataDelete(id);
       await sync();
-      notifySuccess(`已成功删除 '${id}'`);
+      notifySuccess(t('page.main.notify.delete.success', [id]));
     } catch (e) {
       console.error(e);
-      notifyError(`删除 '${id}' 失败`, e);
+      notifyError(t('page.main.notify.delete.fail', [id]), e);
     } finally {
       loading.hide();
     }
@@ -52,7 +56,7 @@ export const useOperation = () => {
     if (useDeployDir) {
       let eventHandle: UnlistenFn | undefined;
       try {
-        const msg = `正在部署 '${id}' 到设置目录...`;
+        const msg = t('page.main.loading.deploying-to-configured', [id]);
         loading.show({
           message: msg,
         });
@@ -63,11 +67,16 @@ export const useOperation = () => {
           const fileCount = event.payload[1];
           const currentFile = truncateString(event.payload[2], 25);
           loading.show({
-            message: `${msg}<br>解压进度：${progress}%<br>文件数量：${fileCount}<br>当前文件：${currentFile}`,
+            message: t('page.main.loading.decompress-progress', [
+              msg,
+              progress,
+              fileCount,
+              currentFile,
+            ]),
             html: true,
           });
           tooltip(
-            `${msg}\n解压进度：${progress}%\n文件数量：${fileCount}\n当前文件：${currentFile}`,
+            t('page.main.notify.decompress-progress', [msg, progress, fileCount, currentFile]),
           ).catch(console.error);
         }).then(
           (handle) => (eventHandle = handle),
@@ -81,10 +90,10 @@ export const useOperation = () => {
         await sync();
         syncDeploymentCache();
 
-        notifySuccess(`已成功部署 '${id}' 到设置目录`);
+        notifySuccess(t('page.main.notify.deploy.config-success', [id]));
       } catch (e) {
         console.error(e);
-        notifyError(`部署 '${id}' 失败`, e);
+        notifyError(t('page.main.notify.deploy.config-fail', [id]), e);
       } finally {
         loading.hide();
         eventHandle?.();
@@ -96,18 +105,28 @@ export const useOperation = () => {
         if (path) {
           let eventHandle: UnlistenFn | undefined;
           try {
-            const msg = `正在部署 '${id}' 到 ${path}...`;
+            const msg = t('page.main.loading.deploying-to-custom', [id, path]);
             loading.show({
               message: msg,
             });
             await tooltip(msg);
 
-            listen<number>('decompression_progress', (event) => {
+            listen<DecompressionInfoPayload>('decompression_progress', (event) => {
+              const progress = event.payload[0];
+              const fileCount = event.payload[1];
+              const currentFile = truncateString(event.payload[2], 25);
               loading.show({
-                message: `${msg}<br>解压进度: ${event.payload}%`,
+                message: t('page.main.loading.decompress-progress', [
+                  msg,
+                  progress,
+                  fileCount,
+                  currentFile,
+                ]),
                 html: true,
               });
-              tooltip(`${msg}\n解压进度: ${event.payload}%`).catch(console.error);
+              tooltip(
+                t('page.main.notify.decompress-progress', [msg, progress, fileCount, currentFile]),
+              ).catch(console.error);
             }).then(
               (handle) => (eventHandle = handle),
               (error) => console.error(`Failed to listen for decompression progress: ${error}`),
@@ -120,21 +139,24 @@ export const useOperation = () => {
             await sync();
             syncDeploymentCache();
 
-            notifySuccess(`已成功部署 '${id}' 到 ${path}`);
+            notifySuccess(t('page.main.notify.deploy.custom-success', [id, path]));
           } catch (e) {
             console.error(e);
-            notifyError(`部署 '${id}' 失败`, e);
+            notifyError(t('page.main.notify.deploy.custom-fail', [id]), e);
           } finally {
             loading.hide();
             eventHandle?.();
             await tooltip();
           }
         } else {
-          notifyError('部署取消', '未选择有效的目录');
+          notifyError(
+            t('page.main.notify.deploy.cancel'),
+            t('page.main.notify.deploy.cancel-no-valid-dir'),
+          );
         }
       } catch (e) {
         console.error(e);
-        notifyError('选择目录失败', e);
+        notifyError(t('notify.select-path.fail'), e);
       }
     }
   };
@@ -142,17 +164,17 @@ export const useOperation = () => {
   const handleDeployOff = async (id: string) => {
     console.info(`Un-deploying item with id: ${id}`);
     loading.show({
-      message: `正在取消部署 '${id}'...`,
+      message: t('page.main.loading.deploy-off', [id]),
     });
     try {
       await Command.metadataDeployOff(id);
       await sync();
       syncDeploymentCache();
 
-      notifySuccess(`已成功取消部署 '${id}'`);
+      notifySuccess(t('page.main.notify.deploy-off.success', [id]));
     } catch (e) {
       console.error(e);
-      notifyError(`取消部署 '${id}' 失败`, e);
+      notifyError(t('page.main.notify.deploy-off.fail', [id]), e);
     } finally {
       loading.hide();
     }

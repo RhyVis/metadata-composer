@@ -15,6 +15,8 @@ general:
   folder-none: 未选择文件夹
   unknown: 未知
   data: 数据
+  sort-d: 降序
+  sort-a: 升序
 layout:
   drop-down:
     dev-mode: 开发模式
@@ -253,6 +255,71 @@ page:
       compress-info: '{0}<br>压缩进度：{1}%<br>文件数量：{2}<br>当前文件：{3}'
     tooltip:
       compress-info: '{0}\n压缩进度：{1}%\n文件数量：{2}\n当前文件：{3}'
+  main:
+    no-image: 无图片
+    deploy:
+      config-dir: 设置目录
+      custom-dir: 自定义目录
+      tooltip:
+        to-target: 部署到指定目录
+        config-or-custom: 部署到设置目录或自定义目录
+        current-config-dir: '当前设置目录: ''{0}'''
+      open-dir: 打开部署文件夹
+      deploy-off: 取消部署
+      confirm-deploy-off: 确定要取消部署吗
+    edit:
+      tooltip: 编辑条目
+    delete:
+      tooltip: 删除条目
+      confirm: 确定要删除'{0}'吗
+    action:
+      refresh: 刷新
+      add: 新建
+      search: 搜索
+      search-regex: 正则表达式搜索
+      search-common: 普通搜索
+      sort: 排序
+      filter: 过滤
+      display-content: 显示内容
+    option:
+      filter:
+        none: 无
+        deployment: 部署
+    table:
+      title: 标题
+      alias: 别名
+      tag: 标签
+      collection: 合集
+      description: 描述
+      image: 图片
+      content-info: 内容
+      archive-size: 归档大小
+      create-time: 创建时间
+      update-time: 更新时间
+      unknown: <未提供>
+    notify:
+      refresh:
+        success: 数据已刷新
+        fail: 数据刷新失败
+      delete:
+        success: 已成功删除 '{0}'
+        fail: 删除 '{0}' 失败
+      decompress-progress: '{0}\n解压进度：{1}%\n文件数量：{2}\n当前文件：{3}'
+      deploy:
+        config-success: 已成功部署 '{0}' 到设置目录
+        config-fail: 部署 '{0}' 失败
+        custom-success: 已成功部署 '{0}' 到 {1}
+        custom-fail: 部署 '{0}' 失败
+        cancel: 部署取消
+        cancel-no-valid-dir: 未选择有效的目录
+      deploy-off:
+        success: 已成功取消部署 '{0}'
+        fail: 取消部署 '{0}' 失败
+    loading:
+      deploying-to-configured: 正在部署 '{0}' 到设置目录...
+      deploying-to-custom: 正在部署 '{0}' 到 {1}...
+      decompress-progress: '{0}<br>解压进度：{1}%<br>文件数量：{2}<br>当前文件：{3}'
+      deploy-off: 正在取消部署 '{0}'...
 develop:
   develop-info: Develop Info
   display:
