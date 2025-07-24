@@ -17,6 +17,12 @@ general:
   data: 数据
   sort-d: 降序
   sort-a: 升序
+  invalid-char: 无效字符
+  system-preserve-name: '"{0}" 是系统保留名称'
+  invalid-length: 长度过长，大于255字符
+  invalid-dot: 无效以点结尾
+  invalid-space: 无效首尾空格
+  quit: 退出
 layout:
   drop-down:
     dev-mode: 开发模式
@@ -253,7 +259,7 @@ page:
         duplicate: 标签 {0} 已存在
       input:
         label: 标签
-        hint: 回车以添加新标签
+        hint: 回车以添加新标签，空格与逗号会自动进行拆分
       empty: 无标签
     loading:
       update: 正在更新

@@ -80,8 +80,8 @@ const {
     />
     <q-input
       v-model="gInputDeveloper"
-      :debounce="$t('page.edit.content-info.game.developer.label')"
       :hint="$t('page.edit.content-info.game.developer.hint')"
+      :label="$t('page.edit.content-info.game.developer.label')"
       clearable
       stack-label
     />

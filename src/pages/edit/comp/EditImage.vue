@@ -36,7 +36,6 @@ const { imageSrc, showImage, setShowImage, pasteImg, clearImage } = useImg(edit)
         <q-tooltip>{{ $t('page.edit.image.read-clipboard') }}</q-tooltip>
       </q-btn>
     </template>
-    <template #append></template>
   </q-field>
   <q-dialog v-model="showImage" persistent transition-hide="scale" transition-show="scale">
     <q-card class="full-width">

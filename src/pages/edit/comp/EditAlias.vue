@@ -57,7 +57,7 @@ const checkAliasDuplicate = (alias: string): boolean => {
     @clear="resetCache"
     @keyup.enter="handleAddAlias"
   />
-  <div>
+  <div class="q-mt-sm">
     <template v-if="!editData.alias || editData.alias.length === 0">
       <q-chip class="r-no-sel" outline> {{ $t('page.edit.alias.no-alias') }} </q-chip>
     </template>

@@ -74,7 +74,7 @@ const checkTagDuplicate = (alias: string): boolean => {
     @clear="resetCache"
     @keyup.enter="handleAddTag(addCache)"
   />
-  <div>
+  <div class="q-mt-sm">
     <template v-if="!editData.tags || editData.tags.length === 0">
       <q-chip class="r-no-sel" outline> {{ $t('page.edit.tag.empty') }} </q-chip>
     </template>

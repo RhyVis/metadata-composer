@@ -12,10 +12,13 @@ export const enum ArchiveTypeEnum {
 }
 
 export const ArchiveTypeOptions: QSelectOption[] = [
-  { label: t('page.edit.archive.options.type.none'), value: ArchiveTypeEnum.None },
-  { label: t('page.edit.archive.options.type.archive'), value: ArchiveTypeEnum.ArchiveFile },
-  { label: t('page.edit.archive.options.type.common-file'), value: ArchiveTypeEnum.CommonFile },
-  { label: t('page.edit.archive.options.type.directory'), value: ArchiveTypeEnum.Directory },
+  { label: t('page.edit.archive-info.options.type.none'), value: ArchiveTypeEnum.None },
+  { label: t('page.edit.archive-info.options.type.archive'), value: ArchiveTypeEnum.ArchiveFile },
+  {
+    label: t('page.edit.archive-info.options.type.common-file'),
+    value: ArchiveTypeEnum.CommonFile,
+  },
+  { label: t('page.edit.archive-info.options.type.directory'), value: ArchiveTypeEnum.Directory },
 ];
 
 export const enum ContentTypeEnum {

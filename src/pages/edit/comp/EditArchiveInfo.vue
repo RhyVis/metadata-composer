@@ -69,9 +69,7 @@ const handlePassword = () => {
     map-options
     stack-label
     @clear="archiveType = ArchiveTypeEnum.None"
-  >
-    <template #after-options></template>
-  </q-select>
+  />
   <template v-if="archiveType == ArchiveTypeEnum.ArchiveFile">
     <q-field
       :label="
@@ -109,7 +107,6 @@ const handlePassword = () => {
           </q-tooltip>
         </q-btn>
       </template>
-      <template #before></template>
     </q-field>
     <q-input v-model="inputPassword" :label="$t('general.password')" stack-label>
       <template #after>
