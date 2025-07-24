@@ -5,11 +5,11 @@ import { ArchiveTypeEnum, ArchiveTypeOptions } from '@/pages/edit/script/define.
 import { openPath } from '@tauri-apps/plugin-opener';
 import { useGlobalStore } from '@/stores/global.ts';
 import { storeToRefs } from 'pinia';
-import { useNotify } from '@/composables/useNotify.ts';
+import { useNotify } from '@/hooks/useNotify';
 import { set } from '@vueuse/core';
 import { generateRandomAsciiString } from '@/api/util.ts';
 import { Command } from '@/api/cmd.ts';
-import { useDarkStyle } from '@/composables/useDarkStyle.ts';
+import { useDarkStyle } from '@/hooks/useDarkStyle';
 
 const { isDevMode } = storeToRefs(useGlobalStore());
 const { notifyWarning, notifyError } = useNotify();

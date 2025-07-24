@@ -1,6 +1,7 @@
 import { fileURLToPath, URL } from 'node:url';
 import { defineConfig } from 'vite';
 import vueDevTools from 'vite-plugin-vue-devtools';
+import VueI18nPlugin from '@intlify/unplugin-vue-i18n/vite';
 import { quasar, transformAssetUrls } from '@quasar/vite-plugin';
 import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
@@ -14,6 +15,9 @@ export default defineConfig({
     }),
     vueJsx(),
     vueDevTools(),
+    VueI18nPlugin({
+      include: fileURLToPath(new URL('./src/i18n/locales/**', import.meta.url)),
+    }),
     quasar({
       sassVariables: fileURLToPath(new URL('./src/assets/quasar-variables.sass', import.meta.url)),
     }),

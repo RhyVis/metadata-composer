@@ -3,7 +3,7 @@ import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { ref } from 'vue';
 import { set } from '@vueuse/core';
 import type { QInput } from 'quasar';
-import { useNotify } from '@/composables/useNotify.ts';
+import { useNotify } from '@/hooks/useNotify';
 
 const { notifyWarning } = useNotify();
 

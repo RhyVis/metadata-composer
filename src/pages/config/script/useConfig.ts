@@ -2,7 +2,7 @@ import type { AppConfig } from '@/api/types.ts';
 import { useQuasar } from 'quasar';
 import { Command } from '@/api/cmd.ts';
 import { selectDirectory } from '@/api/dialog.ts';
-import { useNotify } from '@/composables/useNotify.ts';
+import { useNotify } from '@/hooks/useNotify';
 import { useConfigStore } from '@/stores/config.ts';
 import { message } from '@tauri-apps/plugin-dialog';
 import { exit } from '@tauri-apps/plugin-process';

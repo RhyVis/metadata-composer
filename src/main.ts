@@ -7,7 +7,7 @@ import quasarLang from 'quasar/lang/zh-CN';
 import { createApp } from 'vue';
 import { initKeyBlocker, initLogger } from '@/api/hook.ts';
 import App from '@/App.vue';
-import { initTrayIcon } from '@/composables/useTray.ts';
+import { initTrayIcon } from '@/hooks/useTray';
 import router from '@/router';
 import pinia from '@/stores';
 

@@ -5,7 +5,7 @@ import { useQuasar } from 'quasar';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { Command } from '@/api/cmd.ts';
 import { extractFileName, truncateString } from '@/api/util.ts';
-import { useNotify } from '@/composables/useNotify.ts';
+import { useNotify } from '@/hooks/useNotify';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { listen, TauriEvent } from '@tauri-apps/api/event';
 import { readImage, readText } from '@tauri-apps/plugin-clipboard-manager';

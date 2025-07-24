@@ -3,7 +3,7 @@ import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { storeToRefs } from 'pinia';
 import { useGlobalStore } from '@/stores/global.ts';
 import { useImg } from '@/pages/edit/script/useImg.ts';
-import { useDarkStyle } from '@/composables/useDarkStyle.ts';
+import { useDarkStyle } from '@/hooks/useDarkStyle';
 
 const { isDevMode } = storeToRefs(useGlobalStore());
 const { textClass } = useDarkStyle();

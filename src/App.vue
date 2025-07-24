@@ -2,7 +2,7 @@
 import { useLibraryStore } from '@/stores/library.ts';
 import { onMounted, watch } from 'vue';
 import { useGlobalStore } from '@/stores/global.ts';
-import { useNotify } from '@/composables/useNotify.ts';
+import { useNotify } from '@/hooks/useNotify';
 import { useConfigStore } from '@/stores/config.ts';
 import { useQuasar } from 'quasar';
 import { storeToRefs } from 'pinia';

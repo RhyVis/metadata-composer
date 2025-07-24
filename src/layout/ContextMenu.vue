@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useLibraryStore } from '@/stores/library.ts';
-import { useNotify } from '@/composables/useNotify.ts';
+import { useNotify } from '@/hooks/useNotify';
 
 const { notifyInfo, notifyError } = useNotify();
 

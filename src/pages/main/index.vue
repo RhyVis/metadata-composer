@@ -14,7 +14,7 @@ import AsyncImage from '@/components/AsyncImage.vue';
 import { computed, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useLibraryStore } from '@/stores/library.ts';
-import { useNotify } from '@/composables/useNotify.ts';
+import { useNotify } from '@/hooks/useNotify';
 import { getDeployPath, isDeployable, isDeployed } from '@/pages/main/script/function.ts';
 import { useConfigStore } from '@/stores/config.ts';
 import { formatBytes } from '@/api/util.ts';

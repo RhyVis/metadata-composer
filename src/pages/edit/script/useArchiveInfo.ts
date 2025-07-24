@@ -2,7 +2,7 @@ import type { ArchiveInfo } from '@/api/types.ts';
 import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { computed } from 'vue';
 import { selectDirectory, selectFile } from '@/api/dialog.ts';
-import { useNotify } from '@/composables/useNotify.ts';
+import { useNotify } from '@/hooks/useNotify';
 import { set } from '@vueuse/core';
 
 const defaultArchiveInfo = (type: ArchiveInfo['type'] = 'None'): ArchiveInfo => {

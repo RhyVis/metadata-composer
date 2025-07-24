@@ -4,7 +4,7 @@ import { useQuasar } from 'quasar';
 import { computed } from 'vue';
 import { Command } from '@/api/cmd.ts';
 import { isNumericOnly } from '@/api/util.ts';
-import { useNotify } from '@/composables/useNotify.ts';
+import { useNotify } from '@/hooks/useNotify';
 import { DLContentTypeEnum } from '@/pages/edit/script/define.ts';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { get, set } from '@vueuse/core';

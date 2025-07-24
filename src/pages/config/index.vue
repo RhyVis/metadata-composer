@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { useConfigStore } from '@/stores/config.ts';
 import { onMounted } from 'vue';
-import { useNotify } from '@/composables/useNotify.ts';
+import { useNotify } from '@/hooks/useNotify';
 import { storeToRefs } from 'pinia';
 import { Command } from '@/api/cmd.ts';
 import { useConfig } from '@/pages/config/script/useConfig.ts';
