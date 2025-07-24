@@ -79,6 +79,12 @@ page:
         success: 导入元数据成功
         refresh-for-changes: 刷新数据库以查看更改
         fail: 导入元数据失败
+        change-lang-fail: 语言设置同步失败
+    lang:
+      header: 语言
+      switch:
+        label: 设置语言
+        desc: 设置软件显示的语言
   edit:
     dialog:
       exit-guard:

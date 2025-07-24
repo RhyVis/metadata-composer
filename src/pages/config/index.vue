@@ -2,12 +2,18 @@
 import { useConfigStore } from '@/stores/config.ts';
 import { storeToRefs } from 'pinia';
 import { Command } from '@/api/cmd.ts';
-import { useConfig } from '@/pages/config/script/useConfig.ts';
+import { LanguageList, useConfig } from '@/pages/config/script/useConfig.ts';
 
 const config = useConfigStore();
 const { pathData, pathDeploy } = storeToRefs(config);
-const { handleSelectDir, handleClearField, handleClearImageCache, handleExport, handleImport } =
-  useConfig();
+const {
+  handleSelectDir,
+  handleClearField,
+  handleClearImageCache,
+  handleExport,
+  handleImport,
+  handleChangeLang,
+} = useConfig();
 </script>
 
 <template>
@@ -85,6 +91,28 @@ const { handleSelectDir, handleClearField, handleClearImageCache, handleExport, 
           <q-item-label>{{ $t('page.config.directory.dir-log.label') }}</q-item-label>
           <q-item-label caption> {{ $t('page.config.directory.dir-log.desc') }} </q-item-label>
         </q-item-section>
+      </q-item>
+
+      <q-item-label header>{{ $t('page.config.lang.header') }}</q-item-label>
+
+      <q-item v-ripple clickable>
+        <q-item-section>
+          <q-item-label>{{ $t('page.config.lang.switch.label') }}</q-item-label>
+          <q-item-label caption>{{ $t('page.config.lang.switch.desc') }}</q-item-label>
+        </q-item-section>
+        <q-menu>
+          <q-list>
+            <q-item
+              v-close-popup
+              v-for="item in LanguageList"
+              :key="item.lang"
+              clickable
+              @click="handleChangeLang(item.lang)"
+            >
+              <q-item-section>{{ item.label }}</q-item-section>
+            </q-item>
+          </q-list>
+        </q-menu>
       </q-item>
     </q-list>
   </q-page>

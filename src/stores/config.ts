@@ -1,4 +1,4 @@
-import type { AppConfig } from '@/api/types.ts';
+import type { AppConfig, Language } from '@/api/types.ts';
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { Command } from '@/api/cmd.ts';
@@ -17,6 +17,7 @@ export const useConfigStore = defineStore(
       darkMode: false,
     });
     const backend = ref<AppConfig>({
+      lang: 'zh-CN',
       path_data: '',
       path_deploy: null,
     });
@@ -24,6 +25,7 @@ export const useConfigStore = defineStore(
     const isDevMode = computed(() => frontend.value.devMode);
     const isDarkMode = computed(() => frontend.value.darkMode);
 
+    const lang = computed(() => backend.value.lang);
     const pathData = computed(() => backend.value.path_data);
     const pathDeploy = computed(() => backend.value.path_deploy);
 
@@ -37,6 +39,10 @@ export const useConfigStore = defineStore(
 
     function toggleDarkMode() {
       frontend.value.darkMode = !frontend.value.darkMode;
+    }
+
+    function setLanguage(lang: Language) {
+      backend.value.lang = lang;
     }
 
     function setDataPath(path: string) {
@@ -54,12 +60,14 @@ export const useConfigStore = defineStore(
       // Getter
       isDevMode,
       isDarkMode,
+      lang,
       pathData,
       pathDeploy,
       // Action
       sync,
       toggleDevMode,
       toggleDarkMode,
+      setLanguage,
       setDataPath,
       setDeployPath,
     };

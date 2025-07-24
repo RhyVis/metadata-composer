@@ -2,17 +2,19 @@ import type { WatchHandle } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useQuasar } from 'quasar';
 import { onUnmounted, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useTableStore } from '@/pages/main/script/useTableStore';
 import { useConfigStore } from '@/stores/config';
 import { useDatabaseStore } from '@/stores/database';
-import { get } from '@vueuse/core';
+import { get, syncRef } from '@vueuse/core';
 
 export const useInit = () => {
+  const { locale } = useI18n();
   const tableStore = useTableStore();
   const configStore = useConfigStore();
   const databaseStore = useDatabaseStore();
 
-  const { isDarkMode } = storeToRefs(configStore);
+  const { isDarkMode, lang } = storeToRefs(configStore);
   const { dark } = useQuasar();
 
   let watchHandle: WatchHandle | undefined;
@@ -32,6 +34,9 @@ export const useInit = () => {
             dark.set(false);
             document.documentElement.classList.remove('dark-style');
           }
+        });
+        syncRef(locale, lang, {
+          direction: 'rtl',
         });
       })
       .catch(console.error);

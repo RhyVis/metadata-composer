@@ -12,7 +12,7 @@ use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::DialogExt;
 use ts_rs::TS;
 
-use crate::core::{check_init_flag, create_init_flag, get_handle_ref};
+use crate::core::{Language, check_init_flag, create_init_flag, get_handle_ref};
 
 #[cfg(debug_assertions)]
 const CONFIG_FILE_NAME: &str = "Config.dev.toml";
@@ -26,6 +26,8 @@ const DIR_NAME_IMAGE: &str = "image";
 #[ts(export, export_to = "../../src/api/types.ts")]
 pub struct AppConfig {
     #[serde(default)]
+    lang: Language,
+    #[serde(default)]
     path_data: PathBuf,
     #[serde(default)]
     path_deploy: Option<PathBuf>,
@@ -34,6 +36,7 @@ pub struct AppConfig {
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
+            lang: Language::default(),
             path_data: PathBuf::from("."),
             path_deploy: None,
         }
@@ -88,6 +91,13 @@ impl AppConfig {
 
     pub(super) fn update_field(&mut self, name: &str, value: Value) -> Result<()> {
         match name {
+            "lang" => {
+                let lang = value.into();
+                self.write(|c| {
+                    c.lang = lang;
+                    Ok(())
+                })?;
+            },
             "path_root" => {
                 if let Some(value) = value.as_str() {
                     let path = Path::new(value);
@@ -222,5 +232,14 @@ impl AppConfig {
         f(self)?;
         self.save(get_handle_ref())?;
         Ok(())
+    }
+}
+
+impl From<Value> for Language {
+    fn from(value: Value) -> Self {
+        serde_json::from_value::<Language>(value.clone()).unwrap_or_else(|e| {
+            warn!("Provided language '{:#}' not parsable: '{}", value, e);
+            Language::default()
+        })
     }
 }

@@ -2,8 +2,10 @@ use std::{fs::File, sync::OnceLock};
 
 use anyhow::{Result, anyhow};
 use log::info;
+use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, State};
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
+use ts_rs::TS;
 
 use crate::core::{
     config::{ConfigState, init_config},
@@ -56,15 +58,13 @@ fn init_core_internal(app: &AppHandle) -> Result<()> {
 }
 
 pub trait StringResult<T, E>
-where
-    E: std::fmt::Display,
+where E: std::fmt::Display
 {
     fn string_result(self) -> Result<T, String>;
 }
 
 impl<T, E> StringResult<T, E> for Result<T, E>
-where
-    E: std::fmt::Display,
+where E: std::fmt::Display
 {
     fn string_result(self) -> Result<T, String> {
         self.map_err(|e| e.to_string())
@@ -77,11 +77,16 @@ pub enum Whether<This, That> {
     That(That),
 }
 
-#[derive(Debug)]
 #[allow(dead_code)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, Default)]
+#[ts(export, export_to = "../../src/api/types.ts")]
 pub enum Language {
-    EnUs,
+    #[default]
+    #[serde(rename = "zh-CN")]
     ZhCn,
+    #[serde(rename = "en-US")]
+    EnUs,
+    #[serde(rename = "ja-JP")]
     JaJp,
 }
 
