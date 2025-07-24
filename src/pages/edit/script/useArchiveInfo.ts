@@ -1,20 +1,17 @@
 import type { ArchiveInfo } from '@/api/types.ts';
 import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { selectDirectory, selectFile } from '@/api/dialog.ts';
 import { useNotify } from '@/hooks/useNotify';
+import { ArchiveTypeEnum } from '@/pages/edit/script/define';
 import { set } from '@vueuse/core';
 
-const defaultArchiveInfo = (type: ArchiveInfo['type'] = 'None'): ArchiveInfo => {
+const defaultArchiveInfo = (type: ArchiveInfo['type'] = ArchiveTypeEnum.None): ArchiveInfo => {
   switch (type) {
-    case 'None': {
+    case ArchiveTypeEnum.ArchiveFile: {
       return {
-        type: 'None',
-      };
-    }
-    case 'ArchiveFile': {
-      return {
-        type: 'ArchiveFile',
+        type: ArchiveTypeEnum.ArchiveFile,
         data: {
           size: 0,
           path: '',
@@ -22,22 +19,27 @@ const defaultArchiveInfo = (type: ArchiveInfo['type'] = 'None'): ArchiveInfo => 
         },
       };
     }
-    case 'CommonFile': {
+    case ArchiveTypeEnum.CommonFile: {
       return {
-        type: 'CommonFile',
+        type: ArchiveTypeEnum.CommonFile,
         data: {
           size: 0,
           path: '',
         },
       };
     }
-    case 'Directory': {
+    case ArchiveTypeEnum.Directory: {
       return {
-        type: 'Directory',
+        type: ArchiveTypeEnum.Directory,
         data: {
           size: 0,
           path: '',
         },
+      };
+    }
+    default: {
+      return {
+        type: ArchiveTypeEnum.None,
       };
     }
   }
@@ -46,6 +48,7 @@ const defaultArchiveInfo = (type: ArchiveInfo['type'] = 'None'): ArchiveInfo => 
 export const defaultPassword = 'COMPOSER';
 
 export const useArchiveInfo = (edit: UseEdit) => {
+  const { t } = useI18n();
   const { editData, updateField } = edit;
   const { notifyError, notifyWarning } = useNotify();
 
@@ -56,9 +59,9 @@ export const useArchiveInfo = (edit: UseEdit) => {
 
   const archiveInfo = computed<ArchiveInfo>(() => editData.value.archive_info!);
   const inputPath = computed({
-    get: () => (archiveInfo.value.type === 'None' ? '' : archiveInfo.value.data.path),
+    get: () => (archiveInfo.value.type === ArchiveTypeEnum.None ? '' : archiveInfo.value.data.path),
     set: (val: string) => {
-      if (archiveInfo.value.type === 'None') {
+      if (archiveInfo.value.type === ArchiveTypeEnum.None) {
         console.warn('Attempted to set path on non-archive type');
       } else {
         updateField('archive_info', {
@@ -94,18 +97,18 @@ export const useArchiveInfo = (edit: UseEdit) => {
   });
 
   const doSelect = async (dir: boolean) => {
-    if (archiveType.value === 'None') {
+    if (archiveType.value === ArchiveTypeEnum.None) {
       console.warn('Attempted to select path for non-archive type');
       return;
     }
     try {
       const path = dir ? await selectDirectory() : await selectFile();
       if (!path) {
-        notifyWarning('未选择路径', '请确保选择了一个有效的文件或目录路径');
+        notifyWarning(t('notify.select-path.no-path'), t('notify.select-path.valid-please'));
         return;
       }
 
-      if (archiveType.value === 'ArchiveFile' && !inputPassword.value) {
+      if (archiveType.value === ArchiveTypeEnum.ArchiveFile && !inputPassword.value) {
         set(inputPassword, defaultPassword);
       }
 
@@ -114,7 +117,7 @@ export const useArchiveInfo = (edit: UseEdit) => {
       updateField('archive_info', obj);
     } catch (e) {
       console.error(e);
-      notifyError('选择路径失败', e);
+      notifyError(t('notify.select-path.fail'), e);
     }
   };
 

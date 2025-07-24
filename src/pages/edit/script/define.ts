@@ -1,5 +1,8 @@
 import type { QSelectOption } from 'quasar';
 import type { GameType } from '@/api/types.ts';
+import i18n from '@/i18n';
+
+const { t } = i18n.global;
 
 export const enum ArchiveTypeEnum {
   None = 'None',
@@ -9,10 +12,10 @@ export const enum ArchiveTypeEnum {
 }
 
 export const ArchiveTypeOptions: QSelectOption[] = [
-  { label: '无', value: ArchiveTypeEnum.None },
-  { label: '压缩档', value: ArchiveTypeEnum.ArchiveFile },
-  { label: '文件', value: ArchiveTypeEnum.CommonFile },
-  { label: '目录', value: ArchiveTypeEnum.Directory },
+  { label: t('page.edit.archive.options.type.none'), value: ArchiveTypeEnum.None },
+  { label: t('page.edit.archive.options.type.archive'), value: ArchiveTypeEnum.ArchiveFile },
+  { label: t('page.edit.archive.options.type.common-file'), value: ArchiveTypeEnum.CommonFile },
+  { label: t('page.edit.archive.options.type.directory'), value: ArchiveTypeEnum.Directory },
 ];
 
 export const enum ContentTypeEnum {
@@ -21,8 +24,8 @@ export const enum ContentTypeEnum {
 }
 
 export const ContentTypeOptions: QSelectOption[] = [
-  { label: '未知', value: ContentTypeEnum.Undefined },
-  { label: '游戏', value: ContentTypeEnum.Game },
+  { label: t('page.edit.content-info.options.type.undefined'), value: ContentTypeEnum.Undefined },
+  { label: t('page.edit.content-info.options.type.game'), value: ContentTypeEnum.Game },
 ];
 
 export const GameTypeEnum = {
@@ -33,10 +36,13 @@ export const GameTypeEnum = {
 } as const satisfies Record<string, GameType>;
 
 export const GameTypeOptions: QSelectOption[] = [
-  { label: '未指定', value: GameTypeEnum.Unspecified },
-  { label: '角色扮演游戏 (RPG)', value: GameTypeEnum.RPG },
-  { label: '策略游戏 (SLG)', value: GameTypeEnum.SLG },
-  { label: '冒险游戏 (AVG)', value: GameTypeEnum.AVG },
+  {
+    label: t('page.edit.content-info.options.game-type.unspecified'),
+    value: GameTypeEnum.Unspecified,
+  },
+  { label: t('page.edit.content-info.options.game-type.rpg'), value: GameTypeEnum.RPG },
+  { label: t('page.edit.content-info.options.game-type.slg'), value: GameTypeEnum.SLG },
+  { label: t('page.edit.content-info.options.game-type.avg'), value: GameTypeEnum.AVG },
 ];
 
 export const enum GameSysPlatformEnum {
@@ -65,10 +71,16 @@ export const enum GameDistributionEnum {
 }
 
 export const GameDistributionOptions: QSelectOption[] = [
-  { label: '未知', value: GameDistributionEnum.Unknown },
-  { label: 'Steam', value: GameDistributionEnum.Steam },
-  { label: 'DLSite', value: GameDistributionEnum.DLSite },
-  { label: '其他', value: GameDistributionEnum.Other },
+  {
+    label: t('page.edit.content-info.options.game-dist.unknown'),
+    value: GameDistributionEnum.Unknown,
+  },
+  { label: t('page.edit.content-info.options.game-dist.steam'), value: GameDistributionEnum.Steam },
+  {
+    label: t('page.edit.content-info.options.game-dist.dl-site'),
+    value: GameDistributionEnum.DLSite,
+  },
+  { label: t('page.edit.content-info.options.game-dist.other'), value: GameDistributionEnum.Other },
 ];
 
 export const enum DLContentTypeEnum {
@@ -83,14 +95,38 @@ export const enum DLContentTypeEnum {
 }
 
 export const DLContentTypeOptions: QSelectOption[] = [
-  { label: '同人', value: DLContentTypeEnum.Doujin },
-  { label: '漫画', value: DLContentTypeEnum.Comics },
-  { label: 'PC软件', value: DLContentTypeEnum.PcGames },
-  { label: '手机游戏', value: DLContentTypeEnum.SmartphoneGames },
-  { label: '同人 R18', value: DLContentTypeEnum.DoujinR18 },
-  { label: '漫画 R18', value: DLContentTypeEnum.ComicsR18 },
-  { label: '美少女游戏 R18', value: DLContentTypeEnum.HGames },
-  { label: '手机游戏 R18', value: DLContentTypeEnum.SmartphoneGamesR18 },
+  {
+    label: t('page.edit.content-info.options.game-dl-content.doujin'),
+    value: DLContentTypeEnum.Doujin,
+  },
+  {
+    label: t('page.edit.content-info.options.game-dl-content.comics'),
+    value: DLContentTypeEnum.Comics,
+  },
+  {
+    label: t('page.edit.content-info.options.game-dl-content.pc-games'),
+    value: DLContentTypeEnum.PcGames,
+  },
+  {
+    label: t('page.edit.content-info.options.game-dl-content.smartphone-games'),
+    value: DLContentTypeEnum.SmartphoneGames,
+  },
+  {
+    label: t('page.edit.content-info.options.game-dl-content.doujin-r18'),
+    value: DLContentTypeEnum.DoujinR18,
+  },
+  {
+    label: t('page.edit.content-info.options.game-dl-content.comics-r18'),
+    value: DLContentTypeEnum.ComicsR18,
+  },
+  {
+    label: t('page.edit.content-info.options.game-dl-content.h-games'),
+    value: DLContentTypeEnum.HGames,
+  },
+  {
+    label: t('page.edit.content-info.options.game-dl-content.smartphone-games-r18'),
+    value: DLContentTypeEnum.SmartphoneGamesR18,
+  },
 ];
 
 export type EditPreset = 'DoujinR18';

@@ -17,6 +17,8 @@ export default defineConfig({
     vueDevTools(),
     VueI18nPlugin({
       include: fileURLToPath(new URL('./src/i18n/locales/**', import.meta.url)),
+      strictMessage: false,
+      escapeHtml: false,
     }),
     quasar({
       sassVariables: fileURLToPath(new URL('./src/assets/quasar-variables.sass', import.meta.url)),

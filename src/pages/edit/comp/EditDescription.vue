@@ -16,10 +16,10 @@ const description = computed({
 <template>
   <q-input
     v-model="description"
+    :hint="$t('page.edit.description.hint')"
+    :label="$t('page.edit.description.label')"
     autogrow
     clearable
-    hint="内容描述"
-    label="描述"
     stack-label
     type="textarea"
   />

@@ -2,29 +2,36 @@ import type { ContentInfo, DLContentType, GameData, GameDistribution } from '@/a
 import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { useQuasar } from 'quasar';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Command } from '@/api/cmd.ts';
 import { isNumericOnly } from '@/api/util.ts';
 import { useNotify } from '@/hooks/useNotify';
-import { DLContentTypeEnum } from '@/pages/edit/script/define.ts';
+import {
+  ContentTypeEnum,
+  DLContentTypeEnum,
+  GameDistributionEnum,
+  GameTypeEnum,
+} from '@/pages/edit/script/define.ts';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { get, set } from '@vueuse/core';
 
 const defaultContentInfo = (): ContentInfo => ({
-  type: 'Undefined',
+  type: ContentTypeEnum.Undefined,
 });
 
 const defaultGameData = (): GameData => ({
   version: '1.0.0',
-  game_type: 'Unspecified',
+  game_type: GameTypeEnum.Unspecified,
   developer: null,
   publisher: null,
   sys_platform: [],
   distribution: {
-    type: 'Unknown',
+    type: GameDistributionEnum.Unknown,
   },
 });
 
 export const useContentInfo = (edit: UseEdit) => {
+  const { t } = useI18n();
   const { editData, updateField } = edit;
   const { loading } = useQuasar();
   const { notifyWarning, notifyError } = useNotify();
@@ -43,15 +50,17 @@ export const useContentInfo = (edit: UseEdit) => {
 
   const isTypeGameDLSite = computed(
     () =>
-      contentInfo.value.type === 'Game' && contentInfo.value.data.distribution.type === 'DLSite',
+      contentInfo.value.type === ContentTypeEnum.Game &&
+      contentInfo.value.data.distribution.type === GameDistributionEnum.DLSite,
   );
 
   const gInputVersion = computed({
-    get: () => (contentInfo.value.type === 'Game' ? contentInfo.value.data.version : ''),
+    get: () =>
+      contentInfo.value.type === ContentTypeEnum.Game ? contentInfo.value.data.version : '',
     set: (val: GameData['version']) => {
-      if (contentInfo.value.type === 'Game') {
+      if (contentInfo.value.type === ContentTypeEnum.Game) {
         updateField('content_info', {
-          type: 'Game',
+          type: ContentTypeEnum.Game,
           data: {
             ...contentInfo.value.data,
             version: val?.trim() || '1.0.0',
@@ -64,11 +73,13 @@ export const useContentInfo = (edit: UseEdit) => {
   });
   const gInputGameType = computed({
     get: () =>
-      contentInfo.value.type === 'Game' ? contentInfo.value.data.game_type : 'Unspecified',
+      contentInfo.value.type === ContentTypeEnum.Game
+        ? contentInfo.value.data.game_type
+        : ContentTypeEnum.Undefined,
     set: (val: GameData['game_type']) => {
-      if (contentInfo.value.type === 'Game') {
+      if (contentInfo.value.type === ContentTypeEnum.Game) {
         updateField('content_info', {
-          type: 'Game',
+          type: ContentTypeEnum.Game,
           data: {
             ...contentInfo.value.data,
             game_type: val,
@@ -80,11 +91,12 @@ export const useContentInfo = (edit: UseEdit) => {
     },
   });
   const gInputDeveloper = computed({
-    get: () => (contentInfo.value.type === 'Game' ? contentInfo.value.data.developer : null),
+    get: () =>
+      contentInfo.value.type === ContentTypeEnum.Game ? contentInfo.value.data.developer : null,
     set: (val: GameData['developer']) => {
-      if (contentInfo.value.type === 'Game') {
+      if (contentInfo.value.type === ContentTypeEnum.Game) {
         updateField('content_info', {
-          type: 'Game',
+          type: ContentTypeEnum.Game,
           data: {
             ...contentInfo.value.data,
             developer: val ? val.trim() : null,
@@ -96,11 +108,12 @@ export const useContentInfo = (edit: UseEdit) => {
     },
   });
   const gInputPublisher = computed({
-    get: () => (contentInfo.value.type === 'Game' ? contentInfo.value.data.publisher : null),
+    get: () =>
+      contentInfo.value.type === ContentTypeEnum.Game ? contentInfo.value.data.publisher : null,
     set: (val: GameData['publisher']) => {
-      if (contentInfo.value.type === 'Game') {
+      if (contentInfo.value.type === ContentTypeEnum.Game) {
         updateField('content_info', {
-          type: 'Game',
+          type: ContentTypeEnum.Game,
           data: {
             ...contentInfo.value.data,
             publisher: val ? val.trim() : null,
@@ -112,11 +125,12 @@ export const useContentInfo = (edit: UseEdit) => {
     },
   });
   const gInputSysPlatform = computed({
-    get: () => (contentInfo.value.type === 'Game' ? contentInfo.value.data.sys_platform : []),
+    get: () =>
+      contentInfo.value.type === ContentTypeEnum.Game ? contentInfo.value.data.sys_platform : [],
     set: (val: GameData['sys_platform']) => {
-      if (contentInfo.value.type === 'Game') {
+      if (contentInfo.value.type === ContentTypeEnum.Game) {
         updateField('content_info', {
-          type: 'Game',
+          type: ContentTypeEnum.Game,
           data: {
             ...contentInfo.value.data,
             sys_platform: val,
@@ -129,13 +143,14 @@ export const useContentInfo = (edit: UseEdit) => {
   });
   const gInputSteamAppId = computed({
     get: () =>
-      contentInfo.value.type === 'Game' && contentInfo.value.data.distribution.type === 'Steam'
+      contentInfo.value.type === ContentTypeEnum.Game &&
+      contentInfo.value.data.distribution.type === GameDistributionEnum.Steam
         ? contentInfo.value.data.distribution.data.app_id
         : '',
     set: (val: string) => {
       if (
-        contentInfo.value.type === 'Game' &&
-        contentInfo.value.data.distribution.type === 'Steam'
+        contentInfo.value.type === ContentTypeEnum.Game &&
+        contentInfo.value.data.distribution.type === GameDistributionEnum.Steam
       ) {
         const trim = val.trim();
         if (!isNumericOnly(trim)) {
@@ -143,11 +158,11 @@ export const useContentInfo = (edit: UseEdit) => {
           return;
         }
         updateField('content_info', {
-          type: 'Game',
+          type: ContentTypeEnum.Game,
           data: {
             ...contentInfo.value.data,
             distribution: {
-              type: 'Steam',
+              type: GameDistributionEnum.Steam,
               data: { app_id: trim },
             },
           },
@@ -160,13 +175,14 @@ export const useContentInfo = (edit: UseEdit) => {
 
   const gInputDLSiteId = computed({
     get: () =>
-      contentInfo.value.type === 'Game' && contentInfo.value.data.distribution.type === 'DLSite'
+      contentInfo.value.type === ContentTypeEnum.Game &&
+      contentInfo.value.data.distribution.type === GameDistributionEnum.DLSite
         ? contentInfo.value.data.distribution.data.id
         : '',
     set: (val: string) => {
       if (
-        contentInfo.value.type === 'Game' &&
-        contentInfo.value.data.distribution.type === 'DLSite'
+        contentInfo.value.type === ContentTypeEnum.Game &&
+        contentInfo.value.data.distribution.type === GameDistributionEnum.DLSite
       ) {
         const trim = val.trim();
         if (!isNumericOnly(trim)) {
@@ -174,11 +190,11 @@ export const useContentInfo = (edit: UseEdit) => {
           return;
         }
         updateField('content_info', {
-          type: 'Game',
+          type: ContentTypeEnum.Game,
           data: {
             ...contentInfo.value.data,
             distribution: {
-              type: 'DLSite',
+              type: GameDistributionEnum.DLSite,
               data: {
                 ...contentInfo.value.data.distribution.data,
                 id: trim,
@@ -193,20 +209,21 @@ export const useContentInfo = (edit: UseEdit) => {
   });
   const gInputDLSiteContentType = computed({
     get: () =>
-      contentInfo.value.type === 'Game' && contentInfo.value.data.distribution.type === 'DLSite'
+      contentInfo.value.type === ContentTypeEnum.Game &&
+      contentInfo.value.data.distribution.type === GameDistributionEnum.DLSite
         ? contentInfo.value.data.distribution.data.content_type
         : DLContentTypeEnum.Doujin,
     set: (val: DLContentType) => {
       if (
-        contentInfo.value.type === 'Game' &&
-        contentInfo.value.data.distribution.type === 'DLSite'
+        contentInfo.value.type === ContentTypeEnum.Game &&
+        contentInfo.value.data.distribution.type === GameDistributionEnum.DLSite
       ) {
         updateField('content_info', {
-          type: 'Game',
+          type: ContentTypeEnum.Game,
           data: {
             ...contentInfo.value.data,
             distribution: {
-              type: 'DLSite',
+              type: GameDistributionEnum.DLSite,
               data: { ...contentInfo.value.data.distribution.data, content_type: val },
             },
           },
@@ -218,21 +235,25 @@ export const useContentInfo = (edit: UseEdit) => {
   });
   const gInputOtherName = computed({
     get: () =>
-      contentInfo.value.type === 'Game' && contentInfo.value.data.distribution.type === 'Other'
+      contentInfo.value.type === ContentTypeEnum.Game &&
+      contentInfo.value.data.distribution.type === GameDistributionEnum.Other
         ? contentInfo.value.data.distribution.data.name
         : '',
     set: (val: string) => {
       if (
-        contentInfo.value.type === 'Game' &&
-        contentInfo.value.data.distribution.type === 'Other'
+        contentInfo.value.type === ContentTypeEnum.Game &&
+        contentInfo.value.data.distribution.type === GameDistributionEnum.Other
       ) {
         updateField('content_info', {
-          type: 'Game',
+          type: ContentTypeEnum.Game,
           data: {
             ...contentInfo.value.data,
             distribution: {
-              type: 'Other',
-              data: { ...contentInfo.value.data.distribution.data, name: val?.trim() },
+              type: GameDistributionEnum.Other,
+              data: {
+                ...contentInfo.value.data.distribution.data,
+                name: (val?.trim() ?? '').toLowerCase(),
+              },
             },
           },
         });
@@ -243,20 +264,21 @@ export const useContentInfo = (edit: UseEdit) => {
   });
   const gInputOtherId = computed({
     get: () =>
-      contentInfo.value.type === 'Game' && contentInfo.value.data.distribution.type === 'Other'
+      contentInfo.value.type === ContentTypeEnum.Game &&
+      contentInfo.value.data.distribution.type === GameDistributionEnum.Other
         ? contentInfo.value.data.distribution.data.id
         : '',
     set: (val: string) => {
       if (
-        contentInfo.value.type === 'Game' &&
-        contentInfo.value.data.distribution.type === 'Other'
+        contentInfo.value.type === ContentTypeEnum.Game &&
+        contentInfo.value.data.distribution.type === GameDistributionEnum.Other
       ) {
         updateField('content_info', {
-          type: 'Game',
+          type: ContentTypeEnum.Game,
           data: {
             ...contentInfo.value.data,
             distribution: {
-              type: 'Other',
+              type: GameDistributionEnum.Other,
               data: { ...contentInfo.value.data.distribution.data, id: val?.trim() },
             },
           },
@@ -268,13 +290,15 @@ export const useContentInfo = (edit: UseEdit) => {
   });
   const gInputDistributionType = computed({
     get: () =>
-      contentInfo.value.type === 'Game' ? contentInfo.value.data.distribution.type : 'Unknown',
+      contentInfo.value.type === ContentTypeEnum.Game
+        ? contentInfo.value.data.distribution.type
+        : GameDistributionEnum.Unknown,
     set: (val: GameDistribution['type']) => {
-      if (contentInfo.value.type === 'Game') {
+      if (contentInfo.value.type === ContentTypeEnum.Game) {
         switch (val) {
-          case 'Unknown': {
+          case GameDistributionEnum.Unknown: {
             updateField('content_info', {
-              type: 'Game',
+              type: ContentTypeEnum.Game,
               data: {
                 ...contentInfo.value.data,
                 distribution: { type: val },
@@ -282,9 +306,9 @@ export const useContentInfo = (edit: UseEdit) => {
             });
             break;
           }
-          case 'Steam': {
+          case GameDistributionEnum.Steam: {
             updateField('content_info', {
-              type: 'Game',
+              type: ContentTypeEnum.Game,
               data: {
                 ...contentInfo.value.data,
                 distribution: { type: val, data: { app_id: '0' } },
@@ -292,9 +316,9 @@ export const useContentInfo = (edit: UseEdit) => {
             });
             break;
           }
-          case 'DLSite': {
+          case GameDistributionEnum.DLSite: {
             updateField('content_info', {
-              type: 'Game',
+              type: ContentTypeEnum.Game,
               data: {
                 ...contentInfo.value.data,
                 distribution: {
@@ -305,9 +329,9 @@ export const useContentInfo = (edit: UseEdit) => {
             });
             break;
           }
-          case 'Other': {
+          case GameDistributionEnum.Other: {
             updateField('content_info', {
-              type: 'Game',
+              type: ContentTypeEnum.Game,
               data: {
                 ...contentInfo.value.data,
                 distribution: {
@@ -333,8 +357,8 @@ export const useContentInfo = (edit: UseEdit) => {
 
   const gViewDLSiteIdPrefix = computed(() => {
     if (
-      contentInfo.value.type === 'Game' &&
-      contentInfo.value.data.distribution.type === 'DLSite'
+      contentInfo.value.type === ContentTypeEnum.Game &&
+      contentInfo.value.data.distribution.type === GameDistributionEnum.DLSite
     ) {
       switch (gInputDLSiteContentType.value) {
         case DLContentTypeEnum.Doujin:
@@ -357,8 +381,8 @@ export const useContentInfo = (edit: UseEdit) => {
   });
   const gViewDLSiteUrlSeg = computed(() => {
     if (
-      contentInfo.value.type === 'Game' &&
-      contentInfo.value.data.distribution.type === 'DLSite'
+      contentInfo.value.type === ContentTypeEnum.Game &&
+      contentInfo.value.data.distribution.type === GameDistributionEnum.DLSite
     ) {
       switch (gInputDLSiteContentType.value) {
         case DLContentTypeEnum.Doujin:
@@ -386,9 +410,9 @@ export const useContentInfo = (edit: UseEdit) => {
     get: () => editData.value.content_info!.type,
     set: (val: ContentInfo['type']) => {
       switch (val) {
-        case 'Game': {
+        case ContentTypeEnum.Game: {
           updateField('content_info', {
-            type: 'Game',
+            type: ContentTypeEnum.Game,
             data: defaultGameData(),
           });
           break;
@@ -409,17 +433,17 @@ export const useContentInfo = (edit: UseEdit) => {
 
     const id = gInputDLSiteId.value.trim();
     if (!id) {
-      notifyWarning('DLSite ID 不能为空，请检查输入');
+      notifyWarning(t('page.edit.content-info.notify.dl-id-empty'));
       return;
     }
     if (!isNumericOnly(id)) {
-      notifyWarning('DLSite ID 应为不包含前缀的数字，请检查输入');
+      notifyWarning(t('page.edit.content-info.notify.dl-id-invalid'));
       return;
     }
 
     try {
       loading.show({
-        message: `正在获取 ${gViewDLSiteIdPrefix.value}${id} 的信息...`,
+        message: t('page.edit.content-info.loading.fetch-info', [gViewDLSiteIdPrefix.value, id]),
       });
       const data = await Command.utilDlFetchInfo({
         id,
@@ -443,7 +467,7 @@ export const useContentInfo = (edit: UseEdit) => {
       }
     } catch (e) {
       console.error('Failed to fetch DLSite info:', e);
-      notifyError('获取 DLSite 信息失败，请稍后再试');
+      notifyError(t('page.edit.content-info.notify.dl-fetch-fail'));
     } finally {
       loading.hide();
     }
@@ -451,7 +475,7 @@ export const useContentInfo = (edit: UseEdit) => {
   const gOpenDLSitePage = async () => {
     if (!isTypeGameDLSite.value || !gInputDLSiteId.value) {
       console.warn('Attempted to open DLSite page on non-DLSite content type or without ID');
-      notifyWarning('请先设置 DLSite ID，然后再尝试打开页面');
+      notifyWarning(t('page.edit.content-info.notify.dl-open-id-invalid'));
       return;
     }
     const url = `https://www.dlsite.com/${get(gViewDLSiteUrlSeg)}/work/=/product_id/${get(gViewDLSiteIdPrefix)}${get(gInputDLSiteId)}.html`;
@@ -459,7 +483,7 @@ export const useContentInfo = (edit: UseEdit) => {
       await openUrl(url);
     } catch (e) {
       console.error('Failed to open DLSite page:', e);
-      notifyError('打开 DLSite 页面失败，请检查网络连接或稍后再试', url);
+      notifyError(t('page.edit.content-info.notify.dl-open-fail'), url);
     }
   };
 

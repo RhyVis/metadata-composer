@@ -5,6 +5,16 @@ general:
   select-path-fail: 选择路径失败
   select-no-dir: 未选择任何目录
   notification: 提示
+  ok: 确认
+  cancel: 取消
+  exit: 退出
+  update: 更新
+  create: 创建
+  password: 密码
+  file-none: 未选择文件
+  folder-none: 未选择文件夹
+  unknown: 未知
+  data: 数据
 layout:
   drop-down:
     dev-mode: 开发模式
@@ -17,6 +27,14 @@ database:
   refresh-fail: 数据库刷新失败
 notify:
   sync-fail: 数据同步失败
+  open-path:
+    fail: 打开路径失败
+    no-path: 路径未定义
+    choose-one-please: 请先选择一个路径
+  select-path:
+    no-path: 未选择路径
+    valid-please: 请确保选择了一个有效的文件或目录路径
+    fail: 选择路径失败
 page:
   config:
     storage:
@@ -59,3 +77,190 @@ page:
         success: 导入元数据成功
         refresh-for-changes: 刷新数据库以查看更改
         fail: 导入元数据失败
+  edit:
+    dialog:
+      exit-guard:
+        title: 确认离开
+        message: 有未保存的更改，确定要离开吗？
+    title:
+      edit: 编辑 {0}
+      create: 新建元数据
+      label: 标题
+      hint: 标题内容
+      rules:
+        required: 标题不能为空
+        maxLength: 标题最大长度不能超过32
+    preset:
+      header: 预设
+      doujin-r18: DLSite R18 同人
+    notify:
+      validation-fail: 表单验证失败，请检查填写内容
+      update:
+        success: 更新成功
+        fail: 更新失败
+      create:
+        fail: 创建失败
+        success: 创建成功
+    alias:
+      label: 代称
+      hint: 回车以添加新标签
+      no-alias: 无别称
+      notify:
+        exist-one: 别称 '{0}' 已存在
+    archive-info:
+      label: 归档类型
+      hint: 存储在磁盘上的方式
+      archive-file:
+        label-archive: 压缩包路径
+        label-source: 源文件路径
+        no-folder: 未选择文件夹
+        no-archive: 未选择压缩包
+        tooltip: 是否创建新的压缩归档
+        tooltip-choose-folder: 选择文件夹，压缩将不包含文件夹本身
+        tooltip-choose-archive: 选择压缩包
+        fill-rand-pw: 填充随机密码
+        fill-default-pw: 填充默认密码
+      common-file:
+        label: 源路径
+      directory:
+        label: 源文件夹
+      options:
+        type:
+          none: 无
+          archive: 压缩档
+          common-file: 文件
+          directory: 目录
+    collection:
+      label: 所属合集
+      hint: 可通过下拉选项选择已有合集，或输入新合集名称
+    content-info:
+      label: 内容类型
+      game:
+        version:
+          label: 版本
+          hint: 游戏本体的版本号，默认为1.0.0
+        type:
+          label: 类型
+          hint: 游戏内容类型
+        developer:
+          label: 开发者
+          hint: 游戏开发者的名称
+        publisher:
+          label: 发行商
+          hint: 发行商的名称
+        platform:
+          label: 游戏平台
+          hint: 可以运行的平台
+        distribution:
+          label: 发行方式
+          hint: 游戏发行平台
+          steam:
+            label: Steam App ID
+            hint: Steam商店的ID
+            rule:
+              no-empty: Steam App ID不能为空
+              must-num: Steam App ID必须是数字
+              char-limit: Steam App ID长度不能超过16个字符
+          dl-site:
+            label: DLSite商店ID
+            hint: DLSite发行的ID，不包含前缀部分
+            rule:
+              no-empty: DLSite的商店ID不能为空
+              must-num: DLSite的ID只需要数字部分
+              char-limit: DLSite ID的长度不能超过16个字符
+            open-page: 打开网址
+            fetch-info: 根据ID从DLSite官网获取信息
+            content-type:
+              hint: 在DLSite官网标记的基本类型
+          other:
+            name:
+              label: 名称
+              hint: 其它发行方式的名称
+              rule:
+                no-empty: 名称不能为空
+                char-limit: 名称长度不能超过32个字符
+                ascii: 名称只能包含ASCII字符
+            id:
+              label: ID
+              hint: 其它发行方式的ID
+              rule:
+                no-empty: ID不能为空
+                char-limit: ID长度不能超过64个字符
+                ascii: ID只能包含ASCII字符
+        content:
+          label: 内容类型
+      options:
+        type:
+          undefined: 未知
+          game: 游戏
+        game-type:
+          unspecified: 未指定
+          rpg: 角色扮演游戏 (RPG)
+          slg: 策略游戏 (SLG)
+          avg: 冒险游戏 (AVG)
+        game-dist:
+          unknown: 未知
+          steam: Steam
+          dl-site: DLSite
+          other: 其他
+        game-dl-content:
+          doujin: 同人
+          comics: 漫画
+          pc-games: PC软件
+          smartphone-games: 手机游戏
+          doujin-r18: 同人 R18
+          comics-r18: 漫画 R18
+          h-games: 美少女游戏 R18
+          smartphone-games-r18: 手机游戏 R18
+      notify:
+        dl-id-empty: DLSite ID 不能为空，请检查输入
+        dl-id-invalid: DLSite ID 应为不包含前缀的数字，请检查输入
+        dl-fetch-fail: 获取 DLSite 信息失败，请稍后再试
+        dl-open-id-invalid: 请先设置 DLSite ID，然后再尝试打开页面
+        dl-open-fail: 打开 DLSite 页面失败，请检查网络连接或稍后再试
+      loading:
+        fetch-info: 正在获取 {0}{1} 的信息...
+    description:
+      label: 描述
+      hint: 内容描述
+    image:
+      label: 图片
+      hint: 此处存储的为图片哈希值
+      note: 拖拽文件到窗口以上传图片，支持PNG、JPG、JPEG 或 WEBP格式；或点击右侧按钮粘贴图片或图片链接
+      show: 查看图片详情
+      read-clipboard: 从剪贴板读取图片或图片链接
+      loading:
+        paste-img-process: 正在处理粘贴的图像... ({0}x{1})
+        paste-url-process: '正在处理图像链接: {0}'
+        paste-drag-process: 正在处理拖放的文件...
+      notify:
+        success: 图片处理成功
+        paste-hash-display: 粘贴图像 -> {0}
+        valid-url-please: 请使用有效链接
+        url-fail: 处理 '{0}' 链接失败
+        unsupported-type: '不支持的图片文件类型: {0}'
+        unsupported-hint: 请拖放 PNG、JPG、JPEG 或 WEBP 格式的图片文件。
+    tag:
+      notify:
+        duplicate: 标签 {0} 已存在
+      input:
+        label: 标签
+        hint: 回车以添加新标签
+      empty: 无标签
+    loading:
+      update: 正在更新
+      create: 正在创建
+      compress-info: '{0}<br>压缩进度：{1}%<br>文件数量：{2}<br>当前文件：{3}'
+    tooltip:
+      compress-info: '{0}\n压缩进度：{1}%\n文件数量：{2}\n当前文件：{3}'
+develop:
+  develop-info: Develop Info
+  display:
+    id: 'ID: {0}'
+    test-validation: Test Validation
+    current-type: 'Current Type: {0}'
+    path: 'Path: {0}'
+    password: 'Password: {0}'
+    content-type: 'Content Type: {0}'
+    hash: 'Hash: {0}'
+    asset: 'Asset: {0}'

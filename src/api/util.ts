@@ -72,3 +72,7 @@ export function isValidFileSystemString(str: string): true | string {
 
   return true;
 }
+
+export function isAsciiNumeric(str: string): boolean {
+  return /^[\x20-\x7E]+$/.test(str);
+}

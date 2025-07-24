@@ -14,7 +14,9 @@ import EditTitle from '@/pages/edit/comp/EditTitle.vue';
 import EditCollection from '@/pages/edit/comp/EditCollection.vue';
 import EditDescription from '@/pages/edit/comp/EditDescription.vue';
 import { useConfigStore } from '@/stores/config';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const { push } = useRouter();
 const { dialog } = useQuasar();
 const { isDevMode } = storeToRefs(useConfigStore());
@@ -47,10 +49,10 @@ onBeforeRouteLeave((_to, _from, next) => {
     next(false);
   } else if (everEdited.value) {
     dialog({
-      title: '确认离开',
-      message: '有未保存的更改，确定要离开吗？',
-      ok: '离开',
-      cancel: '取消',
+      title: t('page.edit.dialog.exit-guard.title'),
+      message: t('page.edit.dialog.exit-guard.message'),
+      ok: t('general.ok'),
+      cancel: t('general.cancel'),
     })
       .onOk(() => {
         console.info('Leaving the edit page.');
@@ -71,25 +73,27 @@ onBeforeRouteLeave((_to, _from, next) => {
     <q-card>
       <template v-if="isDevMode">
         <q-card-section>
-          <div class="text-subtitle2">Develop Info</div>
+          <div class="text-subtitle2">{{ $t('develop.develop-info') }}</div>
           <q-separator />
-          <div class="text-caption">ID: {{ id }}</div>
+          <div class="text-caption">{{ $t('develop.display.id', [id]) }}</div>
           <div class="text-caption">
             EditData:
             <pre>{{ editData }}</pre>
           </div>
-          <q-btn label="Test Validation" @click="validate" />
+          <q-btn :label="$t('develop.display.test-validation')" @click="validate" />
         </q-card-section>
         <q-separator inset />
       </template>
 
       <q-card-section class="row items-center">
         <div class="text-h6 r-no-sel">
-          <template v-if="isEditMode">编辑 {{ editData.title || editData.id }}</template>
-          <template v-else>新建元数据</template>
+          <template v-if="isEditMode">{{
+            $t('page.edit.title.edit', [editData.title || editData.id])
+          }}</template>
+          <template v-else>{{ $t('page.edit.title.create') }}</template>
         </div>
         <q-space />
-        <q-btn icon="bookmarks" label="预设" outline size="md">
+        <q-btn :label="$t('page.edit.preset.header')" icon="bookmarks" outline size="md">
           <q-menu
             anchor="center middle"
             self="top right"
@@ -98,7 +102,7 @@ onBeforeRouteLeave((_to, _from, next) => {
           >
             <q-list style="min-width: 100px">
               <q-item v-close-popup clickable @click="applyPreset('DoujinR18')">
-                <q-item-section>DLSite R18 同人</q-item-section>
+                <q-item-section>{{ $t('page.edit.preset.doujin-r18') }}</q-item-section>
               </q-item>
             </q-list>
           </q-menu>
@@ -133,8 +137,13 @@ onBeforeRouteLeave((_to, _from, next) => {
       <q-card-actions>
         <q-space />
         <q-btn-group outline>
-          <q-btn icon="close" label="退出" outline @click="push('/')" />
-          <q-btn :label="isEditMode ? '更新' : '创建'" icon="save" outline @click="handleUpdate" />
+          <q-btn :label="$t('general.exit')" icon="close" outline @click="push('/')" />
+          <q-btn
+            :label="isEditMode ? $t('general.update') : $t('general.create')"
+            icon="save"
+            outline
+            @click="handleUpdate"
+          />
         </q-btn-group>
       </q-card-actions>
     </q-card>

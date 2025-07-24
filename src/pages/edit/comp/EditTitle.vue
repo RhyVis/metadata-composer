@@ -17,14 +17,14 @@ const title = computed({
 <template>
   <q-input
     v-model="title"
+    :hint="$t('page.edit.title.hint')"
+    :label="$t('page.edit.title.label')"
     :rules="[
-      (val: string) => !!val || '标题不能为空',
-      (val: string) => val.length <= 32 || '标题不能超过32个字符',
+      (val: string) => !!val || $t('page.edit.title.rules.required'),
+      (val: string) => val.length <= 32 || $t('page.edit.title.rules.maxLength'),
       isValidFileSystemString,
     ]"
     clearable
-    hint="标题内容"
-    label="标题"
     stack-label
   />
 </template>
