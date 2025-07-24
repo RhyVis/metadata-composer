@@ -6,6 +6,7 @@ import { useConfigStore } from '@/stores/config';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
+import AsyncImage from '@/components/AsyncImage.vue';
 
 interface ColItem {
   name: string;
@@ -50,7 +51,7 @@ const innerTextClazz = computed(() => (isDarkMode.value ? 'text-grey-5' : 'text-
             <template v-else-if="col.name === 'image'">
               <div class="r-no-sel text-weight-medium">{{ col.label }}</div>
               <div class="full-width" style="max-height: 260px">
-                <AsyncImage :hash="col.value">
+                <AsyncImage :hash="col.value as string">
                   <template #state="{ assetUrl, error, loading }">
                     <q-card
                       class="full-width flex items-center justify-center"
