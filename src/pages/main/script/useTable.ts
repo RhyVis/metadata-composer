@@ -15,7 +15,7 @@ export const useTable = () => {
   const searchTag = ref('');
   const searchByRegex = ref(false);
 
-  const filterType = ref<FilterType>('None');
+  const filterType = ref<FilterType>(FilterTypeEnum.None);
 
   const searchFunc = computed(() =>
     searchByRegex.value

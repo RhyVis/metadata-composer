@@ -8,9 +8,7 @@ const { table } = defineProps<{
   table: UseTable;
 }>();
 const { filterType, searchTag, searchByRegex } = table;
-
 const { pagination, visibleColumns } = storeToRefs(useTableStore());
-
 const { colDef, paginationOptions, filterOptions } = useMainDefine();
 </script>
 

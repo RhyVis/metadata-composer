@@ -11,10 +11,8 @@ const { operation, table } = defineProps<{
 }>();
 const { handleReload } = operation;
 const { rows } = table;
-
-const emit = defineEmits(['new']);
-
 const { totalFileSize, size } = storeToRefs(useDatabaseStore());
+const emit = defineEmits(['new']);
 </script>
 
 <template>

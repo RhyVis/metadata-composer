@@ -23,6 +23,7 @@ general:
   invalid-dot: 无效以点结尾
   invalid-space: 无效首尾空格
   quit: 退出
+  initializing: 正在初始化…
 layout:
   drop-down:
     dev-mode: 开发模式
