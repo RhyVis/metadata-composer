@@ -24,6 +24,7 @@ general:
   invalid-space: 无效首尾空格
   quit: 退出
   initializing: 正在初始化…
+  initialization-fail: 初始化失败
 layout:
   drop-down:
     dev-mode: 开发模式

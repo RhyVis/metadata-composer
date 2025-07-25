@@ -6,6 +6,8 @@ import { useI18n } from 'vue-i18n';
 import { useTableStore } from '@/pages/main/script/useTableStore';
 import { useConfigStore } from '@/stores/config';
 import { useDatabaseStore } from '@/stores/database';
+import { message } from '@tauri-apps/plugin-dialog';
+import { exit } from '@tauri-apps/plugin-process';
 import { get, syncRef } from '@vueuse/core';
 
 export const useInit = () => {
@@ -24,11 +26,20 @@ export const useInit = () => {
 
   const init = async () => {
     const initTasks = [
-      tableStore.$tauri.start().catch((e) => {
-        console.error('Failed to start table store:', e);
-        error.value.push('Failed to start table store');
-        throw e;
-      }),
+      tableStore.$tauri
+        .start()
+        .then(() => {
+          tableStore.syncDeploymentCache().catch((e) => {
+            console.error('Failed to sync deployment cache:', e);
+            error.value.push('Failed to sync deployment cache');
+            throw e;
+          });
+        })
+        .catch((e) => {
+          console.error('Failed to start table store:', e);
+          error.value.push('Failed to start table store');
+          throw e;
+        }),
       configStore.$tauri
         .start()
         .then(() => {
@@ -68,8 +79,15 @@ export const useInit = () => {
         message: t('general.initializing'),
       });
       await Promise.allSettled(initTasks);
-    } catch (error) {
-      console.error('Initialization failed:', error);
+      if (error.value.length > 0) {
+        await message(error.value.join('\n'), {
+          title: t('general.initialization-fail'),
+          kind: 'error',
+        });
+        await exit(1);
+      }
+    } catch (e) {
+      console.error('Initialization failed:', e);
     } finally {
       loading.hide();
     }
