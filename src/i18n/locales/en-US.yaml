@@ -1,6 +1,366 @@
 general:
   dark-mode: Dark Mode
   light-mode: Light Mode
+  cancel: Cancel
+  create: Create
+  data: Data
+  exit: Exit
+  file-none: No file selected
+  folder-none: No folder selected
+  invalid-char: Invalid characters
+  invalid-dot: Invalid ends with a dot
+  invalid-length: Too long, greater than 255 characters
+  invalid-space: Invalid beginning and end space
+  notification: Notification
+  ok: Confirm
+  password: Password
+  quit: Quit
+  select-no-dir: No directory was selected
+  select-path-fail: Failed to select path
+  sort-a: Ascending order
+  sort-d: Descending order
+  unknown: Unknown
+  system-preserve-name: '"{0}" is the system reserved name'
+  unset: Unset
+  update: Update
 layout:
   drop-down:
     dev-mode: Develop Mode
+  context-menu:
+    home: Home
+    refresh: Refresh
+    settings: Settings
+database:
+  refresh-fail: Database refresh failed
+  refresh-success: Database refresh successfully
+notify:
+  sync-fail: Data synchronization failed
+  select-path:
+    fail: Failed to select path
+    no-path: Path not selected
+    valid-please: Make sure that a valid file or directory path is selected
+  open-path:
+    no-path: The path is not defined
+    fail: Failed to open the path
+    choose-one-please: Please select a path first
+page:
+  config:
+    database:
+      header: Database
+      export:
+        label: Export metadata
+        desc: Export the metadata in the current database to 'lib.json'
+      import:
+        label: Import metadata
+        desc: Import metadata from 'lib.json' to the current database
+    directory:
+      header: Directory
+      dir-config:
+        label: Open the configuration directory
+        desc: The configuration file is Config.toml
+      dir-log:
+        label: Open the log directory
+        desc: The log file is Composer.log
+    lang:
+      header: Language
+      switch:
+        label: Set language
+        desc: Set the language of the software display
+    notify:
+      clear-field-fail: Failed to clear field
+      update-restart: >-
+        After updating the data path, you need to restart the application before
+        it can take effect.
+      clear-unused-image:
+        count: Cleared {0} unused image
+        fail: Failed to clear image cache
+        loading: Clearing the image cache...
+        nothing: No unused images
+        success: Clear image cache successfully
+      export:
+        fail: Failed to export metadata
+        loading: Exporting metadata...
+        success: Exporting metadata successfully
+      import:
+        change-lang-fail: Language settings synchronization failed
+        fail: Failed to import metadata
+        loading: Importing metadata...
+        refresh-for-changes: Refresh the database to view changes
+        success: Metadata import successfully
+    storage:
+      path-data: Data Directory
+      path-deploy: Deployment Directory
+      header: Storage
+      clear-image-cache: Clear image cache
+      clear-image-cache-desc: Clear unused image cache
+  main:
+    action:
+      add: New
+      display-content: Display content
+      filter: filter
+      refresh: Refresh
+      search: Search
+      search-common: Common search
+      search-regex: Regular expression search
+      sort: Sort
+    no-image: No Image
+    delete:
+      tooltip: Delete entry
+      confirm: Are you sure you want to delete '{0}'
+    deploy:
+      config-dir: Config Direcotry
+      confirm-deploy-off: Are you sure you want to cancel the deployment?
+      custom-dir: Custom Directory
+      deploy-off: Cancel deployment
+      open-dir: Open the deployment folder
+      tooltip:
+        config-or-custom: Deploy to a settings directory or a custom directory
+        current-config-dir: 'Current settings directory: ''{0}'''
+        to-target: Deploy to a specified directory
+    edit:
+      tooltip: Edit the entry
+    loading:
+      decompress-progress: >-
+        {0}<br>Decompression progress: {1}%<br>Number of files: {2}<br>Current
+        file: {3}
+      deploy-off: Undeployment '{0}'...
+      deploying-to-configured: Deploying '{0}' to the settings directory...
+      deploying-to-custom: Deploying '{0}' to {1}...
+    table:
+      update-time: Update Time
+      title: Title
+      unknown: <Unprovided>
+      image: Image
+      tag: Tag
+      create-time: Created Time
+      description: Description
+      alias: Alias
+      archive-size: Archive Size
+      collection: Collection
+      content-info: Content
+    option:
+      filter:
+        none: None
+        deployment: Deployment
+    notify:
+      refresh:
+        success: Data has been refreshed
+        fail: Data refresh failed
+      deploy:
+        custom-success: '''{0}'' to {1} has been successfully deployed'
+        custom-fail: Deployment '{0}' failed
+        config-success: '''{0}'' has been successfully deployed to the settings directory'
+        config-fail: Deployment '{0}' failed
+        cancel-no-valid-dir: A valid directory was not selected
+        cancel: Deployment Cancel
+      deploy-off:
+        success: Undeployed successfully '{0}'
+        fail: Undeployment '{0}' failed
+      delete:
+        success: '''{0}'' has been successfully deleted'
+        fail: Deletion '{0}' failed
+      decompress-progress: |-
+        {0}
+        Decompression progress: {1}%
+        Number of files: {2}
+        Current file: {3}
+  edit:
+    alias:
+      hint: Enter to add a new alias
+      label: Alias
+      no-alias: No alias
+      notify:
+        exist-one: Alias '{0}' already exists
+    archive-info:
+      hint: How to store the files on disk
+      label: Archive Type
+      archive-file:
+        fill-default-pw: Fill in the default password
+        fill-rand-pw: Fill in random password
+        label-archive: Compressed package path
+        label-source: Source file path
+        no-archive: Compressed package not selected
+        no-folder: Folder not selected
+        tooltip: Whether to create a new compressed archive
+        tooltip-choose-archive: Select a compressed package
+        tooltip-choose-folder: Select a folder, compression will not include the folder itself
+      common-file:
+        label: Source path
+      directory:
+        label: Source folder
+      options:
+        type:
+          archive: Archive
+          common-file: Common File
+          directory: Directory
+          none: None
+    title:
+      create: Create new metadata
+      edit: Edit {0}
+      hint: Title content
+      label: Title
+      rules:
+        required: The title cannot be empty
+        maxLength: The maximum title length cannot exceed 32
+    tooltip:
+      compress-info: |-
+        {0}
+        Compression progress: {1}%
+        Number of files: {2}
+        Current file: {3}
+    tag:
+      empty: No tag
+      input:
+        hint: Enter to add new labels, spaces and commas will be automatically split
+        label: Tag
+      notify:
+        duplicate: Tag {0} already exists
+    preset:
+      header: Presets
+      doujin-r18: DLSite R18 Fans
+    notify:
+      validation-fail: Form verification failed, please check the contents
+      create:
+        fail: Creation failed
+        success: Created successfully
+      update:
+        fail: Update failed
+        success: Update successfully
+    loading:
+      compress-info: >-
+        {0}<br>Compression progress: {1}%<br>Number of files: {2}<br>Current
+        file: {3}
+      create: Creating
+      update: Updating
+    image:
+      hint: The image hash value stored here
+      label: Image
+      note: >-
+        Drag and drop files to the window to upload pictures, supporting PNG,
+        JPG, JPEG or WEBP formats; or click the button on the right to paste the
+        picture or picture link
+      read-clipboard: Read an image or image link from the clipboard
+      show: View picture details
+      loading:
+        paste-drag-process: Processing drag-and-drop files...
+        paste-img-process: Processing pasted image... ({0}x{1})
+        paste-url-process: 'Processing image link: {0}'
+      notify:
+        paste-hash-display: Pasted image -> {0}
+        success: The image processing was successful
+        unsupported-hint: Please drag and drop image files in PNG, JPG, JPEG, or WEBP format.
+        unsupported-type: 'Unsupported image file types: {0}'
+        url-fail: Failed to handle '{0}' link
+        valid-url-please: Please use a valid link
+    dialog:
+      exit-guard:
+        message: There are unsaved changes, are you sure you want to leave?
+        title: Confirm leaving
+    description:
+      hint: Content description
+      label: Description
+    content-info:
+      label: Content Info
+      game:
+        content:
+          label: Content Type
+        developer:
+          hint: The name of the game developer
+          label: Developer
+        distribution:
+          label: Distribution
+          hint: Game distribution platform
+          dl-site:
+            content-type:
+              hint: Basic types of tags on DLSite official website
+            fetch-info: Obtain information from DLSite official website according to ID
+            label: DLSite Store ID
+            rule:
+              char-limit: The length of the DLSite ID cannot exceed 16 characters
+              must-num: DLSite ID only requires a numeric part
+              no-empty: DLSite's store ID cannot be empty
+            open-page: Open the URL
+            hint: The ID of DLSite issuance does not contain the prefix part
+          other:
+            id:
+              hint: IDs of other distribution methods
+              label: ID
+              rule:
+                char-limit: The ID length cannot exceed 64 characters
+                ascii: ID can only contain ASCII characters
+                no-empty: ID cannot be empty
+            name:
+              hint: Names of other distribution methods
+              rule:
+                ascii: Names can only contain ASCII characters
+                char-limit: The name cannot exceed 32 characters
+                no-empty: The name cannot be empty
+              label: Name
+          steam:
+            hint: Steam store ID
+            rule:
+              char-limit: The length of Steam App ID cannot exceed 16 characters
+              must-num: The Steam App ID must be a number
+              no-empty: Steam App ID cannot be empty
+            label: Steam App ID
+        platform:
+          label: Game Platform
+          hint: The platforms that can be running on
+        publisher:
+          label: Publisher
+          hint: The name of the publisher
+        type:
+          label: Type
+          hint: Game content type
+        version:
+          label: Version
+          hint: The version number of the game, 1.0.0 by default
+      loading:
+        fetch-info: Getting information about {0}{1}...
+      notify:
+        dl-fetch-fail: Failed to obtain DLSite information, please try again later
+        dl-id-empty: DLSite ID cannot be empty, please check the input
+        dl-id-invalid: DLSite ID should be a number without prefix, please check the input
+        dl-open-fail: >-
+          The DLSite page has failed to open. Please check the network
+          connection or try again later
+        dl-open-id-invalid: Please set the DLSite ID first, and then try to open the page
+      options:
+        game-dist:
+          dl-site: DLSite
+          other: Other
+          steam: Steam
+          unknown: Unknown
+        game-dl-content:
+          comics: Comics
+          comics-r18: Comics R18
+          doujin: Doujin
+          doujin-r18: Doujin R18 (Maniax)
+          h-games: H Games
+          pc-games: PC Software
+          smartphone-games: Smartphone Games
+          smartphone-games-r18: Smartphone Games R18
+        game-type:
+          avg: AVG
+          rpg: RPG
+          slg: SLG
+          unspecified: Unspecified
+        type:
+          game: Game
+          undefined: Undefined
+    collection:
+      label: Collection
+      hint: >-
+        You can select an existing collection through the drop-down option or
+        enter a new collection name
+develop:
+  develop-info: Develop Info
+  display:
+    asset: 'Asset: {0}'
+    content-type: 'Content Type: {0}'
+    current-type: 'Current Type: {0}'
+    hash: 'Hash: {0}'
+    id: 'ID: {0}'
+    password: 'Password: {0}'
+    path: 'Path: {0}'
+    test-validation: Test Validation
