@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { FilterOptions, MainColDef, PaginationOptions } from '@/pages/main/script/define';
+import { useMainDefine } from '@/pages/main/script/useMainDefine';
 import type { UseTable } from '@/pages/main/script/useTable';
 import { useTableStore } from '@/pages/main/script/useTableStore';
 import { storeToRefs } from 'pinia';
@@ -10,6 +10,8 @@ const { table } = defineProps<{
 const { filterType, searchTag, searchByRegex } = table;
 
 const { pagination, visibleColumns } = storeToRefs(useTableStore());
+
+const { colDef, paginationOptions, filterOptions } = useMainDefine();
 </script>
 
 <template>
@@ -34,7 +36,7 @@ const { pagination, visibleColumns } = storeToRefs(useTableStore());
     <q-select
       v-model="pagination.sortBy"
       :display-value="$t('page.main.action.sort')"
-      :options="PaginationOptions"
+      :options="paginationOptions"
       dense
       emit-value
       map-options
@@ -60,7 +62,7 @@ const { pagination, visibleColumns } = storeToRefs(useTableStore());
     <q-select
       v-model="filterType"
       :display-value="$t('page.main.action.filter')"
-      :options="FilterOptions"
+      :options="filterOptions"
       dense
       emit-value
       map-options
@@ -70,7 +72,7 @@ const { pagination, visibleColumns } = storeToRefs(useTableStore());
     <q-select
       v-model="visibleColumns"
       :display-value="$t('page.main.action.display-content')"
-      :options="MainColDef.filter((col) => col.name != 'title')"
+      :options="colDef.filter((col) => col.name != 'title')"
       dense
       emit-value
       map-options

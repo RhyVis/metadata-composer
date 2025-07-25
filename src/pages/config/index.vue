@@ -3,9 +3,10 @@ import { useConfigStore } from '@/stores/config.ts';
 import { storeToRefs } from 'pinia';
 import { Command } from '@/api/cmd.ts';
 import { LanguageList, useConfig } from '@/pages/config/script/useConfig.ts';
+import { computed } from 'vue';
 
 const config = useConfigStore();
-const { pathData, pathDeploy } = storeToRefs(config);
+const { pathData, pathDeploy, lang } = storeToRefs(config);
 const {
   handleSelectDir,
   handleClearField,
@@ -14,6 +15,8 @@ const {
   handleImport,
   handleChangeLang,
 } = useConfig();
+
+const languageList = computed(() => LanguageList.filter((item) => item.lang !== lang.value));
 </script>
 
 <template>
@@ -104,7 +107,7 @@ const {
           <q-list>
             <q-item
               v-close-popup
-              v-for="item in LanguageList"
+              v-for="item in languageList"
               :key="item.lang"
               clickable
               @click="handleChangeLang(item.lang)"

@@ -3,17 +3,14 @@ import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { useContentInfo } from '@/pages/edit/script/useContentInfo.ts';
 import {
   ContentTypeEnum,
-  ContentTypeOptions,
-  DLContentTypeOptions,
   GameDistributionEnum,
-  GameDistributionOptions,
   GameSysPlatformOptions,
   GameTypeEnum,
-  GameTypeOptions,
 } from '@/pages/edit/script/define.ts';
 import { storeToRefs } from 'pinia';
 import { isAsciiNumeric, isNumericOnly, isValidFileSystemString } from '@/api/util.ts';
 import { useConfigStore } from '@/stores/config';
+import { useEditDefine } from '@/pages/edit/script/useEditDefine';
 
 const { isDevMode } = storeToRefs(useConfigStore());
 
@@ -38,6 +35,9 @@ const {
   gFetchDLSiteInfo,
   gOpenDLSitePage,
 } = useContentInfo(edit);
+
+const { contentTypeOptions, gameTypeOptions, gameDistributionOptions, dlContentTypeOptions } =
+  useEditDefine();
 </script>
 
 <template>
@@ -50,7 +50,7 @@ const {
     v-model="contentType"
     :clearable="contentType != ContentTypeEnum.Undefined"
     :label="$t('page.edit.content-info.label')"
-    :options="ContentTypeOptions"
+    :options="contentTypeOptions"
     emit-value
     map-options
     stack-label
@@ -72,7 +72,7 @@ const {
       :clearable="gInputGameType != GameTypeEnum.Unspecified"
       :hint="$t('page.edit.content-info.game.type.hint')"
       :label="$t('page.edit.content-info.game.type.label')"
-      :options="GameTypeOptions"
+      :options="gameTypeOptions"
       emit-value
       map-options
       stack-label
@@ -108,7 +108,7 @@ const {
       v-model="gInputDistributionType"
       :hint="$t('page.edit.content-info.game.distribution.hint')"
       :label="$t('page.edit.content-info.game.distribution.label')"
-      :options="GameDistributionOptions"
+      :options="gameDistributionOptions"
       emit-value
       map-options
       stack-label
@@ -168,7 +168,7 @@ const {
         v-model="gInputDLSiteContentType"
         :hint="$t('page.edit.content-info.game.distribution.dl-site.content-type.hint')"
         :label="$t('page.edit.content-info.game.content.label')"
-        :options="DLContentTypeOptions"
+        :options="dlContentTypeOptions"
         emit-value
         map-options
         stack-label

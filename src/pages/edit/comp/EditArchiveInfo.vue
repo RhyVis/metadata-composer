@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { defaultPassword, useArchiveInfo } from '@/pages/edit/script/useArchiveInfo.ts';
-import { ArchiveTypeEnum, ArchiveTypeOptions } from '@/pages/edit/script/define.ts';
+import { ArchiveTypeEnum } from '@/pages/edit/script/define.ts';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { storeToRefs } from 'pinia';
 import { useNotify } from '@/hooks/useNotify';
@@ -11,6 +11,7 @@ import { Command } from '@/api/cmd.ts';
 import { useDarkStyle } from '@/hooks/useDarkStyle';
 import { useConfigStore } from '@/stores/config';
 import { useI18n } from 'vue-i18n';
+import { useEditDefine } from '@/pages/edit/script/useEditDefine';
 
 const { t } = useI18n();
 const { isDevMode } = storeToRefs(useConfigStore());
@@ -22,6 +23,8 @@ const { edit } = defineProps<{
 }>();
 const editArchiveInfo = useArchiveInfo(edit);
 const { archiveType, inputPath, inputPassword, flagCreateArchive, doSelect } = editArchiveInfo;
+
+const { archiveTypeOptions } = useEditDefine();
 
 const handlePathOpen = async (path: string | null, resolveArchive: boolean = false) => {
   if (path) {
@@ -63,7 +66,7 @@ const handlePassword = () => {
     v-model="archiveType"
     :hint="$t('page.edit.archive-info.hint')"
     :label="$t('page.edit.archive-info.label')"
-    :options="ArchiveTypeOptions"
+    :options="archiveTypeOptions"
     clearable
     emit-value
     map-options

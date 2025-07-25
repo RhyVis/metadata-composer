@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { useRouter } from 'vue-router';
-import { MainColDef, RowPageSizes } from '@/pages/main/script/define.ts';
+import { RowPageSizes } from '@/pages/main/script/define.ts';
 import { useTable } from '@/pages/main/script/useTable.ts';
 import { storeToRefs } from 'pinia';
 import { useOperation } from '@/pages/main/script/useOperation.ts';
@@ -8,6 +8,7 @@ import { useTableStore } from './script/useTableStore';
 import MainTableTopLeft from '@/pages/main/comp/MainTableTopLeft.vue';
 import MainTableTopRight from '@/pages/main/comp/MainTableTopRight.vue';
 import MainItemCard from '@/pages/main/comp/MainItemCard.vue';
+import { useMainDefine } from '@/pages/main/script/useMainDefine';
 
 const { push } = useRouter();
 
@@ -17,6 +18,8 @@ const { pagination, visibleColumns } = storeToRefs(tableStore);
 const table = useTable();
 const operation = useOperation();
 const { rows } = table;
+
+const { colDef } = useMainDefine();
 
 const handleEdit = (id: string) => {
   console.info(`Editing item with id: ${id}`);
@@ -29,7 +32,7 @@ const handleEdit = (id: string) => {
     <div class="text-center">
       <q-table
         v-model:pagination="pagination"
-        :columns="MainColDef"
+        :columns="colDef"
         :rows="rows"
         :rows-per-page-options="RowPageSizes"
         :visible-columns="visibleColumns"

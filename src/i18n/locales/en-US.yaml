@@ -97,7 +97,7 @@ page:
     action:
       add: New
       display-content: Display content
-      filter: filter
+      filter: Filter
       refresh: Refresh
       search: Search
       search-common: Common search

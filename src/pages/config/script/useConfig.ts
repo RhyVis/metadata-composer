@@ -1,4 +1,5 @@
 import type { AppConfig, Language } from '@/api/types.ts';
+import { clone } from 'lodash-es';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { Command } from '@/api/cmd.ts';
@@ -20,7 +21,7 @@ export const LanguageList: {
 
 export const useConfig = () => {
   const { t } = useI18n();
-  const { sync, lang: langStore } = useConfigStore();
+  const { sync } = useConfigStore();
   const { loading } = useQuasar();
   const { notifyError, notifyWarning, notifySuccess } = useNotify();
 
@@ -117,11 +118,8 @@ export const useConfig = () => {
 
   const handleChangeLang = async (lang: Language) => {
     try {
-      const previousLang = get(langStore);
       await Command.configUpdate('lang', lang);
       await sync();
-      const currentLang = get(langStore);
-      console.info(`Language changed from ${previousLang} to ${currentLang}`);
     } catch (e) {
       console.error(e);
       notifyError(t('page.config.notify.import.change-lang-fail'), e);
