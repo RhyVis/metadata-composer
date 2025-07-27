@@ -157,9 +157,10 @@ async fn metadata_delete_internal(key: String, data: State<'_, DataState>) -> Re
         write.commit()?;
 
         if let Some(removed) = removed {
-            let _ = collection_cache_remove(&removed, get_handle_ref().state_data())
+            let data = get_handle_ref().state_data();
+            let _ = collection_cache_remove(&removed, data.clone())
                 .inspect_err(|e| error!("Failed to remove collection from cache: {}", e));
-            let _ = deployment_cache_remove(&removed, get_handle_ref().state_data())
+            let _ = deployment_cache_remove(&removed, data)
                 .inspect_err(|e| error!("Failed to remove deployment from cache: {}", e));
         }
 
@@ -235,11 +236,14 @@ pub async fn metadata_deploy(key: String, arg: DeployArg, app: AppHandle) -> Res
         async fn deploy_process(
             mut metadata: Metadata,
             deploy_path: impl AsRef<Path>,
-            data: State<'_, DataState>,
+            app: &AppHandle,
         ) -> Result<()> {
             let id = metadata.id.to_string();
-            if metadata.deploy(deploy_path).await? {
+            if metadata.deploy(deploy_path, app).await? {
                 info!("Successfully deployed metadata with id '{id}'");
+
+                let data = app.state_data();
+
                 metadata_set_internal(id, metadata.clone(), data.clone()).await?;
                 let _ = deployment_cache_sync(&metadata, data).inspect_err(|e| {
                     error!(
@@ -264,7 +268,7 @@ pub async fn metadata_deploy(key: String, arg: DeployArg, app: AppHandle) -> Res
                 tfs::create_dir_all(&deploy_path).await?;
             }
 
-            deploy_process(metadata, deploy_path, data).await
+            deploy_process(metadata, deploy_path, &app).await
         } else if arg.target_dir.is_some() {
             // Deploy to custom dir
             let deploy_path = arg.target_dir.expect("Why?");
@@ -275,7 +279,7 @@ pub async fn metadata_deploy(key: String, arg: DeployArg, app: AppHandle) -> Res
                 tfs::create_dir_all(&deploy_path).await?;
             }
 
-            deploy_process(metadata, deploy_path, data).await
+            deploy_process(metadata, deploy_path, &app).await
         } else {
             error!("Provided deploy argument not valid: {}, {:?}", key, arg);
             Err(anyhow!("Failed to deploy metadata with key '{}'", key))

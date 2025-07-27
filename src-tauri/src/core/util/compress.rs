@@ -4,22 +4,20 @@ use anyhow::{Result, anyhow};
 use encoding_rs::GBK;
 use log::{debug, error, info};
 use regex::Regex;
-use tauri::Emitter;
+use tauri::{AppHandle, Emitter};
 use tauri_plugin_shell::{ShellExt, process::CommandEvent};
 use tokio::fs as tfs;
-
-use crate::core::get_handle;
 
 const EVENT_COMPRESSION_PROGRESS: &str = "compression_progress";
 const EVENT_DECOMPRESSION_PROGRESS: &str = "decompression_progress";
 
 pub async fn compress(
+    app: &AppHandle,
     input_dir: impl AsRef<Path>,
     output_file: impl AsRef<Path>,
     password: Option<&str>,
 ) -> Result<()> {
-    let handle = get_handle();
-    let shell = handle.shell();
+    let shell = app.shell();
     let command = shell
         .sidecar("7z")
         .map_err(|e| anyhow!("Failed to get 7z sidecar: {e}"))?;
@@ -76,7 +74,7 @@ pub async fn compress(
                         info!(
                             "Compression progress: {progress:#?}% - {file_count} files - {file_path}"
                         );
-                        let _ = handle
+                        let _ = app
                             .emit(
                                 EVENT_COMPRESSION_PROGRESS,
                                 (progress, file_count, file_path),
@@ -122,12 +120,12 @@ pub async fn compress(
 }
 
 pub async fn decompress(
+    app: &AppHandle,
     input_file: impl AsRef<Path>,
     output_dir: impl AsRef<Path>,
     password: Option<&str>,
 ) -> Result<()> {
-    let handle = get_handle();
-    let shell = handle.shell();
+    let shell = app.shell();
     let command = shell
         .sidecar("7z")
         .map_err(|e| anyhow!("Failed to get 7z sidecar: {e}"))?;
@@ -173,7 +171,7 @@ pub async fn decompress(
                         info!(
                             "Decompression progress: {progress:#?}% - {file_count} files - {file_path}"
                         );
-                        let _ = handle
+                        let _ = app
                             .emit(
                                 EVENT_DECOMPRESSION_PROGRESS,
                                 (progress, file_count, file_path),
