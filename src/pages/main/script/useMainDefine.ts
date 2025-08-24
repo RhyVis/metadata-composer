@@ -45,6 +45,12 @@ export const useMainDefine = () => {
         row.description ? row.description.split('\n') : [t('page.main.table.unknown')],
     },
     {
+      name: 'rating',
+      label: t('page.main.table.rating'),
+      classes: 'r-no-sel',
+      field: (row) => row.rating || 0,
+    },
+    {
       name: 'image',
       label: t('page.main.table.image'),
       field: 'image',

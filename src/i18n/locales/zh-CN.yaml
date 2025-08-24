@@ -273,6 +273,9 @@ page:
         压缩进度：{1}%
         文件数量：{2}
         当前文件：{3}
+    rating:
+      hint: 实用程度评分
+      label: 评分
   main:
     no-image: 无图片
     deploy:
@@ -315,6 +318,7 @@ page:
       create-time: 创建时间
       update-time: 更新时间
       unknown: <未提供>
+      rating: 评分
     notify:
       refresh:
         success: 数据已刷新

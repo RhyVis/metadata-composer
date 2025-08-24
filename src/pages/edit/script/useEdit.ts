@@ -55,6 +55,7 @@ export const useEdit = (id: Ref<string>, formRef: Ref<QForm>) => {
       collection: copy?.collection ?? null,
       description: copy?.description ?? null,
       image: copy?.image ?? null,
+      rating: copy?.rating ?? null,
       content_info: copy?.content_info ?? null,
       archive_info: copy?.archive_info ?? null,
       flag_create_archive: false,

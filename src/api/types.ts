@@ -84,6 +84,10 @@ description: string | null,
  */
 image: string | null, 
 /**
+ * Rating
+ */
+rating: number, 
+/**
  * The content type of the data item
  */
 content_info: ContentInfo, 
@@ -99,7 +103,7 @@ deploy_info: DeployInfo, create_time: string, update_time: string, };
 /**
  * Fields in [Metadata] with optional, used in communication with the frontend
  */
-export type MetadataOption = { id: string | null, title?: string | null, alias: Array<string> | null, tags: Array<string> | null, collection: string | null, description: string | null, image: string | null, content_info: ContentInfo | null, archive_info: ArchiveInfo | null, flag_create_archive: boolean, };
+export type MetadataOption = { id: string | null, title?: string | null, alias: Array<string> | null, tags: Array<string> | null, collection: string | null, description: string | null, image: string | null, rating: number | null, content_info: ContentInfo | null, archive_info: ArchiveInfo | null, flag_create_archive: boolean, };
 
 export type OtherDistributionData = { name: string, id: string, };
 

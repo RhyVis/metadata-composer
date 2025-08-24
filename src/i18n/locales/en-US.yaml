@@ -23,6 +23,8 @@ general:
   system-preserve-name: '"{0}" is the system reserved name'
   unset: Unset
   update: Update
+  initializing: Initializing...
+  initialization-fail: Initialization failed
 layout:
   drop-down:
     dev-mode: Develop Mode
@@ -138,6 +140,7 @@ page:
       archive-size: Archive Size
       collection: Collection
       content-info: Content
+      rating: Rating
     option:
       filter:
         none: None
@@ -353,6 +356,9 @@ page:
       hint: >-
         You can select an existing collection through the drop-down option or
         enter a new collection name
+    rating:
+      hint: Is it useful, playable?
+      label: Rating
 develop:
   develop-info: Develop Info
   display:

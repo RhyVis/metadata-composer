@@ -22,6 +22,10 @@ const CONFIG_FILE_NAME: &str = "Config.toml";
 const DIR_NAME_ARCHIVE: &str = "archive";
 const DIR_NAME_IMAGE: &str = "image";
 
+const FIELD_LANG: &str = "lang";
+const FIELD_PATH_DATA: &str = "path_data";
+const FIELD_PATH_DEPLOY: &str = "path_deploy";
+
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/api/types.ts")]
 pub struct AppConfig {
@@ -91,14 +95,14 @@ impl AppConfig {
 
     pub(super) fn update_field(&mut self, name: &str, value: Value) -> Result<()> {
         match name {
-            "lang" => {
+            FIELD_LANG => {
                 let lang = value.into();
                 self.write(|c| {
                     c.lang = lang;
                     Ok(())
                 })?;
             },
-            "path_root" => {
+            FIELD_PATH_DATA => {
                 if let Some(value) = value.as_str() {
                     let path = Path::new(value);
                     if !path.exists() || !path.is_dir() {
@@ -118,7 +122,7 @@ impl AppConfig {
                     return Err(anyhow!("Invalid value for path_data"));
                 }
             },
-            "path_deploy" => {
+            FIELD_PATH_DEPLOY => {
                 if let Some(_) = value.as_null() {
                     self.write(|c| {
                         c.path_deploy = None;

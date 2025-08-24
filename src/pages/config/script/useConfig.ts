@@ -1,5 +1,4 @@
 import type { AppConfig, Language } from '@/api/types.ts';
-import { clone } from 'lodash-es';
 import { useQuasar } from 'quasar';
 import { useI18n } from 'vue-i18n';
 import { Command } from '@/api/cmd.ts';
@@ -8,7 +7,6 @@ import { useNotify } from '@/hooks/useNotify';
 import { useConfigStore } from '@/stores/config.ts';
 import { message } from '@tauri-apps/plugin-dialog';
 import { exit } from '@tauri-apps/plugin-process';
-import { get } from '@vueuse/core';
 
 export const LanguageList: {
   lang: Language;

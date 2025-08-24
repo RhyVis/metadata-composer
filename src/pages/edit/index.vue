@@ -8,6 +8,7 @@ import EditTag from '@/pages/edit/comp/EditTag.vue';
 import EditArchiveInfo from '@/pages/edit/comp/EditArchiveInfo.vue';
 import EditContentInfo from '@/pages/edit/comp/EditContentInfo.vue';
 import EditImage from '@/pages/edit/comp/EditImage.vue';
+import EditRating from '@/pages/edit/comp/EditRating.vue';
 import { storeToRefs } from 'pinia';
 import { type QForm, useQuasar } from 'quasar';
 import EditTitle from '@/pages/edit/comp/EditTitle.vue';
@@ -125,6 +126,8 @@ onBeforeRouteLeave((_to, _from, next) => {
           <EditDescription :edit="edit" />
           <!-- Image Input -->
           <EditImage :edit="edit" />
+          <!-- Rating Input -->
+          <EditRating :edit="edit" />
           <!-- Content Info -->
           <EditContentInfo :edit="edit" />
           <!-- Archive Info -->

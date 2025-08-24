@@ -51,6 +51,9 @@ pub struct Metadata {
     /// Image hash, if any
     #[serde(default)]
     pub image: Option<String>,
+    /// Rating
+    #[serde(default)]
+    pub rating: u8,
 
     /// The content type of the data item
     #[serde(default)]
@@ -93,6 +96,8 @@ pub struct MetadataOption {
     #[serde(default)]
     pub image: Option<String>,
     #[serde(default)]
+    pub rating: Option<u8>,
+    #[serde(default)]
     pub content_info: Option<ContentInfo>,
     #[serde(default)]
     pub archive_info: Option<ArchiveInfo>,
@@ -113,6 +118,7 @@ impl Metadata {
             collection: opt.collection,
             description: opt.description,
             image: opt.image,
+            rating: opt.rating.unwrap_or_default(),
             content_info: opt.content_info.unwrap_or_default(),
             archive_info: opt.archive_info.clone().unwrap_or_default(),
             deploy_info: DeployInfo::None,
@@ -155,6 +161,9 @@ impl Metadata {
         }
         if let Some(image) = opt.image {
             self.image = Some(image);
+        }
+        if let Some(rating) = opt.rating {
+            self.rating = rating;
         }
         if let Some(content_info) = opt.content_info {
             self.content_info = content_info;
