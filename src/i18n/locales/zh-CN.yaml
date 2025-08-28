@@ -53,6 +53,8 @@ page:
       path-deploy: 部署目录
       clear-image-cache: 清除图片缓存
       clear-image-cache-desc: 清除未使用的图片缓存
+      clear-unused-deploy-dir: 清除未使用部署目录
+      clear-unused-deploy-dir-desc: 清除配置部署目录中的空文件夹
     database:
       header: 数据库
       export:
@@ -88,6 +90,12 @@ page:
         refresh-for-changes: 刷新数据库以查看更改
         fail: 导入元数据失败
         change-lang-fail: 语言设置同步失败
+      clear-unused-deploy-dir:
+        loading: 正在清除未使用部署目录...
+        count: 已清除 {0} 未使用的部署目录
+        success: 清除未使用的部署目录成功
+        nothing: 没有未使用的部署目录
+        fail: 清除未使用的部署目录失败
     lang:
       header: 语言
       switch:

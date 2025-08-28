@@ -65,6 +65,10 @@ export class Command {
     return await invoke('util_clear_unused_images');
   }
 
+  static async utilClearUnusedDeployDirs(): Promise<number> {
+    return await invoke('util_clear_unused_deploy_dirs');
+  }
+
   static async utilDlFetchInfo(arg: DLFetchArg): Promise<DLFetchInfo> {
     return await invoke('util_dl_fetch_info', { arg });
   }

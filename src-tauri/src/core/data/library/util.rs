@@ -1,13 +1,13 @@
 use std::collections::HashSet;
 
-use anyhow::anyhow;
+use anyhow::{Result, anyhow};
 use log::{debug, info, warn};
 use tauri::AppHandle;
 use tokio::fs as tfs;
 
 use crate::core::{AppStateExt, data::library::metadata_get_all};
 
-pub async fn clear_unused_images(app: AppHandle) -> anyhow::Result<u32> {
+pub async fn clear_unused_images(app: AppHandle) -> Result<u32> {
     let all_used_images = metadata_get_all(app.state_data())
         .await?
         .iter()
@@ -61,4 +61,37 @@ pub async fn clear_unused_images(app: AppHandle) -> anyhow::Result<u32> {
         );
     }
     Ok(removed_count)
+}
+
+pub async fn clear_unused_deploy_dirs(app: AppHandle) -> Result<u32> {
+    let config = app.state_config().get();
+    let Some(path) = config.path_deploy() else {
+        return Ok(0);
+    };
+    if !tfs::try_exists(path).await? {
+        return Ok(0);
+    }
+
+    let mut dirs = tfs::read_dir(path).await?;
+    let mut count = 0u32;
+    while let Some(entry) = dirs.next_entry().await? {
+        let path = entry.path();
+        if path.is_dir() {
+            if let None = tfs::read_dir(&path).await?.next_entry().await? {
+                match tfs::remove_dir_all(&path).await {
+                    Ok(_) => {
+                        count += 1;
+                        debug!("Removed unused deploy directory: {}", path.display())
+                    },
+                    Err(e) => warn!(
+                        "Failed to remove deploy directory '{}': {}",
+                        path.display(),
+                        e
+                    ),
+                }
+            }
+        }
+    }
+
+    Ok(count)
 }

@@ -85,6 +85,29 @@ export const useConfig = () => {
     }
   };
 
+  const handleClearUnusedDeployDirs = async () => {
+    try {
+      loading.show({ message: t('page.config.notify.clear-unused-deploy-dir.loading') });
+      const count = await Command.utilClearUnusedDeployDirs();
+      if (count > 0) {
+        notifySuccess(
+          t('page.config.notify.clear-unused-deploy-dir.success'),
+          t('page.config.notify.clear-unused-deploy-dir.count', [count]),
+        );
+      } else {
+        notifySuccess(
+          t('page.config.notify.clear-unused-deploy-dir.success'),
+          t('page.config.notify.clear-unused-deploy-dir.nothing'),
+        );
+      }
+    } catch (e) {
+      console.error(e);
+      notifyError(t('page.config.notify.clear-unused-deploy-dir.fail'), e);
+    } finally {
+      loading.hide();
+    }
+  };
+
   const handleExport = async () => {
     try {
       loading.show({ message: t('page.config.notify.export.loading') });
@@ -128,6 +151,7 @@ export const useConfig = () => {
     handleSelectDir,
     handleClearField,
     handleClearImageCache,
+    handleClearUnusedDeployDirs,
     handleExport,
     handleImport,
     handleChangeLang,

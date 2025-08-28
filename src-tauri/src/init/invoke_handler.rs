@@ -18,6 +18,7 @@ pub fn register_invoke_handler(builder: Builder<Wry>) -> Builder<Wry> {
         util_process_img_web,
         util_process_img_bytes,
         util_clear_unused_images,
+        util_clear_unused_deploy_dirs,
         util_dl_fetch_info,
         util_dark_state,
         open_config_dir,

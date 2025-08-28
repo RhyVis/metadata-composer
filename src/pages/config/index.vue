@@ -11,6 +11,7 @@ const {
   handleSelectDir,
   handleClearField,
   handleClearImageCache,
+  handleClearUnusedDeployDirs,
   handleExport,
   handleImport,
   handleChangeLang,
@@ -60,6 +61,15 @@ const languageList = computed(() => LanguageList.filter((item) => item.lang !== 
           <q-item-label>{{ $t('page.config.storage.clear-image-cache') }}</q-item-label>
           <q-item-label caption>
             {{ $t('page.config.storage.clear-image-cache-desc') }}
+          </q-item-label>
+        </q-item-section>
+      </q-item>
+
+      <q-item v-if="pathDeploy" v-ripple clickable @click="handleClearUnusedDeployDirs">
+        <q-item-section>
+          <q-item-label>{{ $t('page.config.storage.clear-unused-deploy-dir') }}</q-item-label>
+          <q-item-label caption>
+            {{ $t('page.config.storage.clear-unused-deploy-dir-desc') }}
           </q-item-label>
         </q-item-section>
       </q-item>

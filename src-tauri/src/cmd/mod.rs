@@ -116,6 +116,11 @@ pub async fn util_clear_unused_images(app: AppHandle) -> CommandResult<u32> {
 }
 
 #[command]
+pub async fn util_clear_unused_deploy_dirs(app: AppHandle) -> CommandResult<u32> {
+    library::clear_unused_deploy_dirs(app).await.string_result()
+}
+
+#[command]
 pub async fn util_dl_fetch_info(arg: DLFetchArg) -> CommandResult<DLFetchInfo> {
     arg.content_type
         .fetch_info(arg.id.as_str(), &Language::ZhCn)

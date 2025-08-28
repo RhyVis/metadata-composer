@@ -12,9 +12,7 @@ use redb::{Database, ReadableTable, TableDefinition};
 use tauri::{AppHandle, Manager, async_runtime};
 use tokio::fs as tfs;
 
-pub use self::{
-    collection::collection_cache_get, delegate::*, deployment::*, util::clear_unused_images,
-};
+pub use self::{collection::collection_cache_get, delegate::*, deployment::*, util::*};
 use crate::core::{
     AppStateExt,
     data::{library::collection::collection_cache_sync_all, metadata::Metadata, state::DataState},
