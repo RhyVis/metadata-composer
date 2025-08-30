@@ -227,7 +227,7 @@ impl Metadata {
         let dir_base = app.state_config().get().dir_archive();
         let dir_rel = self.content_info.path_rel();
 
-        let file_name = format!("{}.a", self.content_info.file_name());
+        let file_name = self.content_info.file_name();
 
         let mut target_path = dir_base.join(&dir_rel);
         tfs::create_dir_all(&target_path).await.map_err(|e| {

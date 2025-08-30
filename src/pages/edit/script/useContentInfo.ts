@@ -4,7 +4,7 @@ import { useQuasar } from 'quasar';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Command } from '@/api/cmd.ts';
-import { isNumericOnly } from '@/api/util.ts';
+import { extractNumbers, isNumericOnly } from '@/api/util.ts';
 import { useNotify } from '@/hooks/useNotify';
 import {
   ContentTypeEnum,
@@ -152,9 +152,9 @@ export const useContentInfo = (edit: UseEdit) => {
         contentInfo.value.type === ContentTypeEnum.Game &&
         contentInfo.value.data.distribution.type === GameDistributionEnum.Steam
       ) {
-        const trim = val.trim();
-        if (!isNumericOnly(trim)) {
-          console.warn('App ID should be numeric only, please check the input');
+        const trim = extractNumbers(val.trim());
+        if (!trim) {
+          console.warn('App ID empty');
           return;
         }
         updateField('content_info', {
@@ -184,9 +184,9 @@ export const useContentInfo = (edit: UseEdit) => {
         contentInfo.value.type === ContentTypeEnum.Game &&
         contentInfo.value.data.distribution.type === GameDistributionEnum.DLSite
       ) {
-        const trim = val.trim();
-        if (!isNumericOnly(trim)) {
-          console.warn('DLSite ID should be numeric only, please check the input');
+        const trim = extractNumbers(val.trim());
+        if (!trim) {
+          console.warn('DLSite ID empty');
           return;
         }
         updateField('content_info', {
