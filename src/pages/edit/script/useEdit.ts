@@ -29,14 +29,14 @@ export type MaybeMetadata = Metadata | undefined;
 
 type EditableField = Exclude<keyof MetadataOption, 'id'>;
 
-const window = getCurrentWindow();
-
 export const useEdit = (id: Ref<string>, formRef: Ref<QForm>) => {
   const { t } = useI18n();
   const { update, find } = useDatabaseStore();
   const { loading } = useQuasar();
   const { notifySuccess, notifyError, notifyWarning } = useNotify();
   const { tooltip } = useTray();
+
+  const window = getCurrentWindow();
 
   const initData = () => find(get(id));
   const initialData = ref<MaybeMetadata>(initData());
@@ -119,7 +119,7 @@ export const useEdit = (id: Ref<string>, formRef: Ref<QForm>) => {
         ? t('page.edit.notify.update.success')
         : t('page.edit.notify.create.success');
       notifySuccess(successMsg, undefined, 1000);
-      if (!(await window.isVisible())) sendNotification(successMsg);
+      if (!(await window.isFocused())) sendNotification(successMsg);
 
       return true;
     } catch (e) {

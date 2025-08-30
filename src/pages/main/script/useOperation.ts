@@ -10,6 +10,8 @@ import { useTray } from '@/hooks/useTray';
 import { useTableStore } from '@/pages/main/script/useTableStore';
 import { useDatabaseStore } from '@/stores/database';
 import { listen } from '@tauri-apps/api/event';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { sendNotification } from '@tauri-apps/plugin-notification';
 
 export type UseOperation = ReturnType<typeof useOperation>;
 
@@ -20,6 +22,8 @@ export const useOperation = () => {
   const { loading } = useQuasar();
   const { notifySuccess, notifyError } = useNotify();
   const { tooltip } = useTray();
+
+  const window = getCurrentWindow();
 
   const handleReload = async () => {
     console.info('Reloading table data...');
@@ -88,9 +92,11 @@ export const useOperation = () => {
           target_dir: null,
         });
         await sync();
-        syncDeploymentCache();
+        await syncDeploymentCache();
 
-        notifySuccess(t('page.main.notify.deploy.config-success', [id]));
+        const successMsg = t('page.main.notify.deploy.config-success', [id]);
+        notifySuccess(successMsg);
+        if (!(await window.isFocused())) sendNotification(successMsg);
       } catch (e) {
         console.error(e);
         notifyError(t('page.main.notify.deploy.config-fail', [id]), e);
@@ -137,7 +143,7 @@ export const useOperation = () => {
               target_dir: path,
             });
             await sync();
-            syncDeploymentCache();
+            await syncDeploymentCache();
 
             notifySuccess(t('page.main.notify.deploy.custom-success', [id, path]));
           } catch (e) {
@@ -169,7 +175,7 @@ export const useOperation = () => {
     try {
       await Command.metadataDeployOff(id);
       await sync();
-      syncDeploymentCache();
+      await syncDeploymentCache();
 
       notifySuccess(t('page.main.notify.deploy-off.success', [id]));
     } catch (e) {

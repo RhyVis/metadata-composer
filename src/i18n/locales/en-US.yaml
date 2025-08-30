@@ -89,12 +89,20 @@ page:
         loading: Importing metadata...
         refresh-for-changes: Refresh the database to view changes
         success: Metadata import successfully
+      clear-unused-deploy-dir:
+        count: Cleared {0} unused deployment directory
+        fail: Failed to clear unused deployment directory
+        loading: Clearing the unused deployment directory...
+        nothing: No unused deployment directory
+        success: Clearing unused deployment directory successfully
     storage:
       path-data: Data Directory
       path-deploy: Deployment Directory
       header: Storage
       clear-image-cache: Clear image cache
       clear-image-cache-desc: Clear unused image cache
+      clear-unused-deploy-dir: Clear the unused deployment directory
+      clear-unused-deploy-dir-desc: Clear empty folders in the configured deployment directory
   main:
     action:
       add: New
