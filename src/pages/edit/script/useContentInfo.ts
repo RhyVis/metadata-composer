@@ -252,7 +252,7 @@ export const useContentInfo = (edit: UseEdit) => {
               type: GameDistributionEnum.Other,
               data: {
                 ...contentInfo.value.data.distribution.data,
-                name: (val?.trim() ?? '').toLowerCase(),
+                name: (val?.trim().replace(/\./g, '') ?? '').toLowerCase(),
               },
             },
           },
@@ -464,6 +464,20 @@ export const useContentInfo = (edit: UseEdit) => {
       }
       if (data.description && !editData.value.description) {
         updateField('description', data.description.join('\n'));
+      }
+      if (data.og_image && !editData.value.image) {
+        loading.show({
+          message: t('page.edit.content-info.loading.fetch-info-image', [
+            gViewDLSiteIdPrefix.value,
+            id,
+          ]),
+          html: true,
+        });
+        try {
+          updateField('image', await Command.utilProcessImgWeb(data.og_image));
+        } catch (e) {
+          console.error('Failed to process image:', e);
+        }
       }
     } catch (e) {
       console.error('Failed to fetch DLSite info:', e);

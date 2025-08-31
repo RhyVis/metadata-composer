@@ -19,7 +19,7 @@ export type DLContentType = "Doujin" | "Comics" | "PcGames" | "SmartphoneGames" 
 
 export type DLFetchArg = { id: string, content_type: DLContentType, };
 
-export type DLFetchInfo = { title: string, circle: string, scenario: Array<string>, illustration: Array<string>, category: Array<string>, tags: Array<string>, description: Array<string>, };
+export type DLFetchInfo = { title: string, circle: string, scenario: Array<string>, illustration: Array<string>, category: Array<string>, tags: Array<string>, description: Array<string>, og_image: string | null, };
 
 export type DLSiteDistributionData = { id: string, content_type: DLContentType, };
 

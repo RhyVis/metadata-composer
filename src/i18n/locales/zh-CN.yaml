@@ -244,6 +244,7 @@ page:
         dl-open-fail: 打开 DLSite 页面失败，请检查网络连接或稍后再试
       loading:
         fetch-info: 正在获取 {0}{1} 的信息...
+        fetch-info-image: 正在获取 {0}{1} 的封面...
     description:
       label: 描述
       hint: 内容描述
