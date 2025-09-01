@@ -33,7 +33,7 @@ pub async fn compress(
     let output_path = output_file.as_ref().to_owned();
     let password = password.map(|s| s.to_owned());
 
-    if output_path.exists() {
+    if tfs::try_exists(&output_path).await? {
         tfs::remove_file(&output_path)
             .await
             .map_err(|e| anyhow!("Failed to remove existing output file: {e}"))?;
@@ -42,7 +42,7 @@ pub async fn compress(
 
     let mut command = command
         .arg("a")
-        .arg(output_path)
+        .arg(&output_path)
         .arg(input_path.join("*"))
         .arg("-t7z")
         .arg("-mx9")
@@ -114,7 +114,21 @@ pub async fn compress(
         error!("{}", err_msg);
         Err(anyhow!(err_msg))
     } else {
+        if !tfs::try_exists(&output_path).await? {
+            let mut check_path = output_path.clone();
+            check_path.set_extension("7z");
+            if tfs::try_exists(&check_path).await? {
+                tfs::rename(&check_path, &output_path).await?;
+            } else {
+                return Err(anyhow!(
+                    "Output file not found after compression: {}",
+                    output_path.display()
+                ));
+            }
+        }
+
         info!("Compression completed successfully.");
+
         Ok(())
     }
 }

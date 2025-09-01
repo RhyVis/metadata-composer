@@ -69,6 +69,10 @@ export class Command {
     return await invoke('util_clear_unused_deploy_dirs');
   }
 
+  static async utilRecalculateArchiveSize(): Promise<void> {
+    return await invoke('util_recalculate_archive_size');
+  }
+
   static async utilDlFetchInfo(arg: DLFetchArg): Promise<DLFetchInfo> {
     return await invoke('util_dl_fetch_info', { arg });
   }

@@ -55,6 +55,8 @@ page:
       clear-image-cache-desc: 清除未使用的图片缓存
       clear-unused-deploy-dir: 清除未使用部署目录
       clear-unused-deploy-dir-desc: 清除配置部署目录中的空文件夹
+      recalculate-archive-size: 重新计算归档大小
+      recalculate-archive-size-desc: 重新计算数据库中所有归档文件的大小
     database:
       header: 数据库
       export:
@@ -96,6 +98,10 @@ page:
         success: 清除未使用的部署目录成功
         nothing: 没有未使用的部署目录
         fail: 清除未使用的部署目录失败
+      recalculate-archive-size:
+        loading: 重新计算归档大小...
+        success: 成功重新计算归档大小
+        fail: 重新计算归档大小失败
     lang:
       header: 语言
       switch:

@@ -69,6 +69,14 @@ impl PathExt for Path {
     }
 
     async fn calculate_size_async(&self) -> u64 {
+        if !tfs::try_exists(self).await.unwrap_or(false) {
+            warn!(
+                "Tried to calculate size of non-existent path: {}",
+                self.display()
+            );
+            return 0;
+        }
+
         if self.is_file() {
             match tfs::metadata(self).await {
                 Ok(metadata) => metadata.len(),

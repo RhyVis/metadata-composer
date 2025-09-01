@@ -5,6 +5,7 @@ import { Command } from '@/api/cmd.ts';
 import { selectDirectory } from '@/api/dialog.ts';
 import { useNotify } from '@/hooks/useNotify';
 import { useConfigStore } from '@/stores/config.ts';
+import { useDatabaseStore } from '@/stores/database';
 import { message } from '@tauri-apps/plugin-dialog';
 import { exit } from '@tauri-apps/plugin-process';
 
@@ -19,7 +20,8 @@ export const LanguageList: {
 
 export const useConfig = () => {
   const { t } = useI18n();
-  const { sync } = useConfigStore();
+  const { sync: syncConfig } = useConfigStore();
+  const { sync: syncDatabase } = useDatabaseStore();
   const { loading } = useQuasar();
   const { notifyError, notifyWarning, notifySuccess } = useNotify();
 
@@ -36,13 +38,13 @@ export const useConfig = () => {
           await message(t('page.config.notify.update-restart'), {
             title: t('general.notification'),
           });
-          await sync();
+          await syncConfig();
           await exit();
           break;
         }
         case 'path_deploy': {
           await Command.configUpdate('path_deploy', path);
-          await sync();
+          await syncConfig();
           break;
         }
       }
@@ -55,7 +57,7 @@ export const useConfig = () => {
   const handleClearField = async (name: keyof AppConfig) => {
     try {
       await Command.configUpdate(name, null);
-      await sync();
+      await syncConfig();
     } catch (e) {
       console.error(e);
       notifyError(t('page.config.notify.clear-field-fail'), e);
@@ -108,6 +110,20 @@ export const useConfig = () => {
     }
   };
 
+  const handleRecalculateArchiveSize = async () => {
+    try {
+      loading.show({ message: t('page.config.notify.recalculate-archive-size.loading') });
+      await Command.utilRecalculateArchiveSize();
+      await syncDatabase();
+      notifySuccess(t('page.config.notify.recalculate-archive-size.success'));
+    } catch (e) {
+      console.error(e);
+      notifyError(t('page.config.notify.recalculate-archive-size.fail'), e);
+    } finally {
+      loading.hide();
+    }
+  };
+
   const handleExport = async () => {
     try {
       loading.show({ message: t('page.config.notify.export.loading') });
@@ -125,6 +141,7 @@ export const useConfig = () => {
     try {
       loading.show({ message: t('page.config.notify.import.loading') });
       await Command.metadataImport();
+      await syncDatabase();
       notifySuccess(
         t('page.config.notify.import.success'),
         t('page.config.notify.import.refresh-for-changes'),
@@ -140,7 +157,7 @@ export const useConfig = () => {
   const handleChangeLang = async (lang: Language) => {
     try {
       await Command.configUpdate('lang', lang);
-      await sync();
+      await syncConfig();
     } catch (e) {
       console.error(e);
       notifyError(t('page.config.notify.import.change-lang-fail'), e);
@@ -152,6 +169,7 @@ export const useConfig = () => {
     handleClearField,
     handleClearImageCache,
     handleClearUnusedDeployDirs,
+    handleRecalculateArchiveSize,
     handleExport,
     handleImport,
     handleChangeLang,

@@ -247,16 +247,30 @@ impl Metadata {
         compress(&app, raw_path, &target_path, password.as_deref())
             .await
             .map_err(|e| {
-                error!("Failed to compress archive: {}", e);
-                anyhow!("Failed to compress archive: {}", e)
+                let err_msg = format!("Failed to compress archive: {}", e);
+                error!("{err_msg}");
+                anyhow!(err_msg)
             })?;
 
+        let target_path_resolve = target_path.canonicalize().unwrap_or_else(|e| {
+            warn!(
+                "Falling back to non-canonicalized path for target: {}: {}",
+                target_path.display(),
+                e
+            );
+            target_path
+        });
+
         self.archive_info = ArchiveInfo::ArchiveFile {
-            size: target_path.calculate_size(),
+            size: target_path_resolve.calculate_size_async().await,
             path: dir_rel.join(file_name).to_string_lossy().to_string(),
             password,
         };
-        info!("Created archive for metadata: {}", self.id);
+        info!(
+            "Created archive for metadata {} at {}",
+            self.id,
+            target_path_resolve.display()
+        );
 
         Ok(())
     }

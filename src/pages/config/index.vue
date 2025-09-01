@@ -12,6 +12,7 @@ const {
   handleClearField,
   handleClearImageCache,
   handleClearUnusedDeployDirs,
+  handleRecalculateArchiveSize,
   handleExport,
   handleImport,
   handleChangeLang,
@@ -71,6 +72,15 @@ const languageList = computed(() => LanguageList.filter((item) => item.lang !== 
           <q-item-label caption>
             {{ $t('page.config.storage.clear-unused-deploy-dir-desc') }}
           </q-item-label>
+        </q-item-section>
+      </q-item>
+
+      <q-item v-ripple clickable @click="handleRecalculateArchiveSize">
+        <q-item-section>
+          <q-item-label>{{ $t('page.config.storage.recalculate-archive-size') }}</q-item-label>
+          <q-item-label caption>{{
+            $t('page.config.storage.recalculate-archive-size-desc')
+          }}</q-item-label>
         </q-item-section>
       </q-item>
 
