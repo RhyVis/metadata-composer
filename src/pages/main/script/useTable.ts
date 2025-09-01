@@ -1,10 +1,11 @@
 import type { Metadata } from '@/api/types.ts';
 import type { FilterType } from '@/pages/main/script/define.ts';
 import { storeToRefs } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { FilterTypeEnum } from '@/pages/main/script/define.ts';
 import { useTableStore } from '@/pages/main/script/useTableStore';
 import { useDatabaseStore } from '@/stores/database';
+import { set } from '@vueuse/core';
 
 export type UseTable = ReturnType<typeof useTable>;
 
@@ -17,10 +18,15 @@ export const useTable = () => {
 
   const filterType = ref<FilterType>(FilterTypeEnum.None);
 
+  const deploymentCacheLocal = ref<string[]>([]);
+  watch(deploymentCache, (newVal) => {
+    set(deploymentCacheLocal, newVal);
+  });
+
   const searchFunc = computed(() =>
     searchByRegex.value
-      ? (a: string, b: string) => !!a.match(b)
-      : (a: string, b: string) => a.includes(b),
+      ? (a: string, b: string) => !!a.match(new RegExp(b, 'i'))
+      : (a: string, b: string) => a.toLowerCase().includes(b.toLowerCase()),
   );
   const filterFunc = computed(
     () => (rows: Metadata[]) =>
@@ -37,7 +43,7 @@ export const useTable = () => {
       case FilterTypeEnum.Deployment: {
         return filterFunc
           .value(items.value)
-          .filter((item) => deploymentCache.value.includes(item.id));
+          .filter((item) => deploymentCacheLocal.value.includes(item.id));
       }
       default: {
         return filterFunc.value(items.value);
