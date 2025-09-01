@@ -1,5 +1,5 @@
 use anyhow::{Result, anyhow};
-use log::warn;
+use log::{info, warn};
 use redb::ReadableTable;
 use tauri::State;
 
@@ -53,6 +53,7 @@ pub(super) fn deployment_cache_remove(
 }
 
 pub fn deployment_cache_get(data: State<'_, DataState>) -> Result<Vec<String>> {
+    info!("Retrieving deployment cache");
     Ok(data
         .deployment_cache()
         .lock()

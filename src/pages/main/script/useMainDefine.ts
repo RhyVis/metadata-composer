@@ -51,11 +51,6 @@ export const useMainDefine = () => {
       field: (row) => row.rating || 0,
     },
     {
-      name: 'image',
-      label: t('page.main.table.image'),
-      field: 'image',
-    },
-    {
       name: 'content_info',
       label: t('page.main.table.content-info'),
       classes: 'r-no-sel',
@@ -82,6 +77,11 @@ export const useMainDefine = () => {
       sortOrder: 'ad',
       sort: (a: string, b: string) => new Date(a).getTime() - new Date(b).getTime(),
       field: (row: Metadata) => date.formatDate(row.update_time, 'YYYY-MM-DD HH:mm:ss'),
+    },
+    {
+      name: 'image',
+      label: t('page.main.table.image'),
+      field: 'image',
     },
   ]);
 

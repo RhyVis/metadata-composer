@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { Command } from '@/api/cmd.ts';
+import { set } from '@vueuse/core';
 
 export const useTableStore = defineStore(
   'table',
@@ -18,7 +19,7 @@ export const useTableStore = defineStore(
     // Actions
     async function syncDeploymentCache() {
       try {
-        deploymentCache.value = await Command.metadataDeploymentCache();
+        set(deploymentCache, await Command.metadataDeploymentCache());
       } catch (error) {
         console.error('Failed to sync deployment cache:', error);
         throw error;
