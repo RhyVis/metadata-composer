@@ -25,6 +25,8 @@ general:
   update: Update
   initializing: Initializing...
   initialization-fail: Initialization failed
+  not-safe-for-work: NSFW
+  safe-for-work: SFW
 layout:
   drop-down:
     dev-mode: Develop Mode
@@ -175,6 +177,7 @@ page:
         Decompression progress: {1}%
         Number of files: {2}
         Current file: {3}
+    sfw-block: The content is blocked due to SFW setting
   edit:
     alias:
       hint: Enter to add a new alias

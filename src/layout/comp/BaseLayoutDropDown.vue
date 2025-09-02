@@ -8,8 +8,8 @@ const dev = computed(() => import.meta.env.DEV);
 const { t } = useI18n();
 
 const configStore = useConfigStore();
-const { isDevMode, isDarkMode } = storeToRefs(configStore);
-const { toggleDevMode, toggleDarkMode } = configStore;
+const { isDevMode, isDarkMode, isSafeForWorkMode } = storeToRefs(configStore);
+const { toggleDevMode, toggleDarkMode, toggleSafeForWorkMode } = configStore;
 </script>
 
 <template>
@@ -29,6 +29,14 @@ const { toggleDevMode, toggleDarkMode } = configStore;
             </q-item-section>
             <q-item-section>
               {{ isDarkMode ? t('general.dark-mode') : t('general.light-mode') }}
+            </q-item-section>
+          </q-item>
+          <q-item clickable @click="toggleSafeForWorkMode">
+            <q-item-section avatar>
+              <q-icon :name="isSafeForWorkMode ? 'lock' : 'favorite'" />
+            </q-item-section>
+            <q-item-section>
+              {{ isSafeForWorkMode ? t('general.safe-for-work') : t('general.not-safe-for-work') }}
             </q-item-section>
           </q-item>
         </q-list>

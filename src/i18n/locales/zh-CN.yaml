@@ -25,6 +25,8 @@ general:
   quit: 退出
   initializing: 正在初始化…
   initialization-fail: 初始化失败
+  not-safe-for-work: NSFW
+  safe-for-work: SFW
 layout:
   drop-down:
     dev-mode: 开发模式
@@ -361,6 +363,7 @@ page:
       deploying-to-custom: 正在部署 '{0}' 到 {1}...
       decompress-progress: '{0}<br>解压进度：{1}%<br>文件数量：{2}<br>当前文件：{3}'
       deploy-off: 正在取消部署 '{0}'...
+    sfw-block: 小孩子不能看哦
 develop:
   develop-info: 调试信息
   display:

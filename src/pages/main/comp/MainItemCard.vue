@@ -24,7 +24,7 @@ const emit = defineEmits<{
 }>();
 
 const { handleDeploy, handleDeployOff, handleRemove } = operation;
-const { isDarkMode, pathDeploy } = storeToRefs(useConfigStore());
+const { isDarkMode, isSafeForWorkMode, pathDeploy } = storeToRefs(useConfigStore());
 
 const innerTextClazz = computed(() => (isDarkMode.value ? 'text-grey-5' : 'text-grey-9'));
 </script>
@@ -51,7 +51,20 @@ const innerTextClazz = computed(() => (isDarkMode.value ? 'text-grey-5' : 'text-
             <template v-else-if="col.name === 'image'">
               <div class="r-no-sel text-weight-medium">{{ col.label }}</div>
               <div class="full-width" style="max-height: 260px">
-                <AsyncImage :hash="col.value as string">
+                <q-card
+                  class="full-width flex items-center justify-center"
+                  v-if="isSafeForWorkMode"
+                  flat
+                  style="height: 256px"
+                >
+                  <div class="text-center column items-center">
+                    <q-icon name="lock" color="grey-6" size="4rem" />
+                    <div class="text-subtitle2 text-grey-8 q-mt-sm">
+                      {{ $t('page.main.sfw-block') }}
+                    </div>
+                  </div>
+                </q-card>
+                <AsyncImage v-else :hash="col.value as string">
                   <template #state="{ assetUrl, error, loading }">
                     <q-card
                       class="full-width flex items-center justify-center"

@@ -7,6 +7,7 @@ import { set } from '@vueuse/core';
 interface FrontendConfig {
   devMode: boolean;
   darkMode: boolean;
+  safeForWorkMode: boolean;
 }
 
 export const useConfigStore = defineStore(
@@ -15,6 +16,7 @@ export const useConfigStore = defineStore(
     const frontend = ref<FrontendConfig>({
       devMode: false,
       darkMode: false,
+      safeForWorkMode: false,
     });
     const backend = ref<AppConfig>({
       lang: 'zh-CN',
@@ -24,6 +26,7 @@ export const useConfigStore = defineStore(
 
     const isDevMode = computed(() => frontend.value.devMode);
     const isDarkMode = computed(() => frontend.value.darkMode);
+    const isSafeForWorkMode = computed(() => frontend.value.safeForWorkMode);
 
     const lang = computed(() => backend.value.lang);
     const pathData = computed(() => backend.value.path_data);
@@ -39,6 +42,10 @@ export const useConfigStore = defineStore(
 
     function toggleDarkMode() {
       frontend.value.darkMode = !frontend.value.darkMode;
+    }
+
+    function toggleSafeForWorkMode() {
+      frontend.value.safeForWorkMode = !frontend.value.safeForWorkMode;
     }
 
     function setLanguage(lang: Language) {
@@ -60,6 +67,7 @@ export const useConfigStore = defineStore(
       // Getter
       isDevMode,
       isDarkMode,
+      isSafeForWorkMode,
       lang,
       pathData,
       pathDeploy,
@@ -67,6 +75,7 @@ export const useConfigStore = defineStore(
       sync,
       toggleDevMode,
       toggleDarkMode,
+      toggleSafeForWorkMode,
       setLanguage,
       setDataPath,
       setDeployPath,
