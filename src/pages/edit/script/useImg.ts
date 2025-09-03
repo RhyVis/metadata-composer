@@ -3,15 +3,17 @@ import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import type { Event, UnlistenFn } from '@tauri-apps/api/event';
 import { useQuasar } from 'quasar';
 import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Command } from '@/api/cmd.ts';
 import { extractFileName, truncateString } from '@/api/util.ts';
-import { useNotify } from '@/composables/useNotify.ts';
+import { useNotify } from '@/hooks/useNotify';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { listen, TauriEvent } from '@tauri-apps/api/event';
 import { readImage, readText } from '@tauri-apps/plugin-clipboard-manager';
 import { set, useToggle } from '@vueuse/core';
 
 export const useImg = (edit: UseEdit) => {
+  const { t } = useI18n();
   const { editData, updateField } = edit;
   const { loading } = useQuasar();
   const { notifyWarning, notifySuccess, notifyError } = useNotify();
@@ -24,7 +26,7 @@ export const useImg = (edit: UseEdit) => {
         const image = await readImage();
         const size = await image.size();
         loading.show({
-          message: `正在处理粘贴的图像... (${size.width}x${size.height})`,
+          message: t('page.edit.image.loading.paste-img-process', [size.width, size.height]),
         });
         const hash = await Command.utilProcessImgBytes([
           await image.rgba(),
@@ -33,7 +35,10 @@ export const useImg = (edit: UseEdit) => {
         ]);
         console.info(`Processed pasted image with hash: ${hash}`);
         updateField('image', hash);
-        notifySuccess('图片处理成功', `粘贴图像 -> ${hash}`);
+        notifySuccess(
+          t('page.edit.image.notify.success'),
+          t('page.edit.image.notify.paste-hash-display', [hash]),
+        );
         return;
       } catch (e) {
         if (
@@ -56,7 +61,7 @@ export const useImg = (edit: UseEdit) => {
   const requestImage = async (url: string) => {
     const trim = url.trim();
     if (!trim) {
-      notifyWarning('请使用有效链接');
+      notifyWarning(t('page.edit.image.notify.valid-url-please'));
       return;
     }
 
@@ -64,15 +69,15 @@ export const useImg = (edit: UseEdit) => {
 
     try {
       loading.show({
-        message: `正在处理图像链接: ${truncateString(trim)}`,
+        message: t('page.edit.image.loading.paste-url-process', [truncateString(trim)]),
       });
       const hash = await Command.utilProcessImgWeb(trim);
       console.info(`Processed image with hash: ${hash}`);
       updateField('image', hash);
-      notifySuccess('图片处理成功', `${truncateString(trim)} -> ${hash}`);
+      notifySuccess(t('page.edit.image.notify.success'), `${truncateString(trim)} -> ${hash}`);
     } catch (e) {
       console.error(e);
-      notifyError(`处理 '${truncateString(trim)}' 图像失败`, e);
+      notifyError(t('page.edit.image.notify.url-fail', [truncateString(trim)]), e);
     } finally {
       loading.hide();
     }
@@ -113,7 +118,7 @@ export const useImg = (edit: UseEdit) => {
         return;
       }
       loading.show({
-        message: '正在处理拖放的文件...',
+        message: t('page.edit.image.loading.paste-drag-process'),
       });
       for (const path of event.payload.paths) {
         if (path) {
@@ -127,8 +132,8 @@ export const useImg = (edit: UseEdit) => {
           if (!valid) {
             console.warn(`Invalid file type: '${fileName}'`);
             notifyWarning(
-              `不支持的图片文件类型: ${fileName}`,
-              '请拖放 PNG、JPG、JPEG 或 WEBP 格式的图片文件。',
+              t('page.edit.image.notify.unsupported-type', [fileName]),
+              t('page.edit.image.notify.unsupported-hint'),
             );
             continue;
           }
@@ -136,7 +141,7 @@ export const useImg = (edit: UseEdit) => {
             const hash = await Command.utilProcessImgFile(path);
             console.info(`Processed image with hash: ${hash}`);
             updateField('image', hash);
-            notifySuccess('图片处理成功', `${fileName} -> ${hash}`);
+            notifySuccess(t('page.edit.image.notify.success'), `${fileName} -> ${hash}`);
             break;
           } catch (e) {
             console.error(`Error processing image: ${e}`);

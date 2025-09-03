@@ -1,5 +1,8 @@
 import type { DialogFilter } from '@tauri-apps/plugin-dialog';
+import i18n from '@/i18n';
 import { open } from '@tauri-apps/plugin-dialog';
+
+const { t } = i18n.global;
 
 export async function selectFile(filters?: DialogFilter[]): Promise<string> {
   const file = await open({
@@ -9,7 +12,7 @@ export async function selectFile(filters?: DialogFilter[]): Promise<string> {
   });
 
   if (!file) {
-    throw new Error('未选择文件');
+    throw new Error(t('general.file-none'));
   }
 
   return file;
@@ -22,7 +25,7 @@ export async function selectDirectory(): Promise<string> {
   });
 
   if (!dir) {
-    throw new Error('未选择目录');
+    throw new Error(t('general.folder-none'));
   }
 
   return dir;

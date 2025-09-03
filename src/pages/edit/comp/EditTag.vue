@@ -3,8 +3,10 @@ import type { UseEdit } from '@/pages/edit/script/useEdit.ts';
 import { ref } from 'vue';
 import { set } from '@vueuse/core';
 import type { QInput } from 'quasar';
-import { useNotify } from '@/composables/useNotify.ts';
+import { useNotify } from '@/hooks/useNotify';
+import { useI18n } from 'vue-i18n';
 
+const { t } = useI18n();
 const { notifyWarning } = useNotify();
 
 const { edit } = defineProps<{
@@ -50,7 +52,7 @@ const handleAddTag = (alias: string) => {
     resetCache();
   }
   if (duplicatedTags.length > 0) {
-    notifyWarning(`标签 ${duplicatedTags.join(', ')} 已存在`);
+    notifyWarning(t('page.edit.tag.notify.duplicate', [duplicatedTags.join(', ')]));
   }
 };
 
@@ -63,18 +65,18 @@ const checkTagDuplicate = (alias: string): boolean => {
   <q-input
     v-model="addCache"
     :autofocus="false"
+    :hint="$t('page.edit.tag.input.hint')"
+    :label="$t('page.edit.tag.input.label')"
     clearable
-    hint="回车以添加新标签"
-    label="标签"
     lazy-rules
     ref="inputRef"
     stack-label
     @clear="resetCache"
     @keyup.enter="handleAddTag(addCache)"
   />
-  <div>
+  <div class="q-mt-sm">
     <template v-if="!editData.tags || editData.tags.length === 0">
-      <q-chip class="r-no-sel" outline> 无标签 </q-chip>
+      <q-chip class="r-no-sel" outline> {{ $t('page.edit.tag.empty') }} </q-chip>
     </template>
     <template v-else>
       <q-chip

@@ -1,4 +1,5 @@
 /target/
 /gen/schemas
 /.cargo
-.dev
+/.dev
+/.vscode

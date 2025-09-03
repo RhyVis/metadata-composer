@@ -26,10 +26,10 @@ onMounted(() => {
 <template>
   <q-select
     v-model="collection"
+    :hint="$t('page.edit.collection.hint')"
+    :label="$t('page.edit.collection.label')"
     :options="collectionList"
     clearable
-    hint="可通过下拉选项选择已有合集，或输入新合集名称"
-    label="所属合集"
     new-value-mode="add-unique"
     stack-label
     use-input

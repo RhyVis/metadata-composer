@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use anyhow::Result;
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
 use tauri::Manager;
@@ -86,7 +87,27 @@ impl ArchiveInfo {
         }
     }
 
-    pub async fn update_size(&mut self) -> anyhow::Result<()> {
+    pub fn update_size_blocking(&mut self) -> Result<()> {
+        let path = match self.try_resolve()? {
+            This(path) => path,
+            That(_) => {
+                warn!("ArchiveInfo is not resolved, cannot update size.");
+                return Ok(());
+            },
+        };
+
+        let size = path.calculate_size();
+        match self {
+            Self::ArchiveFile { size: s, .. } => *s = size,
+            Self::CommonFile { size: s, .. } => *s = size,
+            Self::Directory { size: s, .. } => *s = size,
+            Self::None => unreachable!(),
+        }
+        info!("Updated archive info size to: {}", size);
+        Ok(())
+    }
+
+    pub async fn update_size(&mut self) -> Result<()> {
         let path = match self.try_resolve()? {
             This(path) => path,
             That(_) => {

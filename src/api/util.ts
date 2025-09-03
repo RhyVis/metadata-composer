@@ -1,5 +1,8 @@
 import { Command } from '@/api/cmd.ts';
+import i18n from '@/i18n';
 import { convertFileSrc } from '@tauri-apps/api/core';
+
+const { t } = i18n.global;
 
 export function formatBytes(bytes: number): string {
   if (bytes === 0) return '0B';
@@ -36,6 +39,10 @@ export function isNumericOnly(str: string): boolean {
   return /^\d+$/.test(str);
 }
 
+export function extractNumbers(str: string): string {
+  return str ? str.replace(/\D/g, '') : '';
+}
+
 export function truncateString(str: string, maxLength: number = 40): string {
   if (str.length <= maxLength) return str;
   return str.slice(0, maxLength - 3) + '...';
@@ -50,25 +57,29 @@ export function isValidFileSystemString(str: string): true | string {
   // oxlint-disable-next-line no-control-regex
   const invalidChars = /[<>:"/\\|?*\x00-\x1F]/;
   if (invalidChars.test(str)) {
-    return '不能包含以下字符: < > : " / \\ | ? *';
+    return `${t('general.invalid-char')}: < > : " / \\ | ? *`;
   }
 
   const reservedNames = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i;
   if (reservedNames.test(str) || reservedNames.test(str.split('.')[0])) {
-    return `"${str}" 是系统保留名称`;
+    return t('general.system-preserve-name', [str]);
   }
 
-  if (str.startsWith(' ') || str.endsWith(' ') || str.endsWith('.')) {
-    return '不能以空格开头或结尾';
+  if (str.startsWith(' ') || str.endsWith(' ')) {
+    return t('general.invalid-space');
   }
 
   if (str.endsWith('.')) {
-    return '不能以点号结尾';
+    return t('general.invalid-dot');
   }
 
   if (str.length > 255) {
-    return '长度不能超过 255 个字符';
+    return t('general.invalid-length');
   }
 
   return true;
+}
+
+export function isAsciiNumeric(str: string): boolean {
+  return /^[\x20-\x7E]+$/.test(str);
 }

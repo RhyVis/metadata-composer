@@ -12,7 +12,7 @@ use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::DialogExt;
 use ts_rs::TS;
 
-use crate::core::{check_init_flag, create_init_flag, get_handle_ref};
+use crate::core::{Language, check_init_flag, create_init_flag, get_handle_ref};
 
 #[cfg(debug_assertions)]
 const CONFIG_FILE_NAME: &str = "Config.dev.toml";
@@ -22,9 +22,15 @@ const CONFIG_FILE_NAME: &str = "Config.toml";
 const DIR_NAME_ARCHIVE: &str = "archive";
 const DIR_NAME_IMAGE: &str = "image";
 
+const FIELD_LANG: &str = "lang";
+const FIELD_PATH_DATA: &str = "path_data";
+const FIELD_PATH_DEPLOY: &str = "path_deploy";
+
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/api/types.ts")]
 pub struct AppConfig {
+    #[serde(default)]
+    lang: Language,
     #[serde(default)]
     path_data: PathBuf,
     #[serde(default)]
@@ -34,6 +40,7 @@ pub struct AppConfig {
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
+            lang: Language::default(),
             path_data: PathBuf::from("."),
             path_deploy: None,
         }
@@ -88,7 +95,14 @@ impl AppConfig {
 
     pub(super) fn update_field(&mut self, name: &str, value: Value) -> Result<()> {
         match name {
-            "path_root" => {
+            FIELD_LANG => {
+                let lang = value.into();
+                self.write(|c| {
+                    c.lang = lang;
+                    Ok(())
+                })?;
+            },
+            FIELD_PATH_DATA => {
                 if let Some(value) = value.as_str() {
                     let path = Path::new(value);
                     if !path.exists() || !path.is_dir() {
@@ -108,7 +122,7 @@ impl AppConfig {
                     return Err(anyhow!("Invalid value for path_data"));
                 }
             },
-            "path_deploy" => {
+            FIELD_PATH_DEPLOY => {
                 if let Some(_) = value.as_null() {
                     self.write(|c| {
                         c.path_deploy = None;
@@ -222,5 +236,14 @@ impl AppConfig {
         f(self)?;
         self.save(get_handle_ref())?;
         Ok(())
+    }
+}
+
+impl From<Value> for Language {
+    fn from(value: Value) -> Self {
+        serde_json::from_value::<Language>(value.clone()).unwrap_or_else(|e| {
+            warn!("Provided language '{:#}' not parsable: '{}", value, e);
+            Language::default()
+        })
     }
 }

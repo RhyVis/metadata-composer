@@ -16,3 +16,11 @@ pub struct DLFetchArg {
     pub id: String,
     pub content_type: DLContentType,
 }
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(super) struct FrontendConfig {
+    pub dev_mode: bool,
+    pub dark_mode: bool,
+}

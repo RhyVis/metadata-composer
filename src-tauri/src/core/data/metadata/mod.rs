@@ -5,15 +5,15 @@ use chrono::{DateTime, Utc};
 use fs_extra::{dir, dir::CopyOptions};
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
-use tauri::{Manager, async_runtime};
+use tauri::{AppHandle, async_runtime};
 use tokio::fs as tfs;
 use ts_rs::TS;
 use uuid::Uuid;
 
 pub use self::{archive_info::*, content_info::*, deploy_info::*};
 use crate::core::{
+    AppStateExt,
     Whether::{That, This},
-    config::ConfigState,
     get_handle,
     util::{
         compress::{compress, decompress},
@@ -51,6 +51,9 @@ pub struct Metadata {
     /// Image hash, if any
     #[serde(default)]
     pub image: Option<String>,
+    /// Rating
+    #[serde(default)]
+    pub rating: u8,
 
     /// The content type of the data item
     #[serde(default)]
@@ -93,6 +96,8 @@ pub struct MetadataOption {
     #[serde(default)]
     pub image: Option<String>,
     #[serde(default)]
+    pub rating: Option<u8>,
+    #[serde(default)]
     pub content_info: Option<ContentInfo>,
     #[serde(default)]
     pub archive_info: Option<ArchiveInfo>,
@@ -113,6 +118,7 @@ impl Metadata {
             collection: opt.collection,
             description: opt.description,
             image: opt.image,
+            rating: opt.rating.unwrap_or_default(),
             content_info: opt.content_info.unwrap_or_default(),
             archive_info: opt.archive_info.clone().unwrap_or_default(),
             deploy_info: DeployInfo::None,
@@ -155,6 +161,9 @@ impl Metadata {
         }
         if let Some(image) = opt.image {
             self.image = Some(image);
+        }
+        if let Some(rating) = opt.rating {
+            self.rating = rating;
         }
         if let Some(content_info) = opt.content_info {
             self.content_info = content_info;
@@ -213,10 +222,12 @@ impl Metadata {
             ));
         }
 
-        let dir_base = get_handle().state::<ConfigState>().get().dir_archive();
+        let app = get_handle();
+
+        let dir_base = app.state_config().get().dir_archive();
         let dir_rel = self.content_info.path_rel();
 
-        let file_name = format!("{}.a", self.content_info.file_name());
+        let file_name = self.content_info.file_name();
 
         let mut target_path = dir_base.join(&dir_rel);
         tfs::create_dir_all(&target_path).await.map_err(|e| {
@@ -233,24 +244,38 @@ impl Metadata {
             file_name,
             target_path.display()
         );
-        compress(raw_path, &target_path, password.as_deref())
+        compress(&app, raw_path, &target_path, password.as_deref())
             .await
             .map_err(|e| {
-                error!("Failed to compress archive: {}", e);
-                anyhow!("Failed to compress archive: {}", e)
+                let err_msg = format!("Failed to compress archive: {}", e);
+                error!("{err_msg}");
+                anyhow!(err_msg)
             })?;
 
+        let target_path_resolve = target_path.canonicalize().unwrap_or_else(|e| {
+            warn!(
+                "Falling back to non-canonicalized path for target: {}: {}",
+                target_path.display(),
+                e
+            );
+            target_path
+        });
+
         self.archive_info = ArchiveInfo::ArchiveFile {
-            size: target_path.calculate_size(),
+            size: target_path_resolve.calculate_size_async().await,
             path: dir_rel.join(file_name).to_string_lossy().to_string(),
             password,
         };
-        info!("Created archive for metadata: {}", self.id);
+        info!(
+            "Created archive for metadata {} at {}",
+            self.id,
+            target_path_resolve.display()
+        );
 
         Ok(())
     }
 
-    pub async fn deploy(&mut self, target: impl AsRef<Path>) -> Result<bool> {
+    pub async fn deploy(&mut self, target: impl AsRef<Path>, app: &AppHandle) -> Result<bool> {
         let target_path = target.as_ref().to_owned();
         if !target_path.exists() {
             return Err(anyhow!(
@@ -302,7 +327,7 @@ impl Metadata {
                         target_path.display()
                     );
 
-                    decompress(source_path, &target_path, password.as_deref()).await?;
+                    decompress(app, source_path, &target_path, password.as_deref()).await?;
 
                     self.deploy_info = DeployInfo::new_dir(target_path.to_owned());
                     self.mark_update();

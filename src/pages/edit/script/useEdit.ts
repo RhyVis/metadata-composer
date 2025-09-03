@@ -7,10 +7,17 @@ import type { UnlistenFn } from '@tauri-apps/api/event';
 import { cloneDeep } from 'lodash-es';
 import { useQuasar } from 'quasar';
 import { computed, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { truncateString } from '@/api/util.ts';
-import { useNotify } from '@/composables/useNotify.ts';
-import { useTray } from '@/composables/useTray.ts';
-import { useLibraryStore } from '@/stores/library.ts';
+import { useNotify } from '@/hooks/useNotify';
+import { useTray } from '@/hooks/useTray';
+import {
+  ContentTypeEnum,
+  DLContentTypeEnum,
+  GameDistributionEnum,
+  GameSysPlatformEnum,
+} from '@/pages/edit/script/define.ts';
+import { useDatabaseStore } from '@/stores/database';
 import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { sendNotification } from '@tauri-apps/plugin-notification';
@@ -22,15 +29,16 @@ export type MaybeMetadata = Metadata | undefined;
 
 type EditableField = Exclude<keyof MetadataOption, 'id'>;
 
-const window = getCurrentWindow();
-
 export const useEdit = (id: Ref<string>, formRef: Ref<QForm>) => {
-  const { update, index } = useLibraryStore();
+  const { t } = useI18n();
+  const { update, find } = useDatabaseStore();
   const { loading } = useQuasar();
   const { notifySuccess, notifyError, notifyWarning } = useNotify();
   const { tooltip } = useTray();
 
-  const initData = () => index(get(id));
+  const window = getCurrentWindow();
+
+  const initData = () => find(get(id));
   const initialData = ref<MaybeMetadata>(initData());
 
   const isEditMode = computed(() => !!initialData.value?.id);
@@ -47,6 +55,7 @@ export const useEdit = (id: Ref<string>, formRef: Ref<QForm>) => {
       collection: copy?.collection ?? null,
       description: copy?.description ?? null,
       image: copy?.image ?? null,
+      rating: copy?.rating ?? null,
       content_info: copy?.content_info ?? null,
       archive_info: copy?.archive_info ?? null,
       flag_create_archive: false,
@@ -64,14 +73,17 @@ export const useEdit = (id: Ref<string>, formRef: Ref<QForm>) => {
     setEverEdited(true);
   };
 
+  const displayName = computed(
+    () => editData.value.title || editData.value.id || t('general.unknown'),
+  );
   const updatingMsg = computed(
     () =>
-      `正在${isEditMode.value ? '更新 ' : '创建 '}${editData.value.title || editData.value.id || '未知'} 数据...`,
+      `${isEditMode.value ? t('page.edit.loading.update') : t('page.edit.loading.create')} ${displayName.value} ${t('general.data')}...`,
   );
 
   const updateData = async (): Promise<boolean> => {
     if (!(await validate())) {
-      notifyWarning('表单验证失败，请检查填写内容');
+      notifyWarning(t('page.edit.notify.validation-fail'));
       return false;
     }
 
@@ -88,11 +100,11 @@ export const useEdit = (id: Ref<string>, formRef: Ref<QForm>) => {
         const fileCount = event.payload[1];
         const currentFile = truncateString(event.payload[2], 25);
         loading.show({
-          message: `${msg}<br>压缩进度：${progress}%<br>文件数量：${fileCount}<br>当前文件：${currentFile}`,
+          message: t('page.edit.loading.compress-info', [msg, progress, fileCount, currentFile]),
           html: true,
         });
         tooltip(
-          `${msg}\n压缩进度：${progress}%\n文件数量：${fileCount}\n当前文件：${currentFile}`,
+          t('page.edit.tooltip.compress-info', [msg, progress, fileCount, currentFile]),
         ).catch(console.error);
       }).then(
         (handle) => (eventHandle = handle),
@@ -103,14 +115,20 @@ export const useEdit = (id: Ref<string>, formRef: Ref<QForm>) => {
       await update(get(editData));
       setEverEdited(false);
 
-      const successMsg = isEditMode.value ? '更新成功' : '创建成功';
+      const successMsg = isEditMode.value
+        ? t('page.edit.notify.update.success')
+        : t('page.edit.notify.create.success');
       notifySuccess(successMsg, undefined, 1000);
-      if (!(await window.isVisible())) sendNotification(successMsg);
+      if (!(await window.isFocused())) sendNotification(successMsg);
 
       return true;
     } catch (e) {
       console.error(e);
-      notifyError(isEditMode.value ? '更新失败' : '创建失败', e, 1000);
+      notifyError(
+        isEditMode.value ? t('page.edit.notify.update.fail') : t('page.edit.notify.create.fail'),
+        e,
+        1000,
+      );
       return false;
     } finally {
       loading.hide();
@@ -125,18 +143,18 @@ export const useEdit = (id: Ref<string>, formRef: Ref<QForm>) => {
       case 'DoujinR18': {
         console.info('Applying preset: DoujinR18');
         updateField('content_info', {
-          type: 'Game',
+          type: ContentTypeEnum.Game,
           data: {
             version: '1.0.0',
             game_type: 'RPG',
             developer: null,
             publisher: null,
-            sys_platform: ['Windows'],
+            sys_platform: [GameSysPlatformEnum.Windows],
             distribution: {
-              type: 'DLSite',
+              type: GameDistributionEnum.DLSite,
               data: {
                 id: '',
-                content_type: 'DoujinR18',
+                content_type: DLContentTypeEnum.DoujinR18,
               },
             },
           },
@@ -154,7 +172,7 @@ export const useEdit = (id: Ref<string>, formRef: Ref<QForm>) => {
       return await formRef.value.validate();
     } catch (e) {
       console.error(e);
-      notifyError('表单验证失败', e);
+      notifyError(t('page.edit.notify.validation-fail'), e);
       return false;
     }
   };

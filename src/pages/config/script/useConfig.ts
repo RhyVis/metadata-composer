@@ -1,14 +1,27 @@
-import type { AppConfig } from '@/api/types.ts';
+import type { AppConfig, Language } from '@/api/types.ts';
 import { useQuasar } from 'quasar';
+import { useI18n } from 'vue-i18n';
 import { Command } from '@/api/cmd.ts';
 import { selectDirectory } from '@/api/dialog.ts';
-import { useNotify } from '@/composables/useNotify.ts';
+import { useNotify } from '@/hooks/useNotify';
 import { useConfigStore } from '@/stores/config.ts';
+import { useDatabaseStore } from '@/stores/database';
 import { message } from '@tauri-apps/plugin-dialog';
 import { exit } from '@tauri-apps/plugin-process';
 
+export const LanguageList: {
+  lang: Language;
+  label: string;
+}[] = [
+  { lang: 'zh-CN', label: '简体中文' },
+  { lang: 'en-US', label: 'English' },
+  { lang: 'ja-JP', label: '日本語' },
+];
+
 export const useConfig = () => {
-  const { sync } = useConfigStore();
+  const { t } = useI18n();
+  const { sync: syncConfig } = useConfigStore();
+  const { sync: syncDatabase } = useDatabaseStore();
   const { loading } = useQuasar();
   const { notifyError, notifyWarning, notifySuccess } = useNotify();
 
@@ -16,53 +29,96 @@ export const useConfig = () => {
     try {
       const path = await selectDirectory();
       if (!path) {
-        notifyWarning('选择路径失败', '未选择任何目录');
+        notifyWarning(t('general.select-path-fail'), t('general.select-no-dir'));
         return;
       }
       switch (name) {
         case 'path_data': {
           await Command.configUpdate('path_data', path);
-          await message('更新存储根后，需要重启应用才能生效。', {
-            title: '提示',
+          await message(t('page.config.notify.update-restart'), {
+            title: t('general.notification'),
           });
-          await sync();
+          await syncConfig();
           await exit();
           break;
         }
         case 'path_deploy': {
           await Command.configUpdate('path_deploy', path);
-          await sync();
+          await syncConfig();
           break;
         }
       }
     } catch (e) {
       console.error(e);
-      notifyError('选择路径失败', e);
+      notifyError(t('general.select-path-fail'), e);
     }
   };
 
   const handleClearField = async (name: keyof AppConfig) => {
     try {
       await Command.configUpdate(name, null);
-      await sync();
+      await syncConfig();
     } catch (e) {
       console.error(e);
-      notifyError('清除属性失败', e);
+      notifyError(t('page.config.notify.clear-field-fail'), e);
     }
   };
 
   const handleClearImageCache = async () => {
     try {
-      loading.show({ message: '正在清除图片缓存...' });
+      loading.show({ message: t('page.config.notify.clear-unused-image.loading') });
       const count = await Command.utilClearUnusedImages();
       if (count > 0) {
-        notifySuccess('清除图片缓存成功', `已清除 ${count} 张未使用的图片`);
+        notifySuccess(
+          t('page.config.notify.clear-unused-image.success'),
+          t('page.config.notify.clear-unused-image.count', [count]),
+        );
       } else {
-        notifySuccess('清除图片缓存成功', '没有未使用的图片');
+        notifySuccess(
+          t('page.config.notify.clear-unused-image.success'),
+          t('page.config.notify.clear-unused-image.nothing'),
+        );
       }
     } catch (e) {
       console.error(e);
-      notifyError('清除图片缓存失败', e);
+      notifyError(t('page.config.notify.clear-unused-image.fail'), e);
+    } finally {
+      loading.hide();
+    }
+  };
+
+  const handleClearUnusedDeployDirs = async () => {
+    try {
+      loading.show({ message: t('page.config.notify.clear-unused-deploy-dir.loading') });
+      const count = await Command.utilClearUnusedDeployDirs();
+      if (count > 0) {
+        notifySuccess(
+          t('page.config.notify.clear-unused-deploy-dir.success'),
+          t('page.config.notify.clear-unused-deploy-dir.count', [count]),
+        );
+      } else {
+        notifySuccess(
+          t('page.config.notify.clear-unused-deploy-dir.success'),
+          t('page.config.notify.clear-unused-deploy-dir.nothing'),
+        );
+      }
+    } catch (e) {
+      console.error(e);
+      notifyError(t('page.config.notify.clear-unused-deploy-dir.fail'), e);
+    } finally {
+      loading.hide();
+    }
+  };
+
+  const handleRecalculateArchiveSize = async () => {
+    try {
+      loading.show({ message: t('page.config.notify.recalculate-archive-size.loading') });
+      await Command.utilRecalculateArchiveSize();
+      await syncDatabase();
+      notifySuccess(t('page.config.notify.recalculate-archive-size.success'));
+    } catch (e) {
+      console.error(e);
+      notifyError(t('page.config.notify.recalculate-archive-size.fail'), e);
     } finally {
       loading.hide();
     }
@@ -70,12 +126,12 @@ export const useConfig = () => {
 
   const handleExport = async () => {
     try {
-      loading.show({ message: '正在导出元数据...' });
+      loading.show({ message: t('page.config.notify.export.loading') });
       await Command.metadataExport();
-      notifySuccess('导出元数据成功');
+      notifySuccess(t('page.config.notify.export.success'));
     } catch (e) {
       console.error(e);
-      notifyError('导出元数据失败', e);
+      notifyError(t('page.config.notify.export.fail'), e);
     } finally {
       loading.hide();
     }
@@ -83,14 +139,28 @@ export const useConfig = () => {
 
   const handleImport = async () => {
     try {
-      loading.show({ message: '正在导入元数据...' });
+      loading.show({ message: t('page.config.notify.import.loading') });
       await Command.metadataImport();
-      notifySuccess('导入元数据成功', '刷新数据库以查看更改');
+      await syncDatabase();
+      notifySuccess(
+        t('page.config.notify.import.success'),
+        t('page.config.notify.import.refresh-for-changes'),
+      );
     } catch (e) {
       console.error(e);
-      notifyError('导入元数据失败', e);
+      notifyError(t('page.config.notify.import.fail'), e);
     } finally {
       loading.hide();
+    }
+  };
+
+  const handleChangeLang = async (lang: Language) => {
+    try {
+      await Command.configUpdate('lang', lang);
+      await syncConfig();
+    } catch (e) {
+      console.error(e);
+      notifyError(t('page.config.notify.import.change-lang-fail'), e);
     }
   };
 
@@ -98,7 +168,10 @@ export const useConfig = () => {
     handleSelectDir,
     handleClearField,
     handleClearImageCache,
+    handleClearUnusedDeployDirs,
+    handleRecalculateArchiveSize,
     handleExport,
     handleImport,
+    handleChangeLang,
   };
 };

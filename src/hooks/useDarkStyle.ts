@@ -1,9 +1,9 @@
 import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
-import { useGlobalStore } from '@/stores/global.ts';
+import { useConfigStore } from '@/stores/config';
 
 export const useDarkStyle = () => {
-  const { isDarkMode } = storeToRefs(useGlobalStore());
+  const { isDarkMode } = storeToRefs(useConfigStore());
 
   const textClass = computed(() => (isDarkMode.value ? 'text-white' : 'text-dark'));
 

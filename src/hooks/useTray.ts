@@ -1,5 +1,6 @@
 import type { Image } from '@tauri-apps/api/image';
 import type { TrayIconOptions } from '@tauri-apps/api/tray';
+import i18n from '@/i18n';
 import { defaultWindowIcon } from '@tauri-apps/api/app';
 import { Menu } from '@tauri-apps/api/menu/menu';
 import { TrayIcon } from '@tauri-apps/api/tray';
@@ -7,6 +8,7 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 import { exit } from '@tauri-apps/plugin-process';
 
 const window = getCurrentWindow();
+const { t } = i18n.global;
 
 let tray: TrayIcon | null = null;
 
@@ -15,7 +17,7 @@ async function init(): Promise<TrayIcon> {
     items: [
       {
         id: 'quit',
-        text: '退出',
+        text: t('general.quit'),
         action: () => exit().catch(console.error),
       },
     ],

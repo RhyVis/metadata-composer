@@ -1,7 +1,10 @@
 import type { ArchiveInfo, Metadata } from '@/api/types.ts';
+import i18n from '@/i18n';
+
+const { t } = i18n.global;
 
 export function joinArray(arr: string[], sep = ', '): string {
-  return arr.length > 0 ? arr.join(sep) : '<未提供>';
+  return arr.length > 0 ? arr.join(sep) : t('page.main.table.unknown');
 }
 
 export function extractArchiveSize(archiveInfo: ArchiveInfo): number {

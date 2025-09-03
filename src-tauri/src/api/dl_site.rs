@@ -107,6 +107,7 @@ pub struct DLFetchInfo {
     pub category: Vec<String>,
     pub tags: Vec<String>,
     pub description: Vec<String>,
+    pub og_image: Option<String>,
 }
 
 pub trait DLContentFetch {
@@ -211,6 +212,13 @@ impl DLContentFetch for DLContentType {
             .map(|t| t.to_string())
             .collect::<Vec<_>>();
 
+        let og_image_selector = Selector::parse(r#"meta[property="og:image"]"#).to_anyhow()?;
+        let og_image = document
+            .select(&og_image_selector)
+            .next()
+            .and_then(|el| el.value().attr("content"))
+            .map(|content| content.to_string());
+
         Ok(DLFetchInfo {
             title,
             circle,
@@ -219,6 +227,7 @@ impl DLContentFetch for DLContentType {
             category,
             tags,
             description,
+            og_image,
         })
     }
 }
@@ -275,10 +284,9 @@ mod test {
         dbg!(result2);
 
         let faulty_id = "00000000"; // Invalid ID for testing error handling
-        let result3 = DLContentType::DoujinR18
+        let _result3 = DLContentType::DoujinR18
             .fetch_info(faulty_id, &Language::EnUs)
             .await
-            .expect("fetch dl site maniax");
-        dbg!(result3);
+            .inspect_err(|e| eprintln!("Error fetching DL site maniax: {}", e));
     }
 }
