@@ -12,14 +12,14 @@ use crate::{
         AppStateExt,
         data::{
             library::{
-                TABLE_METADATA,
+                TABLE_METADATA, clear_unused_deploy_dirs,
                 collection::{collection_cache_remove, collection_cache_sync},
                 deployment::{deployment_cache_remove, deployment_cache_sync},
             },
             metadata::{Metadata, MetadataOption},
             state::DataState,
         },
-        get_handle_ref,
+        get_handle, get_handle_ref,
     },
 };
 
@@ -300,6 +300,9 @@ pub async fn metadata_deploy_off(key: String, data: State<'_, DataState>) -> Res
                     metadata.id, e
                 )
             });
+            let _ = clear_unused_deploy_dirs(get_handle())
+                .await
+                .inspect_err(|e| error!("Failed to clear unused deploy dirs: {}", e));
             info!("Successfully deployed metadata with key '{key}'");
             Ok(())
         } else {
